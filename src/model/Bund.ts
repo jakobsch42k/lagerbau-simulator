@@ -20,14 +20,25 @@ export function mittelpunkt(punkte: readonly Vec3[]): Vec3 {
   return punkte.reduce((summe, p) => summe.add(p), Vec3.NULL).scale(1 / punkte.length);
 }
 
+/** Gierige Gruppierung: ein Element kommt zum ersten Cluster, dessen Mittelpunkt höchstens `radius` entfernt ist. */
+export function clustereNachNaehe<T>(elemente: readonly T[], position: (e: T) => Vec3, radius: number): T[][] {
+  const cluster: { mitte: Vec3; mitglieder: T[] }[] = [];
+  for (const e of elemente) {
+    const p = position(e);
+    const passend = cluster.find((c) => c.mitte.distanceTo(p) <= radius);
+    if (passend) {
+      passend.mitglieder.push(e);
+      passend.mitte = mittelpunkt(passend.mitglieder.map(position));
+    } else {
+      cluster.push({ mitte: p, mitglieder: [e] });
+    }
+  }
+  return cluster.map((c) => c.mitglieder);
+}
+
 interface Kontakt {
   readonly punkt: Vec3;
   readonly ids: readonly [string, string];
-}
-
-interface Cluster {
-  readonly punkte: Vec3[];
-  readonly ids: Set<string>;
 }
 
 /** Findet Bünde: Stangenpaare mit Achsabstand ≤ Toleranz, nahe Kontakte zu einem Bund zusammengefasst. */
@@ -38,8 +49,9 @@ export class BundFinder {
   ) {}
 
   finde(stangen: readonly Stange[]): Bund[] {
-    return this.gruppiere(this.kontakte(stangen)).map(
-      (c, i) => new Bund(`bund-${i}`, mittelpunkt(c.punkte), [...c.ids].sort()),
+    return clustereNachNaehe(this.kontakte(stangen), (k) => k.punkt, this.clusterRadius).map(
+      (gruppe, i) =>
+        new Bund(`bund-${i}`, mittelpunkt(gruppe.map((k) => k.punkt)), [...new Set(gruppe.flatMap((k) => k.ids))].sort()),
     );
   }
 
@@ -54,19 +66,5 @@ export class BundFinder {
       }
     }
     return kontakte;
-  }
-
-  private gruppiere(kontakte: readonly Kontakt[]): Cluster[] {
-    const cluster: Cluster[] = [];
-    for (const k of kontakte) {
-      const passend = cluster.find((c) => mittelpunkt(c.punkte).distanceTo(k.punkt) <= this.clusterRadius);
-      if (passend) {
-        passend.punkte.push(k.punkt);
-        k.ids.forEach((id) => passend.ids.add(id));
-      } else {
-        cluster.push({ punkte: [k.punkt], ids: new Set(k.ids) });
-      }
-    }
-    return cluster;
   }
 }

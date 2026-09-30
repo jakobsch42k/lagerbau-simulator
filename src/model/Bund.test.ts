@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BundFinder, mittelpunkt } from './Bund';
+import { BundFinder, clustereNachNaehe, mittelpunkt } from './Bund';
 import { Dreibein } from './Dreibein';
 import { STANDARD_DREIBEIN } from './params';
 import { Stange } from './Stange';
@@ -51,5 +51,15 @@ describe('BundFinder', () => {
 describe('mittelpunkt', () => {
   it('mittelt Punkte', () => {
     expect(mittelpunkt([new Vec3(0, 0, 0), new Vec3(2, 4, 6)]).toArray()).toEqual([1, 2, 3]);
+  });
+});
+
+describe('clustereNachNaehe', () => {
+  it('fasst nahe Elemente in Eingabereihenfolge zusammen', () => {
+    const punkte = [new Vec3(0, 0, 0), new Vec3(5, 0, 0), new Vec3(0.1, 0, 0), new Vec3(5.05, 0, 0)];
+    const cluster = clustereNachNaehe(punkte, (p) => p, 0.15);
+    expect(cluster).toHaveLength(2);
+    expect(cluster[0]).toHaveLength(2);
+    expect(cluster[1]).toHaveLength(2);
   });
 });
