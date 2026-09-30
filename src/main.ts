@@ -5,8 +5,14 @@ import { KLICK_TOLERANZ_PX } from './editor/konstanten';
 import { Szene } from './editor/Szene';
 import type { WerkzeugName } from './editor/Werkzeuge';
 import { Bauwerk } from './model/Bauwerk';
+import { Stangenliste } from './model/Stangenliste';
+import type { Hinweis } from './rules/Rule';
+import { RuleEngine } from './rules/RuleEngine';
+import { standardRegeln } from './rules/standardRegeln';
 import { AnsichtsModus } from './ui/AnsichtsModus';
+import { HinweisPanel } from './ui/HinweisPanel';
 import { ParameterPanel } from './ui/ParameterPanel';
+import { StangenlistePanel } from './ui/StangenlistePanel';
 import { Teilen } from './ui/Teilen';
 
 const MELDUNG_DAUER_MS = 4000;
@@ -21,9 +27,21 @@ const editor = new Editor(Bauwerk.leer());
 const szene = new Szene(element('#ansicht'));
 const modus = new AnsichtsModus(document.body);
 const teilen = new Teilen();
+const regeln = new RuleEngine(standardRegeln());
 const parameter = new ParameterPanel(element('#parameter'), editor);
+const hinweisPanel = new HinweisPanel(element('#hinweise'), (h) => editor.markiere(h.betroffeneTeile));
+const stangenlistePanel = new StangenlistePanel(element('#stangenliste'));
 const meldung = element<HTMLParagraphElement>('#meldung');
 const werkzeugKnoepfe = [...document.querySelectorAll<HTMLButtonElement>('[data-werkzeug]')];
+
+// Regeln nur neu prüfen, wenn sich das Bauwerk wirklich geändert hat (nicht bei Auswahl oder Meldung).
+let geprueft: { bauwerk: Bauwerk; hinweise: readonly Hinweis[]; liste: Stangenliste } | null = null;
+function pruefung(bauwerk: Bauwerk): { hinweise: readonly Hinweis[]; liste: Stangenliste } {
+  if (geprueft?.bauwerk !== bauwerk) {
+    geprueft = { bauwerk, hinweise: regeln.pruefe(bauwerk), liste: Stangenliste.aus(bauwerk) };
+  }
+  return geprueft;
+}
 
 function ladeAusAdresse(): void {
   try {
@@ -86,10 +104,13 @@ window.addEventListener('hashchange', ladeAusAdresse);
 
 let meldungsTimer: number | undefined;
 editor.abonniere((z) => {
+  const { hinweise, liste } = pruefung(z.bauwerk);
   const markiert = new Set(z.markiert);
   if (z.auswahl) markiert.add(z.auswahl);
   szene.zeige(z.bauwerk, markiert, z.stangenStart);
   parameter.zeige(z);
+  hinweisPanel.zeige(hinweise);
+  stangenlistePanel.zeige(liste);
   for (const knopf of werkzeugKnoepfe) knopf.setAttribute('aria-pressed', String(knopf.dataset.werkzeug === z.werkzeug));
   element<HTMLButtonElement>('#btn-rueck').disabled = !z.kannRueckgaengig;
   element<HTMLButtonElement>('#btn-wieder').disabled = !z.kannWiederholen;
