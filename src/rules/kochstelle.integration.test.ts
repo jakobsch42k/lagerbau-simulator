@@ -23,7 +23,7 @@ describe('Kochstelle mit allen Regeln', () => {
     expect(engine.pruefe(Bauwerk.leer())).toEqual([]);
   });
 
-  it('enthält die fünf Regeln R1–R5', () => {
-    expect(standardRegeln().map((r) => r.name)).toEqual(['R1', 'R2', 'R3', 'R4', 'R5']);
+  it('enthält die acht Regeln R1–R8', () => {
+    expect(standardRegeln().map((r) => r.name)).toEqual(['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8']);
   });
 });
