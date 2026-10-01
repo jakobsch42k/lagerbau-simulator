@@ -1,6 +1,7 @@
 import type { Editor, EditorZustand } from '../editor/Editor';
 import { ABock } from '../model/ABock';
 import { Dreibein } from '../model/Dreibein';
+import { Neuaufbau } from './Neuaufbau';
 
 interface Feld<P> {
   readonly schluessel: keyof P & string;
@@ -10,15 +11,19 @@ interface Feld<P> {
 
 /** Formular für die ausgewählte Baugruppe oder freie Stange. Ungültige Werte meldet der Editor. */
 export class ParameterPanel {
+  private readonly neuaufbau = new Neuaufbau();
+
   constructor(
     private readonly wurzel: HTMLElement,
     private readonly editor: Editor,
   ) {}
 
   zeige(z: EditorZustand): void {
+    const gruppe = z.auswahl === null ? undefined : z.bauwerk.gruppe(z.auswahl);
+    const freieStange = z.auswahl === null || gruppe ? undefined : z.bauwerk.stange(z.auswahl);
+    if (!this.neuaufbau.noetig(z.auswahl, gruppe ?? freieStange ?? null)) return;
     this.wurzel.replaceChildren();
     if (z.auswahl === null) return;
-    const gruppe = z.bauwerk.gruppe(z.auswahl);
     if (gruppe instanceof Dreibein) {
       this.formular(
         'Dreibein',
@@ -45,7 +50,7 @@ export class ParameterPanel {
         `Höhe ${gruppe.hoehe().toFixed(2)} m · Beinwinkel ${gruppe.beinwinkelGrad().toFixed(0)}° · R dreht`,
       );
     } else {
-      const stange = z.bauwerk.stange(z.auswahl);
+      const stange = freieStange;
       if (!stange) return;
       this.formular(
         'Stange',
