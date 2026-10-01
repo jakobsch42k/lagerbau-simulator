@@ -1,6 +1,7 @@
 import type { Bauwerk } from '../model/Bauwerk';
 import { BauwerkSerializer } from '../share/BauwerkSerializer';
 import { pruefeDateigroesse } from '../share/grenzen';
+import { LinkBasis } from '../share/LinkBasis';
 import { UrlCodec } from '../share/UrlCodec';
 
 /** Link kopieren, als Datei speichern und laden. */
@@ -11,7 +12,12 @@ export class Teilen {
   ) {}
 
   link(bauwerk: Bauwerk): string {
-    return `${location.origin}${location.pathname}${this.codec.alsHash(bauwerk)}`;
+    return `${LinkBasis.aus(location)}${this.codec.alsHash(bauwerk)}`;
+  }
+
+  /** Nur der Hash-Teil (#b=…). Er passt in jede Adresse, auch in die des Windows-Programms. */
+  hash(bauwerk: Bauwerk): string {
+    return this.codec.alsHash(bauwerk);
   }
 
   async kopiereLink(bauwerk: Bauwerk): Promise<void> {

@@ -43,3 +43,15 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Jakobs Einwand vor der Spec-Freigabe („zu sehr auf Statik aus, macht alles nur zu kompliziert”).
 **Richtig ist:** 3D-Planer + Faustregeln (Geometrie-/Graph-Regeln), keine Rechnung.
 **Lehre:** Eine Multiple-Choice-Antwort ist kein Auftrag für die maximale Lösung. Bei großem Aufwandssprung früh fragen, ob die einfache Variante reicht.
+
+### 2026-10-01 — Reviewer erfand falsche Zeilennummern
+**Was die KI gemacht hat:** Der Task-Reviewer für Task 16 meldete als „Important”, die e2e-Ausgabe im Report passe nicht zur Datei (Tests stünden in Zeile 18 und 29 statt 13 und 25).
+**Gefunden durch:** Review-Gegenprobe: frischer Testlauf durch den Controller, `grep -n` auf die Datei.
+**Richtig ist:** Die Tests stehen in Zeile 13 und 25, der Report stimmte.
+**Lehre:** Auch Reviewer-Befunde sind Behauptungen. Vor einem Fix-Durchlauf den Befund selbst nachprüfen.
+
+### 2026-10-01 — Fix für den Fokus erzeugte einen neuen Fehler
+**Was die KI gemacht hat:** Das Parameter-Panel baute nach dem Fix nur noch bei einem neuen Objekt neu auf. Damit blieb ein abgelehnter Wert im Feld stehen, während das Modell den alten Wert behielt.
+**Gefunden durch:** Review (der Implementer nannte es selbst als Bedenken, der Re-Review bestätigte es).
+**Richtig ist:** Bei einer abgelehnten Änderung setzt das Panel das Feld auf den Modellwert zurück (Task 1, desktop-Plan).
+**Lehre:** Wenn ein Fix eine Neuaufbau- oder Cache-Bedingung ändert, alle Wege durchspielen, die bisher nebenbei vom Neuaufbau profitiert haben.

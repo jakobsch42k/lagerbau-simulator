@@ -96,9 +96,12 @@ export class Editor implements EditorKontext {
     });
   }
 
-  /** Änderung aus dem Parameter-Panel. Die Änderung selbst muss innerhalb der Funktion passieren, damit ein RangeError abgefangen wird. */
-  aendereMit(aenderung: (b: Bauwerk) => Bauwerk): void {
-    this.fuehreAus(() => this.aendere(aenderung(this.bauwerk)));
+  /**
+   * Änderung aus dem Parameter-Panel. Die Änderung selbst muss innerhalb der Funktion passieren, damit ein RangeError abgefangen wird.
+   * Gibt false zurück, wenn der Editor die Änderung abgelehnt hat (die Meldung steht dann im Zustand).
+   */
+  aendereMit(aenderung: (b: Bauwerk) => Bauwerk): boolean {
+    return this.fuehreAus(() => this.aendere(aenderung(this.bauwerk)));
   }
 
   loescheAuswahl(): void {
@@ -154,15 +157,18 @@ export class Editor implements EditorKontext {
     return true;
   }
 
-  private fuehreAus(aktion: () => void): void {
+  private fuehreAus(aktion: () => void): boolean {
+    let uebernommen = true;
     try {
       aktion();
       this.meldung = null;
     } catch (e) {
       if (!(e instanceof RangeError)) throw e;
       this.meldung = e.message;
+      uebernommen = false;
     }
     this.melde();
+    return uebernommen;
   }
 
   private melde(): void {

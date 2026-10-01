@@ -1,0 +1,17 @@
+# Packt das Windows-Programm als portable .exe (Spec D5). Aufruf über `npm run dist`.
+appId: io.github.jakobsch42k.lagerbau-simulator
+productName: Lagerbau-Simulator
+directories:
+  output: release
+  buildResources: build
+files:
+  - desktop/main.mjs
+  - dist-desktop/**
+  - package.json
+win:
+  target:
+    - target: portable
+      arch: x64
+  icon: build/icon.png
+portable:
+  artifactName: Lagerbau-Simulator-${version}.exe

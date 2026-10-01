@@ -77,7 +77,8 @@ element('#btn-bearbeiten').addEventListener('click', () => modus.setze(false));
 element('#btn-speichern').addEventListener('click', () => teilen.speichere(editor.bauwerk));
 element('#btn-teilen').addEventListener('click', async () => {
   const bauwerk = editor.bauwerk;
-  history.replaceState(null, '', teilen.link(bauwerk));
+  // Nur den Hash setzen: Im Programm zeigt der Link auf eine andere Origin, und replaceState würde dann werfen.
+  history.replaceState(null, '', teilen.hash(bauwerk));
   try {
     await teilen.kopiereLink(bauwerk);
     editor.zeigeMeldung('Link kopiert.');

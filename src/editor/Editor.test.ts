@@ -5,6 +5,7 @@ import { STANDARD_DREIBEIN } from '../model/params';
 import { Vec3 } from '../model/Vec3';
 import { Editor, type EditorZustand } from './Editor';
 import type { Treffer } from './SnapService';
+import { kochstelle } from '../beispiele/kochstelle';
 
 const zaehler = (): ((p: string) => string) => {
   let n = 0;
@@ -129,5 +130,13 @@ describe('Editor', () => {
     expect(e.bauwerk.istLeer).toBe(true);
     e.wiederholen();
     expect(e.bauwerk.gruppen).toHaveLength(1);
+  });
+
+  it('meldet über den Rückgabewert, ob aendereMit die Änderung übernommen hat', () => {
+    const e = neuerEditor(kochstelle());
+    const d = e.bauwerk.gruppe('dreibein') as Dreibein;
+    expect(e.aendereMit((b) => b.ersetzeGruppe(d.mitParams({ ...d.params, stangenlaenge: 3 })))).toBe(true);
+    expect(e.aendereMit((b) => b.ersetzeGruppe(d.mitParams({ ...d.params, stangenlaenge: 0.5 })))).toBe(false);
+    expect(e.zustand().meldung).toBe('Fußkreisradius muss kleiner als Stangenlänge minus Überstand sein');
   });
 });
