@@ -9,6 +9,7 @@ import { Stangenliste } from './model/Stangenliste';
 import type { Hinweis } from './rules/Rule';
 import { RuleEngine } from './rules/RuleEngine';
 import { standardRegeln } from './rules/standardRegeln';
+import { LinkBasis } from './share/LinkBasis';
 import { AnsichtsModus } from './ui/AnsichtsModus';
 import { HinweisPanel } from './ui/HinweisPanel';
 import { ParameterPanel } from './ui/ParameterPanel';
@@ -83,7 +84,7 @@ element('#btn-teilen').addEventListener('click', async () => {
     await teilen.kopiereLink(bauwerk);
     editor.zeigeMeldung('Link kopiert.');
   } catch {
-    editor.zeigeMeldung('Kopieren nicht möglich. Der Link steht in der Adresszeile.');
+    editor.zeigeMeldung(LinkBasis.kopierFehlerText(location));
   }
 });
 element<HTMLInputElement>('#inp-laden').addEventListener('change', async (e) => {

@@ -13,4 +13,9 @@ export class LinkBasis {
   static aus(ort: Ort): string {
     return ort.protocol === 'file:' ? OEFFENTLICHE_ADRESSE : `${ort.origin}${ort.pathname}`;
   }
+
+  /** Meldung, wenn das Kopieren in die Zwischenablage scheitert. Das Windows-Programm hat keine Adresszeile. */
+  static kopierFehlerText(ort: Ort): string {
+    return ort.protocol === 'file:' ? 'Kopieren nicht möglich.' : 'Kopieren nicht möglich. Der Link steht in der Adresszeile.';
+  }
 }
