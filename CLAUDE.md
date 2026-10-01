@@ -30,4 +30,7 @@ TypeScript + Vite + three.js, Vitest, Playwright. Statisch, kein Backend. Deploy
 
 ## Known Issues & Failed Attempts
 
-_Noch keine._
+### Playwright wartet nach blockierter Navigation endlos
+**What failed:** Im Desktop-E2E: `location.href = 'https://example.com/'` (von `will-navigate` per `preventDefault` gesperrt), danach `await expect(locator('footer')).toBeVisible()` lief in den Timeout (`waiting for navigation to finish...`).
+**Why:** Playwright sieht die abgebrochene Navigation nie als abgeschlossen; web-first-Assertions warten darauf. Die App ist intakt (URL bleibt `file:`, Fußzeile da, `isVisible()` liefert true, `webContents.isLoading()` false).
+**Fix / avoid:** Nach einer geblockten Navigation `expect(await locator.isVisible()).toBe(true)` statt `await expect(locator).toBeVisible()` verwenden.
