@@ -8,6 +8,7 @@ files:
   - desktop/main.mjs
   - dist-desktop/**
   - package.json
+  - build/icon.png
 win:
   target:
     - target: portable

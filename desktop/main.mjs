@@ -13,6 +13,7 @@ class Hauptfenster {
       minWidth: 1024, // nie unter 768 px → die App öffnet immer im Editor-Modus
       minHeight: 700,
       title: TITEL,
+      icon: join(app.getAppPath(), 'build', 'icon.png'),
       webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false },
     });
     Hauptfenster.sperreNavigation(fenster);
