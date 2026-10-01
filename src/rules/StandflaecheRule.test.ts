@@ -3,6 +3,7 @@ import { ABock } from '../model/ABock';
 import { Bauwerk } from '../model/Bauwerk';
 import { Dreibein } from '../model/Dreibein';
 import { STANDARD_ABOCK, STANDARD_DREIBEIN } from '../model/params';
+import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
 import { Analyse } from './Analyse';
@@ -41,5 +42,21 @@ describe('StandflaecheRule (R3)', () => {
     expect(h).toHaveLength(1);
     expect(h[0]?.betroffeneTeile).toContain('s-bein-0');
     expect(h[0]?.betroffeneTeile).not.toContain('b-bein-0');
+  });
+
+  it('zählt die Heringe angebundener Seile zur Standfläche', () => {
+    const abock = new ABock('a', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK);
+    const allein = Bauwerk.leer().mitGruppe(abock);
+    expect(pruefe(allein)).toHaveLength(1);
+    const abgespannt = allein
+      .mitSeil(new Seil('l', abock.spitze(), new Vec3(-1.5, 0, 0)))
+      .mitSeil(new Seil('r', abock.spitze(), new Vec3(1.5, 0, 0)));
+    expect(pruefe(abgespannt)).toEqual([]);
+  });
+
+  it('zählt Heringe von Seilen, die nicht am Bau hängen, nicht', () => {
+    const abock = new ABock('a', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK);
+    const fremd = new Seil('x', new Vec3(5, 2, 0), new Vec3(5, 0, 3));
+    expect(pruefe(Bauwerk.leer().mitGruppe(abock).mitSeil(fremd))).toHaveLength(1);
   });
 });
