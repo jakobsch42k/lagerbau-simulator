@@ -195,4 +195,15 @@ describe('Editor', () => {
     e.loescheAuswahl();
     expect(e.bauwerk.istLeer).toBe(true);
   });
+
+  it('lässt Seile nur im Auswahl-Werkzeug Klicks fangen', () => {
+    const e = neuerEditor();
+    expect(e.trifftSeile).toBe(true);
+    for (const name of ['dreibein', 'abock', 'stange', 'seil', 'baum'] as const) {
+      e.waehleWerkzeug(name);
+      expect(e.trifftSeile, name).toBe(false);
+    }
+    e.waehleWerkzeug('auswahl');
+    expect(e.trifftSeile).toBe(true);
+  });
 });

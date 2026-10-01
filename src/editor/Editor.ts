@@ -47,6 +47,11 @@ export class Editor implements EditorKontext {
     return this.verlauf.aktuell;
   }
 
+  /** Ob Klicks auf Seile ankommen sollen (nur im Auswahl-Werkzeug). */
+  get trifftSeile(): boolean {
+    return this.werkzeug.trifftSeile;
+  }
+
   aendere(neu: Bauwerk): void {
     this.verlauf = this.verlauf.mit(neu);
     this.markiertIds = new Set();

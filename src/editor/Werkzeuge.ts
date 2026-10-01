@@ -23,6 +23,8 @@ export interface EditorKontext {
 export interface Werkzeug {
   readonly name: WerkzeugName;
   readonly angefangen: Vec3 | null;
+  /** Ob Seile Klicks fangen. Nur das Auswahl-Werkzeug will sie; sonst trifft der Strahl, was dahinter liegt. */
+  readonly trifftSeile: boolean;
   onKlick(treffer: Treffer, kontext: EditorKontext): void;
   abbrechen(): void;
 }
@@ -30,6 +32,7 @@ export interface Werkzeug {
 /** Setzt eine Baugruppe mit Standardmaßen auf den angeklickten Bodenpunkt. */
 export class PlaceBaugruppeTool implements Werkzeug {
   readonly angefangen: Vec3 | null = null;
+  readonly trifftSeile = false;
 
   constructor(readonly name: 'dreibein' | 'abock') {}
 
@@ -50,6 +53,7 @@ export class PlaceBaugruppeTool implements Werkzeug {
 export class PlaceBaumTool implements Werkzeug {
   readonly name = 'baum' as const;
   readonly angefangen: Vec3 | null = null;
+  readonly trifftSeile = false;
 
   onKlick(treffer: Treffer, k: EditorKontext): void {
     if (treffer.art !== 'boden') return;
@@ -64,6 +68,7 @@ export class PlaceBaumTool implements Werkzeug {
 /** Zwei Klicks auf Einrastpunkte; liegen sie zu nah beieinander, passiert nichts. Unterklassen erzeugen daraus ein Teil. */
 abstract class ZweiPunktWerkzeug implements Werkzeug {
   abstract readonly name: WerkzeugName;
+  readonly trifftSeile = false;
   private start: SnapPunkt | null = null;
 
   constructor(private readonly mindestabstand: number) {}
@@ -136,6 +141,7 @@ export class DrawSeilTool extends ZweiPunktWerkzeug {
 export class SelectTool implements Werkzeug {
   readonly name = 'auswahl' as const;
   readonly angefangen: Vec3 | null = null;
+  readonly trifftSeile = true;
 
   onKlick(treffer: Treffer, k: EditorKontext): void {
     switch (treffer.art) {

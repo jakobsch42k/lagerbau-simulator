@@ -63,7 +63,7 @@ szene.leinwand.addEventListener('pointerdown', (e) => {
 });
 szene.leinwand.addEventListener('pointerup', (e) => {
   if (druck && Math.hypot(e.clientX - druck.x, e.clientY - druck.y) < KLICK_TOLERANZ_PX) {
-    const treffer = szene.treffer(e);
+    const treffer = szene.treffer(e, editor.trifftSeile);
     if (treffer) editor.klick(treffer);
   }
   druck = null;

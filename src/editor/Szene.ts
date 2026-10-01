@@ -71,11 +71,12 @@ export class Szene {
     if (stangenStart) this.bau.add(this.kugel(stangenStart, 0.1, START));
   }
 
-  treffer(e: PointerEvent): Treffer | null {
+  treffer(e: PointerEvent, seileFangen: boolean): Treffer | null {
     const rect = this.leinwand.getBoundingClientRect();
     const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
     this.raycaster.setFromCamera(ndc, this.kamera);
-    const ziele = this.bau.children.filter((k) => ['stangeId', 'baumId', 'seilId'].some((schluessel) => typeof k.userData[schluessel] === 'string'));
+    const schluessel = seileFangen ? ['stangeId', 'baumId', 'seilId'] : ['stangeId', 'baumId'];
+    const ziele = this.bau.children.filter((k) => schluessel.some((name) => typeof k.userData[name] === 'string'));
     const getroffen = this.raycaster.intersectObjects(ziele, false)[0];
     if (getroffen) {
       const punkt = new Vec3(getroffen.point.x, getroffen.point.y, getroffen.point.z);
