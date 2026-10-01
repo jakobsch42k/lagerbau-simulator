@@ -27,3 +27,14 @@ test('kaputter Link zeigt eine Meldung statt abzustürzen', async ({ page }) => 
   await expect(page.locator('#meldung')).toContainText(/Link ist beschädigt|Ungültige Bauwerk-Daten/);
   await expect(page.locator('#hinweise')).toHaveText('Keine Hinweise.');
 });
+
+test('Link kopieren legt einen Link mit dem Bauwerk in die Zwischenablage', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('./');
+  await page.getByRole('button', { name: 'Beispiel laden' }).click();
+  await page.getByRole('button', { name: 'Link kopieren' }).click();
+  await expect(page.locator('#meldung')).toHaveText('Link kopiert.');
+  const link = await page.evaluate(() => navigator.clipboard.readText());
+  expect(link.startsWith('http://localhost:4173/lagerbau-simulator/#b=')).toBe(true);
+  expect(page.url()).toContain('#b=');
+});
