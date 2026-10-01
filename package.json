@@ -1,7 +1,7 @@
 {
   "name": "lagerbau-simulator",
   "version": "1.0.0",
-  "description": "",
+  "description": "3D-Planer für Pfadfinder-Lagerbauten mit Faustregel-Hinweisen",
   "directories": {
     "doc": "docs"
   },
@@ -15,7 +15,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "private": true,
   "dependencies": {
