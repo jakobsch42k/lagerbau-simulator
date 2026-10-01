@@ -27,6 +27,18 @@ describe('Platzbedarf', () => {
     expect(p?.breite).toBeCloseTo(1.6, 9);
   });
 
+  it('nutzt für zwei Seile an einem gemeinsamen Hering dessen Mittelpunkt', () => {
+    const b = Bauwerk.leer()
+      .mitSeil(new Seil('a', new Vec3(0, 2, 0), new Vec3(2, 0, 0)))
+      .mitSeil(new Seil('b', new Vec3(0, 2, 1), new Vec3(2.1, 0, 0.1)));
+    expect(b.heringe()).toHaveLength(1);
+    const p = Platzbedarf.aus(b);
+    expect(p?.minX).toBeCloseTo(2.05, 9);
+    expect(p?.maxX).toBeCloseTo(2.05, 9);
+    expect(p?.minZ).toBeCloseTo(0.05, 9);
+    expect(p?.maxZ).toBeCloseTo(0.05, 9);
+  });
+
   it('gibt es ohne Füße und Heringe nicht', () => {
     expect(Platzbedarf.aus(Bauwerk.leer())).toBeNull();
     expect(Platzbedarf.aus(Bauwerk.leer().mitBaum(new Baum('b', Vec3.NULL, STANDARD_BAUM)))).toBeNull();
