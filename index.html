@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lagerbau-Simulator</title>
+  </head>
+  <body>
+    <header class="kopf">
+      <h1>Lagerbau-Simulator</h1>
+      <nav class="nur-editor">
+        <button id="btn-beispiel">Beispiel laden</button>
+        <button id="btn-rueck" title="Strg+Z">Rückgängig</button>
+        <button id="btn-wieder" title="Strg+Y">Wiederholen</button>
+        <button id="btn-teilen">Link kopieren</button>
+        <button id="btn-speichern">Speichern</button>
+        <label class="datei">Laden<input id="inp-laden" type="file" accept="application/json,.json" hidden /></label>
+      </nav>
+      <button id="btn-bearbeiten" class="nur-ansicht">Bearbeiten</button>
+    </header>
+    <aside class="links nur-editor">
+      <h2>Bauteile</h2>
+      <button data-werkzeug="auswahl">Auswählen</button>
+      <button data-werkzeug="dreibein">Dreibein setzen</button>
+      <button data-werkzeug="abock">A-Bock setzen</button>
+      <button data-werkzeug="stange">Stange ziehen</button>
+      <section id="parameter"></section>
+    </aside>
+    <main id="ansicht"></main>
+    <aside class="rechts">
+      <h2>Hinweise</h2>
+      <ul id="hinweise"></ul>
+      <h2>Stangenliste</h2>
+      <table id="stangenliste"></table>
+    </aside>
+    <footer>Planungshilfe. Ersetzt nicht Sichtprüfung und Probebelastung durch Leiter.</footer>
+    <p id="meldung" role="status"></p>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

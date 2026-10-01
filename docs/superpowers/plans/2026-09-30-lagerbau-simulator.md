@@ -30,6 +30,7 @@
 - Bünde werden aus der Geometrie abgeleitet (`BundFinder`), nicht gespeichert. Damit ist „Bund entsteht automatisch“ gratis erfüllt, und ein Bund verschwindet, wenn eine Stange nicht mehr berührt.
 - Playwright-Test 10 löscht den First nicht per Canvas-Klick (Pixel-Treffer sind fragil), sondern lädt die Kochstelle ohne First über einen geteilten Link.
 - R2 wird als Heuristik umgesetzt (4er-Zyklus, eben, ohne Diagonale, gegenüberliegende Seiten nicht anderweitig verbunden). Sie ist kein vollständiger Steifigkeitsnachweis. Genau hier soll der „Gemeinheitsbau“ in M2 ansetzen.
+- Der Überstand ist kein Parameter der Stange (Spec D3: „Überstand je Ende“). Er wird automatisch gesetzt: 0 m am Fuß, 0,20 m an einem Bund (`Werkzeuge.ueberstand`).
 
 ## Review Focus
 

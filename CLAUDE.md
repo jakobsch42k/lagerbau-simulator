@@ -9,6 +9,7 @@
 - **Schwellwerte der Regeln kommen von Jakob**, nicht von Claude. Unbestätigte Werte in `src/rules/constants.ts` tragen `// CHECK MANUALLY: <Quelle>`.
 - UI-Sprache Deutsch. Einheiten im Modell: Meter.
 - Bauen am Laptop mit Maus; am Handy nur Ansichtsmodus (geteilter Link).
+- Am Ende zusätzlich **portable Windows-`.exe`** (Electron, offline), Web-Version auf Pages bleibt. Spec D5, eigener Plan, Branch `feat/desktop` nach dem v1-Merge.
 
 ## Stack & Struktur
 
