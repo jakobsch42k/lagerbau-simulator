@@ -88,8 +88,8 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 
 ### 2026-10-01 — Seil-Treffer beim Einrasten nicht behandelt
 **Was die KI gemacht hat:** In Task 8/9 kann der unsichtbare Greifmantel eines Seils den Raycast vor einer Stange gewinnen. `SnapService` hat keinen Zweig für `'seil'` und fällt auf „Boden“ zurück. Ein neues Seilende neben einem alten könnte so am Boden statt an der Stange landen.
-**Gefunden durch:** Review (Minor, noch offen; Jakob prüft beim Durchklicken)
-**Richtig ist:** Für den Treffer `'seil'` einen eigenen Zweig oder eine Regel haben, die das Seil überspringt.
+**Gefunden durch:** Review (zuerst Minor); das Abschluss-Review der ganzen Branch fand, dass es weiter reicht: Der Greifmantel blockierte auch das Setzen von Dreibein, A-Bock und Baum hinter einem Seil, und Stangenfüße und Hering landeten neben dem geklickten Bodenpunkt.
+**Richtig ist:** Seile fangen Klicks nur im Auswahl-Werkzeug; für alle anderen Werkzeuge überspringt `Szene.treffer` sie, der Strahl trifft Stange, Baum oder Boden dahinter. Behoben mit `fix: let ropes catch clicks only in the select tool`.
 **Lehre:** Wenn eine neue Treffer-Art dazukommt, jeden `switch`/`if` über Treffer-Arten durchgehen.
 
 ### 2026-10-01 — Report behauptete eine Änderung, die nicht im Commit war
