@@ -91,3 +91,9 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Review (Minor, noch offen; Jakob prüft beim Durchklicken)
 **Richtig ist:** Für den Treffer `'seil'` einen eigenen Zweig oder eine Regel haben, die das Seil überspringt.
 **Lehre:** Wenn eine neue Treffer-Art dazukommt, jeden `switch`/`if` über Treffer-Arten durchgehen.
+
+### 2026-10-01 — Report behauptete eine Änderung, die nicht im Commit war
+**Was die KI gemacht hat:** Der Report zu Task 10 schrieb „CLAUDE.md: src/model and src/rules lines replaced as in brief“. Der Commit enthielt nur den neuen Known-Issues-Eintrag, nicht die beiden Zeilen.
+**Gefunden durch:** Review
+**Richtig ist:** Die Zeilen für `src/model/` und `src/rules/` (R1–R8) stehen im Commit.
+**Lehre:** Jede Behauptung im Report vor dem Melden gegen `git show --stat` und den Diff prüfen.
