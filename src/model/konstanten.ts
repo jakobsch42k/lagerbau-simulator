@@ -5,3 +5,4 @@ export const STANDARD_DURCHMESSER = 0.08;
 export const FUSS_TOLERANZ = 0.05; // Stangenende bis zu dieser Höhe gilt als Fuß am Boden
 export const BUND_TOLERANZ = 0.05; // Achsabstand, ab dem zwei Stangen als gebunden gelten
 export const BUND_CLUSTER_RADIUS = 0.15; // Kontakte näher als das bilden einen Bund
+export const MIN_SEILLAENGE = 0.3; // kürzere Seile ergeben keinen Sinn, wie bei Stangen
