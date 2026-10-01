@@ -88,7 +88,7 @@ TDD. Abdeckung von `model/` + `rules/` ≥ 80 %. Die erwarteten Hinweise ergeben
 
 **Tests:**
 - Unit (TDD): Link-Basis. `file:` → Pages-URL; `http(s)` → aktuelle Adresse.
-- E2E `e2e/desktop.spec.ts` (Playwright `_electron`) gegen das **gebaute Programm** `release/win-unpacked/Lagerbau-Simulator.exe`:
+- E2E `e2e-desktop/desktop.spec.ts` (Playwright `_electron`, eigene Config `playwright.desktop.config.ts`) gegen das **gebaute Programm** `release/win-unpacked/Lagerbau-Simulator.exe`:
   - Fenstertitel stimmt, Fußzeile ist sichtbar, Editor-Modus ist aktiv.
   - „Beispiel laden“ zeigt „Keine Hinweise.“ und die Stangenliste.
   - „Link teilen“ legt `https://jakobsch42k.github.io/lagerbau-simulator/#b=…` in die Zwischenablage.
