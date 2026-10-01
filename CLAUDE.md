@@ -42,3 +42,8 @@ TypeScript + Vite + three.js, Vitest (+ happy-dom für DOM-Tests), Playwright (B
 **What failed:** `npm run dist` brach ab mit `"directories" in the root is deprecated, please specify in the "build"`.
 **Why:** `package.json` enthielt das npm-Metadatenfeld `"directories": {"doc": "docs"}`; electron-builder liest `directories` im Root als eigene (veraltete) Konfiguration.
 **Fix / avoid:** Das Feld aus `package.json` entfernt. Ausgabe-/Ressourcenordner stehen in `electron-builder.yml`.
+
+### Desktop-E2E „Link kopieren“ rot, obwohl der Code stimmt
+**What failed:** `npm run e2e:desktop` zeigte 4 passed, 1 failed bei „Link kopieren legt einen Link auf die Web-Version in die Zwischenablage“; die Ursache wurde zuerst im v2-Datenformat vermutet.
+**Why:** Die Windows-Zwischenablage war in der Sitzung nicht nutzbar (auch PowerShell `Set-Clipboard` schlug fehl); `clipboard.readText()` lieferte keinen Link.
+**Fix / avoid:** Vor einem Codefix mit `Set-Clipboard` prüfen, ob die Zwischenablage überhaupt geht. Test und App-Code nicht ändern.

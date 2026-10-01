@@ -55,3 +55,39 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Review (der Implementer nannte es selbst als Bedenken, der Re-Review bestätigte es).
 **Richtig ist:** Bei einer abgelehnten Änderung setzt das Panel das Feld auf den Modellwert zurück (Task 1, desktop-Plan).
 **Lehre:** Wenn ein Fix eine Neuaufbau- oder Cache-Bedingung ändert, alle Wege durchspielen, die bisher nebenbei vom Neuaufbau profitiert haben.
+
+### 2026-10-01 — Implementer-Reports übertreiben Zahlen
+**Was die KI gemacht hat:** In 4 von 9 Tasks stimmten die Zahlen im Report nicht. Task 2: „18 neue Tests“, der Diff hat 10. Task 4: „4 neue Fehlerfälle“, der Diff hat 3 neue und 1 geänderten. Task 6: „16 Unit-Tests“, der Diff hat 12 (+4 Integrationstests), geänderte Dateien standen als „erstellt“ im Report. Task 7: „100 % Abdeckung“, echt 99,82 % Statements und 97,22 % Branches; ein `git mv` wurde behauptet, der Diff zeigt Löschen + Neu.
+**Gefunden durch:** Review
+**Richtig ist:** Zahlen aus der Testausgabe abzählen, nicht schätzen.
+**Lehre:** Der Reviewer prüft Report-Zahlen gegen den Diff. Der Dispatch verlangt „count from the output, do not estimate“ (half ab Task 8).
+
+### 2026-10-01 — Falsche Ursache geraten statt geprüft
+**Was die KI gemacht hat:** Der Implementer von Task 9 meldete den roten Desktop-E2E-Test „Link kopieren“ und vermutete als Ursache das v2-Datenformat aus Task 4.
+**Gefunden durch:** Controller-Diagnose
+**Richtig ist:** Die Windows-Zwischenablage war in der Sitzung nicht nutzbar (auch PowerShell `Set-Clipboard` scheiterte); der Code war in Ordnung.
+**Lehre:** Eine Vermutung als Vermutung kennzeichnen und mit einem Minimal-Experiment prüfen, bevor man einen Commit beschuldigt.
+
+### 2026-10-01 — Parallele Implementer auf demselben Branch geplant
+**Was die KI gemacht hat:** Der Controller wollte zwei Implementer parallel starten (Task 1 + Task 2) und nahm es vor dem Start selbst zurück: Das Vorgehen verbietet es wegen gemeinsamem Branch, Index und Testläufen.
+**Gefunden durch:** eigene Regelprüfung des Controllers
+**Richtig ist:** Parallel laufen nur Implementer + Reviewer auf getrennten Dateien.
+**Lehre:** Vor dem Start einer Parallelisierung die Regeln des Vorgehens gegen den Plan halten.
+
+### 2026-10-01 — Uneinheitliche Suche in der Verankerung
+**Was die KI gemacht hat:** In Task 3 nimmt die Suche beim Baum den ersten Treffer innerhalb der Toleranz, bei Stangen den nächsten.
+**Gefunden durch:** Review (Minor, noch offen)
+**Richtig ist:** Gleiche Frage, gleiche Antwort: bei beiden den nächsten Treffer nehmen.
+**Lehre:** Gleiche Fragen („welches Objekt ist gemeint?“) im ganzen Code gleich beantworten.
+
+### 2026-10-01 — Baumkrone nicht anklickbar
+**Was die KI gemacht hat:** In Task 9 trägt nur der Stamm `userData.baumId`; ein Klick auf die Krone geht zum Boden durch.
+**Gefunden durch:** Review (Minor, noch offen)
+**Richtig ist:** Auch die Krone soll den Baum auswählen.
+**Lehre:** Bei jedem sichtbaren Teil eines Objekts fragen, ob er auch Klickziel sein soll.
+
+### 2026-10-01 — Seil-Treffer beim Einrasten nicht behandelt
+**Was die KI gemacht hat:** In Task 8/9 kann der unsichtbare Greifmantel eines Seils den Raycast vor einer Stange gewinnen. `SnapService` hat keinen Zweig für `'seil'` und fällt auf „Boden“ zurück. Ein neues Seilende neben einem alten könnte so am Boden statt an der Stange landen.
+**Gefunden durch:** Review (Minor, noch offen; Jakob prüft beim Durchklicken)
+**Richtig ist:** Für den Treffer `'seil'` einen eigenen Zweig oder eine Regel haben, die das Seil überspringt.
+**Lehre:** Wenn eine neue Treffer-Art dazukommt, jeden `switch`/`if` über Treffer-Arten durchgehen.
