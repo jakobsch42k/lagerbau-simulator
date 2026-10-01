@@ -9,6 +9,9 @@ interface Feld<P> {
   readonly faktor: number; // Anzeige = Modellwert × faktor (Ø in cm, Rest in m)
 }
 
+/** Anzeige-Text eines Modellwerts: auf drei Nachkommastellen gerundet, in Anzeige-Einheit. */
+const anzeige = (wert: number, faktor: number): string => String(Math.round(wert * faktor * 1000) / 1000);
+
 /** Formular für die ausgewählte Baugruppe oder freie Stange. Ungültige Werte meldet der Editor. */
 export class ParameterPanel {
   private readonly neuaufbau = new Neuaufbau();
@@ -66,7 +69,7 @@ export class ParameterPanel {
     titel: string,
     felder: readonly Feld<P>[],
     werte: P,
-    uebernehme: (neu: P) => void,
+    uebernehme: (neu: P) => boolean,
     info: string,
   ): void {
     const kopf = document.createElement('h2');
@@ -78,8 +81,12 @@ export class ParameterPanel {
       const input = document.createElement('input');
       input.type = 'number';
       input.step = feld.faktor === 1 ? '0.05' : '1';
-      input.value = String(Math.round((werte[feld.schluessel] as number) * feld.faktor * 1000) / 1000);
-      input.addEventListener('change', () => uebernehme({ ...werte, [feld.schluessel]: Number(input.value) / feld.faktor }));
+      input.value = anzeige(werte[feld.schluessel] as number, feld.faktor);
+      input.addEventListener('change', () => {
+        const uebernommen = uebernehme({ ...werte, [feld.schluessel]: Number(input.value) / feld.faktor });
+        // Abgelehnt: Das Modell ist unverändert, also baut das Panel nicht neu auf. Das Feld zeigt sonst einen Wert, den es nicht gibt.
+        if (!uebernommen) input.value = anzeige(werte[feld.schluessel] as number, feld.faktor);
+      });
       label.append(input);
       return label;
     });
