@@ -14,7 +14,8 @@ export class Stange {
     readonly rolle: StangenRolle = 'frei',
     readonly gruppeId: string | null = null,
   ) {
-    if (start.distanceTo(ende) < MIN_STANGENLAENGE) {
+    const abstand = start.distanceTo(ende);
+    if (!Number.isFinite(abstand) || !(abstand >= MIN_STANGENLAENGE)) {
       throw new RangeError(`Eine Stange muss mindestens ${MIN_STANGENLAENGE} m lang sein`);
     }
     if (!(durchmesser > 0)) throw new RangeError('Durchmesser muss größer als 0 sein');
@@ -29,7 +30,8 @@ export class Stange {
     ueberstandStart = STANGEN_UEBERSTAND,
     ueberstandEnde = STANGEN_UEBERSTAND,
   ): Stange {
-    if (a.distanceTo(b) < MIN_STANGENLAENGE) {
+    const abstand = a.distanceTo(b);
+    if (!Number.isFinite(abstand) || !(abstand >= MIN_STANGENLAENGE)) {
       throw new RangeError(`Die Punkte liegen näher als ${MIN_STANGENLAENGE} m beieinander`);
     }
     const r = b.sub(a).normalize();

@@ -25,6 +25,14 @@ describe('Stange', () => {
     expect(() => new Stange('n', Vec3.NULL, new Vec3(0, 1, 0), Number.NaN)).toThrow(RangeError);
   });
 
+  it.each([
+    ['NaN', Number.NaN],
+    ['Infinity', Number.POSITIVE_INFINITY],
+  ])('lehnt nicht endliche Endpunkt-Koordinaten ab: %s', (_name, wert) => {
+    expect(() => new Stange('n', Vec3.NULL, new Vec3(wert, 1, 0), 0.08)).toThrow(RangeError);
+    expect(() => new Stange('n', new Vec3(0, wert, 0), new Vec3(0, 1, 0), 0.08)).toThrow(RangeError);
+  });
+
   it('baut eine Stange zwischen zwei Punkten mit Überstand an beiden Enden', () => {
     const z = Stange.zwischen('z', new Vec3(0, 1, 0), new Vec3(2, 1, 0), 0.08);
     expect(z.start.equals(new Vec3(-0.2, 1, 0))).toBe(true);

@@ -101,3 +101,24 @@ describe('ABock', () => {
     expect(a.drehung).toBeCloseTo(Math.PI / 2);
   });
 });
+
+describe('nicht endliche Eingaben', () => {
+  it.each([
+    ['Infinity', Number.POSITIVE_INFINITY],
+    ['NaN', Number.NaN],
+  ])('lehnt %s als Längenparameter ab', (_name, wert) => {
+    expect(() => new Dreibein('d', Vec3.NULL, 0, { ...STANDARD_DREIBEIN, fusskreisradius: wert })).toThrow(RangeError);
+    expect(() => new Dreibein('d', Vec3.NULL, 0, { ...STANDARD_DREIBEIN, stangenlaenge: wert })).toThrow(RangeError);
+    expect(() => new ABock('a', Vec3.NULL, 0, { ...STANDARD_ABOCK, fussabstand: wert })).toThrow(RangeError);
+  });
+
+  it('lehnt eine nicht endliche Drehung ab', () => {
+    expect(() => new Dreibein('d', Vec3.NULL, Number.NaN, STANDARD_DREIBEIN)).toThrow(RangeError);
+    expect(() => new ABock('a', Vec3.NULL, Number.POSITIVE_INFINITY, STANDARD_ABOCK)).toThrow(RangeError);
+  });
+
+  it('lehnt eine Stangenlänge ab, bei der die Höhe überläuft', () => {
+    expect(() => new Dreibein('d', Vec3.NULL, 0, { ...STANDARD_DREIBEIN, stangenlaenge: 1e200 })).toThrow(RangeError);
+    expect(() => new ABock('a', Vec3.NULL, 0, { ...STANDARD_ABOCK, stangenlaenge: 1e200 })).toThrow(RangeError);
+  });
+});

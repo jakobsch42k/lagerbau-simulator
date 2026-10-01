@@ -11,10 +11,12 @@ export abstract class Baugruppe {
     readonly id: string,
     readonly position: Vec3,
     readonly drehung: number,
-  ) {}
+  ) {
+    if (!Number.isFinite(drehung)) throw new RangeError('Drehung muss eine endliche Zahl sein');
+  }
 
   protected static pruefePositiv(wert: number, name: string): void {
-    if (!(wert > 0)) throw new RangeError(`${name} muss größer als 0 sein`);
+    if (!(Number.isFinite(wert) && wert > 0)) throw new RangeError(`${name} muss größer als 0 sein`);
   }
 
   abstract stangen(): readonly Stange[];

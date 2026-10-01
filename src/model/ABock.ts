@@ -21,6 +21,7 @@ export class ABock extends Baugruppe {
     if (params.fussabstand / 2 >= this.nutzlaenge()) {
       throw new RangeError('Fußabstand ist zu groß für diese Stangenlänge');
     }
+    if (!Number.isFinite(this.hoehe())) throw new RangeError('Die Maße sind zu groß');
     if (params.riegelhoehe >= this.hoehe()) throw new RangeError('Der Riegel muss unter der Spitze liegen');
   }
 

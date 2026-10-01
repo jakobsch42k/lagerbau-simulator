@@ -20,6 +20,7 @@ export class Dreibein extends Baugruppe {
     if (params.fusskreisradius >= this.nutzlaenge()) {
       throw new RangeError('Fußkreisradius muss kleiner als Stangenlänge minus Überstand sein');
     }
+    if (!Number.isFinite(this.hoehe())) throw new RangeError('Die Maße sind zu groß');
   }
 
   private nutzlaenge(): number {
