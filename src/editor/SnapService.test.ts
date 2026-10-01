@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Bauwerk } from '../model/Bauwerk';
 import { Dreibein } from '../model/Dreibein';
-import { STANDARD_DREIBEIN } from '../model/params';
+import { Baum } from '../model/Baum';
+import { STANDARD_BAUM, STANDARD_DREIBEIN } from '../model/params';
 import { Vec3 } from '../model/Vec3';
 import { SnapService } from './SnapService';
 
@@ -40,5 +41,24 @@ describe('SnapService', () => {
     const p = snap.snap({ art: 'stange', punkt: new Vec3(5.04, 1, 5), stangeId: 'weg' }, bauwerk);
     expect(p.art).toBe('boden');
     expect(p.punkt.equals(new Vec3(5, 0, 5), 1e-9)).toBe(true);
+  });
+
+  it('rastet am Baumstamm genau am getroffenen Punkt ein', () => {
+    const mitBaum = bauwerk.mitBaum(new Baum('b', new Vec3(5, 0, 0), STANDARD_BAUM));
+    const p = snap.snap({ art: 'baum', punkt: new Vec3(4.85, 1.7, 0), baumId: 'b' }, mitBaum);
+    expect(p.art).toBe('baum');
+    expect(p.punkt.equals(new Vec3(4.85, 1.7, 0), 1e-9)).toBe(true);
+  });
+
+  it('nimmt bei einem unbekannten Baum den Boden darunter', () => {
+    const p = snap.snap({ art: 'baum', punkt: new Vec3(4.87, 1.7, 0), baumId: 'weg' }, bauwerk);
+    expect(p.art).toBe('boden');
+    expect(p.punkt.equals(new Vec3(4.9, 0, 0), 1e-9)).toBe(true);
+  });
+
+  it('nimmt bei einem Seiltreffer fern von Einrastpunkten den Boden darunter', () => {
+    const p = snap.snap({ art: 'seil', punkt: new Vec3(3, 1, 3), seilId: 's' }, bauwerk);
+    expect(p.art).toBe('boden');
+    expect(p.punkt.equals(new Vec3(3, 0, 3), 1e-9)).toBe(true);
   });
 });

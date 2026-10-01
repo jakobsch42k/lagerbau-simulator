@@ -4,9 +4,11 @@ import { BODEN_RASTER, SNAP_RADIUS } from './konstanten';
 
 export type Treffer =
   | { readonly art: 'boden'; readonly punkt: Vec3 }
-  | { readonly art: 'stange'; readonly punkt: Vec3; readonly stangeId: string };
+  | { readonly art: 'stange'; readonly punkt: Vec3; readonly stangeId: string }
+  | { readonly art: 'baum'; readonly punkt: Vec3; readonly baumId: string }
+  | { readonly art: 'seil'; readonly punkt: Vec3; readonly seilId: string };
 
-export type SnapArt = 'spitze' | 'bund' | 'ende' | 'stange' | 'boden';
+export type SnapArt = 'spitze' | 'bund' | 'ende' | 'stange' | 'baum' | 'boden';
 
 export interface SnapPunkt {
   readonly punkt: Vec3;
@@ -27,6 +29,8 @@ export class SnapService {
       const stange = bauwerk.stange(treffer.stangeId);
       if (stange) return { punkt: stange.naechsterPunkt(treffer.punkt), art: 'stange' };
     }
+    // Am Stamm zählt der getroffene Oberflächenpunkt; die Verankerung erkennt ihn als „Baum“.
+    if (treffer.art === 'baum' && bauwerk.baum(treffer.baumId)) return { punkt: treffer.punkt, art: 'baum' };
     return { punkt: this.aufRaster(treffer.punkt), art: 'boden' };
   }
 
