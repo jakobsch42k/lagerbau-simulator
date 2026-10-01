@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { kochstelle } from '../beispiele/kochstelle';
-import { BauwerkSerializer } from './BauwerkSerializer';
 import LZString from 'lz-string';
+import { describe, expect, it, vi } from 'vitest';
+import { kochstelle } from '../beispiele/kochstelle';
+import { Bauwerk } from '../model/Bauwerk';
+import { BauwerkSerializer } from './BauwerkSerializer';
 import { MAX_HASH_ZEICHEN, MAX_JSON_ZEICHEN, MAX_TEILE, pruefeDateigroesse } from './grenzen';
 import { UrlCodec } from './UrlCodec';
 
@@ -61,9 +62,19 @@ describe('Größengrenzen', () => {
   const stangen = (n: number) =>
     Array.from({ length: n }, (_, i) => ({ id: `s${i}`, start: [i, 0, 0], ende: [i, 2, 0], durchmesser: 0.08 }));
 
-  it('lehnt einen zu langen Hash als beschädigten Link ab', () => {
-    const hash = UrlCodec.PRAEFIX + 'a'.repeat(MAX_HASH_ZEICHEN);
-    expect(() => codec.ausHash(hash)).toThrow('Link ist beschädigt');
+  it('lehnt einen zu langen Hash ab, ohne ihn zu entpacken', () => {
+    const c = new UrlCodec();
+    // Gemockt: Ohne Grenze würde sonst wirklich entpackt, und lz-string kann Müll auf ein Vielfaches aufblähen.
+    const entpacke = vi.spyOn(c, 'dekodiere').mockReturnValue(Bauwerk.leer());
+    expect(() => c.ausHash(UrlCodec.PRAEFIX + 'A'.repeat(MAX_HASH_ZEICHEN))).toThrow('Link ist beschädigt');
+    expect(entpacke).not.toHaveBeenCalled();
+  });
+
+  it('entpackt einen Hash, der genau an der Grenze liegt', () => {
+    const c = new UrlCodec();
+    const entpacke = vi.spyOn(c, 'dekodiere').mockReturnValue(Bauwerk.leer());
+    c.ausHash(UrlCodec.PRAEFIX + 'A'.repeat(MAX_HASH_ZEICHEN - UrlCodec.PRAEFIX.length));
+    expect(entpacke).toHaveBeenCalledOnce();
   });
 
   it('lehnt zu große entpackte Daten als beschädigten Link ab', () => {
