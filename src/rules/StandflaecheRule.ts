@@ -24,7 +24,13 @@ export class StandflaecheRule implements Rule {
     if (fuesse.length === 0) return false;
     const hoehe = this.hoehe(a, ids);
     if (hoehe < this.minHoehe) return false;
-    const breite = minimaleBreite(fuesse.map((f) => [f.position.x, f.position.z] as const));
+    // Spec v2a, D3: Heringe der Seile, die an diesem Bau hängen, gehören zur Standfläche.
+    const heringe = a
+      .seileAn(new Set(ids))
+      .filter((x) => x.anderes.art === 'hering')
+      .map((x) => x.anderesEnde);
+    const punkte = [...fuesse.map((f) => f.position), ...heringe];
+    const breite = minimaleBreite(punkte.map((p) => [p.x, p.z] as const));
     return hoehe > this.maxVerhaeltnis * breite;
   }
 

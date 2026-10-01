@@ -1,4 +1,5 @@
 import { ABock } from '../model/ABock';
+import { BUND_TOLERANZ } from '../model/konstanten';
 import type { Analyse } from './Analyse';
 import { R1_MIN_WINKEL_ZUR_EBENE_GRAD } from './constants';
 import { type Hinweis, hinweis, type Rule } from './Rule';
@@ -15,7 +16,7 @@ export class ABockQuerRule implements Rule {
   pruefe(a: Analyse): Hinweis[] {
     return a.bauwerk.gruppen
       .filter((g): g is ABock => g instanceof ABock)
-      .filter((abock) => !this.istQuerGehalten(abock, a))
+      .filter((abock) => !this.istQuerGehalten(abock, a) && !this.istBeidseitigAbgespannt(abock, a))
       .map((abock) => hinweis(this.name, 'A-Bock kann seitlich umkippen, er braucht eine Querverbindung.', [abock.id]));
   }
 
@@ -26,5 +27,18 @@ export class ABockQuerRule implements Rule {
       .filter((b) => b.stangenIds.some((id) => eigene.has(id)))
       .flatMap((b) => b.stangenIds.filter((id) => !eigene.has(id)))
       .some((id) => Math.abs(a.stange(id).richtung.dot(normale)) >= this.minSinus);
+  }
+
+  /** Spec v2a, D3: je mindestens ein verankertes Seil auf beiden Seiten der A-Ebene. Enden in der Ebene zählen nicht. */
+  private istBeidseitigAbgespannt(abock: ABock, a: Analyse): boolean {
+    const eigene = new Set(abock.stangen().map((s) => s.id));
+    const normale = abock.ebenenNormale();
+    const seiten = a
+      .seileAn(eigene)
+      .filter((x) => x.anderes.art !== 'frei')
+      .map((x) => x.anderesEnde.sub(abock.position).dot(normale))
+      .filter((abstand) => Math.abs(abstand) >= BUND_TOLERANZ)
+      .map((abstand) => Math.sign(abstand));
+    return seiten.includes(1) && seiten.includes(-1);
   }
 }

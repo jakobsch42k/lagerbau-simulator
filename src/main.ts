@@ -5,14 +5,16 @@ import { KLICK_TOLERANZ_PX } from './editor/konstanten';
 import { Szene } from './editor/Szene';
 import type { WerkzeugName } from './editor/Werkzeuge';
 import { Bauwerk } from './model/Bauwerk';
-import { Stangenliste } from './model/Stangenliste';
+import { Materialliste } from './model/Materialliste';
 import type { Hinweis } from './rules/Rule';
 import { RuleEngine } from './rules/RuleEngine';
+import { SEIL_ZUGABE_PRO_ENDE } from './rules/constants';
 import { standardRegeln } from './rules/standardRegeln';
+import { LinkBasis } from './share/LinkBasis';
 import { AnsichtsModus } from './ui/AnsichtsModus';
 import { HinweisPanel } from './ui/HinweisPanel';
 import { ParameterPanel } from './ui/ParameterPanel';
-import { StangenlistePanel } from './ui/StangenlistePanel';
+import { MateriallistePanel } from './ui/MateriallistePanel';
 import { Teilen } from './ui/Teilen';
 
 const MELDUNG_DAUER_MS = 4000;
@@ -30,15 +32,15 @@ const teilen = new Teilen();
 const regeln = new RuleEngine(standardRegeln());
 const parameter = new ParameterPanel(element('#parameter'), editor);
 const hinweisPanel = new HinweisPanel(element('#hinweise'), (h) => editor.markiere(h.betroffeneTeile));
-const stangenlistePanel = new StangenlistePanel(element('#stangenliste'));
+const materialPanel = new MateriallistePanel(element('#stangenliste'), element('#platzbedarf'));
 const meldung = element<HTMLParagraphElement>('#meldung');
 const werkzeugKnoepfe = [...document.querySelectorAll<HTMLButtonElement>('[data-werkzeug]')];
 
 // Regeln nur neu prüfen, wenn sich das Bauwerk wirklich geändert hat (nicht bei Auswahl oder Meldung).
-let geprueft: { bauwerk: Bauwerk; hinweise: readonly Hinweis[]; liste: Stangenliste } | null = null;
-function pruefung(bauwerk: Bauwerk): { hinweise: readonly Hinweis[]; liste: Stangenliste } {
+let geprueft: { bauwerk: Bauwerk; hinweise: readonly Hinweis[]; liste: Materialliste } | null = null;
+function pruefung(bauwerk: Bauwerk): { hinweise: readonly Hinweis[]; liste: Materialliste } {
   if (geprueft?.bauwerk !== bauwerk) {
-    geprueft = { bauwerk, hinweise: regeln.pruefe(bauwerk), liste: Stangenliste.aus(bauwerk) };
+    geprueft = { bauwerk, hinweise: regeln.pruefe(bauwerk), liste: Materialliste.aus(bauwerk, SEIL_ZUGABE_PRO_ENDE) };
   }
   return geprueft;
 }
@@ -61,7 +63,7 @@ szene.leinwand.addEventListener('pointerdown', (e) => {
 });
 szene.leinwand.addEventListener('pointerup', (e) => {
   if (druck && Math.hypot(e.clientX - druck.x, e.clientY - druck.y) < KLICK_TOLERANZ_PX) {
-    const treffer = szene.treffer(e);
+    const treffer = szene.treffer(e, editor.trifftSeile);
     if (treffer) editor.klick(treffer);
   }
   druck = null;
@@ -83,7 +85,7 @@ element('#btn-teilen').addEventListener('click', async () => {
     await teilen.kopiereLink(bauwerk);
     editor.zeigeMeldung('Link kopiert.');
   } catch {
-    editor.zeigeMeldung('Kopieren nicht möglich. Der Link steht in der Adresszeile.');
+    editor.zeigeMeldung(LinkBasis.kopierFehlerText(location));
   }
 });
 element<HTMLInputElement>('#inp-laden').addEventListener('change', async (e) => {
@@ -111,11 +113,12 @@ editor.abonniere((z) => {
   szene.zeige(z.bauwerk, markiert, z.stangenStart);
   parameter.zeige(z);
   hinweisPanel.zeige(hinweise);
-  stangenlistePanel.zeige(liste);
+  materialPanel.zeige(liste);
   for (const knopf of werkzeugKnoepfe) knopf.setAttribute('aria-pressed', String(knopf.dataset.werkzeug === z.werkzeug));
   element<HTMLButtonElement>('#btn-rueck').disabled = !z.kannRueckgaengig;
   element<HTMLButtonElement>('#btn-wieder').disabled = !z.kannWiederholen;
-  meldung.textContent = z.meldung ?? (z.stangenStart ? 'Stange: zweiten Punkt anklicken (Esc bricht ab)' : '');
+  const teil = z.werkzeug === 'seil' ? 'Seil' : 'Stange';
+  meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : '');
   if (z.meldung) {
     clearTimeout(meldungsTimer);
     meldungsTimer = window.setTimeout(() => editor.zeigeMeldung(null), MELDUNG_DAUER_MS);

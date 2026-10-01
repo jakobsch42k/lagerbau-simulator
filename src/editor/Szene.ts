@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import type { Baum } from '../model/Baum';
 import type { Bauwerk } from '../model/Bauwerk';
-import type { Bund } from '../model/Bund';
+import { Platzbedarf } from '../model/Platzbedarf';
+import type { Seil } from '../model/Seil';
 import type { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
 import type { Treffer } from './SnapService';
@@ -10,7 +12,14 @@ const HOLZ = new THREE.MeshLambertMaterial({ color: 0x8b5a2b });
 const MARKIERT = new THREE.MeshLambertMaterial({ color: 0xd9480f });
 const SEIL = new THREE.MeshLambertMaterial({ color: 0xe8d9a0 });
 const START = new THREE.MeshLambertMaterial({ color: 0x2f6f3e });
+const STAMM = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
+const KRONE = new THREE.MeshLambertMaterial({ color: 0x3f7d3a });
+const HERING = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+const UNSICHTBAR = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+const PLATZ = new THREE.LineDashedMaterial({ color: 0x1d2733, dashSize: 0.2, gapSize: 0.1 });
 const Y_ACHSE = new THREE.Vector3(0, 1, 0);
+const SEIL_RADIUS = 0.005; // Ø 1 cm, nur optisch
+const SEIL_GREIFRADIUS = 0.05; // unsichtbarer Mantel, damit man ein dünnes Seil anklicken kann
 
 /** three.js-Darstellung. Kennt das Modell nur lesend und liefert Klick-Treffer zurück. */
 export class Szene {
@@ -54,34 +63,85 @@ export class Szene {
       this.bau.add(this.stangenMesh(s, istMarkiert));
     }
     for (const b of bauwerk.buende()) this.bau.add(this.kugel(b.position, 0.07, SEIL));
+    for (const s of bauwerk.seile) this.bau.add(...this.seilMeshes(s, markiert.has(s.id)));
+    for (const h of bauwerk.heringe()) this.bau.add(this.heringMesh(h.position));
+    for (const b of bauwerk.baeume) this.bau.add(...this.baumMeshes(b, markiert.has(b.id)));
+    const platz = Platzbedarf.aus(bauwerk);
+    if (platz) this.bau.add(this.platzRahmen(platz));
     if (stangenStart) this.bau.add(this.kugel(stangenStart, 0.1, START));
   }
 
-  treffer(e: PointerEvent): Treffer | null {
+  treffer(e: PointerEvent, seileFangen: boolean): Treffer | null {
     const rect = this.leinwand.getBoundingClientRect();
     const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
     this.raycaster.setFromCamera(ndc, this.kamera);
-    const stangen = this.bau.children.filter((k) => typeof k.userData.stangeId === 'string');
-    const aufStange = this.raycaster.intersectObjects(stangen, false)[0];
-    if (aufStange) {
-      const p = aufStange.point;
-      return { art: 'stange', punkt: new Vec3(p.x, p.y, p.z), stangeId: aufStange.object.userData.stangeId as string };
+    const schluessel = seileFangen ? ['stangeId', 'baumId', 'seilId'] : ['stangeId', 'baumId'];
+    const ziele = this.bau.children.filter((k) => schluessel.some((name) => typeof k.userData[name] === 'string'));
+    const getroffen = this.raycaster.intersectObjects(ziele, false)[0];
+    if (getroffen) {
+      const punkt = new Vec3(getroffen.point.x, getroffen.point.y, getroffen.point.z);
+      const daten = getroffen.object.userData;
+      if (typeof daten.stangeId === 'string') return { art: 'stange', punkt, stangeId: daten.stangeId };
+      if (typeof daten.baumId === 'string') return { art: 'baum', punkt, baumId: daten.baumId };
+      return { art: 'seil', punkt, seilId: daten.seilId as string };
     }
     const aufBoden = this.raycaster.intersectObject(this.boden, false)[0];
     return aufBoden ? { art: 'boden', punkt: new Vec3(aufBoden.point.x, 0, aufBoden.point.z) } : null;
   }
 
-  private stangenMesh(s: Stange, markiert: boolean): THREE.Mesh {
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(s.durchmesser / 2, s.durchmesser / 2, s.laenge, 12), markiert ? MARKIERT : HOLZ);
-    const mitte = s.start.add(s.ende).scale(0.5);
-    const r = s.richtung;
+  private zylinder(von: Vec3, bis: Vec3, radius: number, material: THREE.Material): THREE.Mesh {
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, von.distanceTo(bis), 12), material);
+    const mitte = von.add(bis).scale(0.5);
+    const r = bis.sub(von).normalize();
     mesh.position.set(mitte.x, mitte.y, mitte.z);
     mesh.quaternion.setFromUnitVectors(Y_ACHSE, new THREE.Vector3(r.x, r.y, r.z));
+    return mesh;
+  }
+
+  private stangenMesh(s: Stange, markiert: boolean): THREE.Mesh {
+    const mesh = this.zylinder(s.start, s.ende, s.durchmesser / 2, markiert ? MARKIERT : HOLZ);
     mesh.userData.stangeId = s.id;
     return mesh;
   }
 
-  private kugel(p: Bund['position'], radius: number, material: THREE.Material): THREE.Mesh {
+  private seilMeshes(s: Seil, markiert: boolean): THREE.Mesh[] {
+    const sichtbar = this.zylinder(s.start, s.ende, SEIL_RADIUS, markiert ? MARKIERT : SEIL);
+    const greifbar = this.zylinder(s.start, s.ende, SEIL_GREIFRADIUS, UNSICHTBAR);
+    greifbar.userData.seilId = s.id;
+    return [sichtbar, greifbar];
+  }
+
+  private heringMesh(p: Vec3): THREE.Mesh {
+    const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.15, 8), HERING);
+    mesh.position.set(p.x, 0.075, p.z);
+    mesh.rotation.x = Math.PI; // Spitze nach unten, in den Boden
+    return mesh;
+  }
+
+  private baumMeshes(b: Baum, markiert: boolean): THREE.Mesh[] {
+    const { durchmesser, hoehe } = b.params;
+    const stamm = new THREE.Mesh(new THREE.CylinderGeometry(durchmesser / 2, durchmesser / 2, hoehe, 12), markiert ? MARKIERT : STAMM);
+    stamm.position.set(b.position.x, hoehe / 2, b.position.z);
+    stamm.userData.baumId = b.id;
+    const krone = new THREE.Mesh(new THREE.SphereGeometry(Math.max(1, hoehe * 0.25), 12, 8), KRONE);
+    krone.position.set(b.position.x, hoehe, b.position.z);
+    return [stamm, krone];
+  }
+
+  private platzRahmen(p: Platzbedarf): THREE.LineLoop {
+    const y = 0.01; // knapp über dem Boden, damit die Linie nicht flimmert
+    const geometrie = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(p.minX, y, p.minZ),
+      new THREE.Vector3(p.maxX, y, p.minZ),
+      new THREE.Vector3(p.maxX, y, p.maxZ),
+      new THREE.Vector3(p.minX, y, p.maxZ),
+    ]);
+    const rahmen = new THREE.LineLoop(geometrie, PLATZ);
+    rahmen.computeLineDistances();
+    return rahmen;
+  }
+
+  private kugel(p: Vec3, radius: number, material: THREE.Material): THREE.Mesh {
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 12, 8), material);
     mesh.position.set(p.x, p.y, p.z);
     return mesh;

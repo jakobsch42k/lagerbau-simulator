@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Bauwerk } from '../model/Bauwerk';
 import { Dreibein } from '../model/Dreibein';
-import { STANDARD_DREIBEIN } from '../model/params';
+import { Baum } from '../model/Baum';
+import { STANDARD_BAUM, STANDARD_DREIBEIN } from '../model/params';
+import { Seil } from '../model/Seil';
 import { Vec3 } from '../model/Vec3';
 import { Editor, type EditorZustand } from './Editor';
 import type { Treffer } from './SnapService';
@@ -138,5 +140,70 @@ describe('Editor', () => {
     expect(e.aendereMit((b) => b.ersetzeGruppe(d.mitParams({ ...d.params, stangenlaenge: 3 })))).toBe(true);
     expect(e.aendereMit((b) => b.ersetzeGruppe(d.mitParams({ ...d.params, stangenlaenge: 0.5 })))).toBe(false);
     expect(e.zustand().meldung).toBe('Fußkreisradius muss kleiner als Stangenlänge minus Überstand sein');
+  });
+
+  it('setzt einen Baum per Bodenklick aufs Raster und wählt ihn aus', () => {
+    const e = neuerEditor();
+    e.waehleWerkzeug('baum');
+    e.klick(boden(3.04, 1.02));
+    expect(e.zustand().auswahl).toBe('baum-1');
+    expect(e.bauwerk.baum('baum-1')?.position.equals(new Vec3(3, 0, 1), 1e-9)).toBe(true);
+  });
+
+  it('spannt ein Seil von der Spitze zum Boden; das Bodenende wird ein Hering', () => {
+    const e = neuerEditor(Bauwerk.leer().mitGruppe(dreibein));
+    e.waehleWerkzeug('seil');
+    e.klick({ art: 'stange', punkt: dreibein.spitze(), stangeId: dreibein.stangen()[0]!.id });
+    expect(e.zustand().stangenStart).not.toBeNull();
+    e.klick(boden(3, 0));
+    const seil = e.bauwerk.seil('seil-1');
+    expect(seil?.start.equals(dreibein.spitze(), 1e-9)).toBe(true);
+    expect(seil?.ende.equals(new Vec3(3, 0, 0), 1e-9)).toBe(true);
+    expect(e.bauwerk.heringe()).toHaveLength(1);
+    expect(e.zustand().auswahl).toBe('seil-1');
+  });
+
+  it('ignoriert ein Seil mit zweimal demselben Punkt', () => {
+    const e = neuerEditor();
+    e.waehleWerkzeug('seil');
+    e.klick(boden(1, 1));
+    e.klick(boden(1, 1));
+    expect(e.bauwerk.istLeer).toBe(true);
+  });
+
+  it('bricht ein angefangenes Seil mit Esc oder Werkzeugwechsel ab', () => {
+    const e = neuerEditor();
+    e.waehleWerkzeug('seil');
+    e.klick(boden(1, 1));
+    e.taste('Escape', false);
+    expect(e.zustand().stangenStart).toBeNull();
+    e.klick(boden(1, 1));
+    e.waehleWerkzeug('auswahl');
+    expect(e.zustand().stangenStart).toBeNull();
+    expect(e.bauwerk.istLeer).toBe(true);
+  });
+
+  it('wählt Seile und Bäume per Klick aus und löscht sie', () => {
+    const seil = new Seil('s', new Vec3(0, 2, 0), new Vec3(2, 0, 0));
+    const baum = new Baum('b', new Vec3(5, 0, 0), STANDARD_BAUM);
+    const e = neuerEditor(Bauwerk.leer().mitSeil(seil).mitBaum(baum));
+    e.klick({ art: 'seil', punkt: new Vec3(1, 1, 0), seilId: 's' });
+    expect(e.zustand().auswahl).toBe('s');
+    e.loescheAuswahl();
+    e.klick({ art: 'baum', punkt: new Vec3(4.85, 1, 0), baumId: 'b' });
+    expect(e.zustand().auswahl).toBe('b');
+    e.loescheAuswahl();
+    expect(e.bauwerk.istLeer).toBe(true);
+  });
+
+  it('lässt Seile nur im Auswahl-Werkzeug Klicks fangen', () => {
+    const e = neuerEditor();
+    expect(e.trifftSeile).toBe(true);
+    for (const name of ['dreibein', 'abock', 'stange', 'seil', 'baum'] as const) {
+      e.waehleWerkzeug(name);
+      expect(e.trifftSeile, name).toBe(false);
+    }
+    e.waehleWerkzeug('auswahl');
+    expect(e.trifftSeile).toBe(true);
   });
 });

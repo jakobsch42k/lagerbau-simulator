@@ -1,8 +1,10 @@
 import { ABock } from '../model/ABock';
 import type { Baugruppe } from '../model/Baugruppe';
+import { Baum } from '../model/Baum';
 import { Bauwerk } from '../model/Bauwerk';
 import { Dreibein } from '../model/Dreibein';
 import type { ABockParams, DreibeinParams } from '../model/params';
+import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
 import { MAX_TEILE } from './grenzen';
@@ -20,10 +22,25 @@ export interface StangeJson {
   readonly durchmesser: number;
 }
 
+export interface SeilJson {
+  readonly id: string;
+  readonly start: V3;
+  readonly ende: V3;
+}
+
+export interface BaumJson {
+  readonly id: string;
+  readonly position: V3;
+  readonly durchmesser: number;
+  readonly hoehe: number;
+}
+
 export interface BauwerkJson {
-  readonly version: 1;
+  readonly version: 2;
   readonly gruppen: readonly GruppeJson[];
   readonly stangen: readonly StangeJson[];
+  readonly seile: readonly SeilJson[];
+  readonly baeume: readonly BaumJson[];
 }
 
 type Roh = Record<string, unknown>;
@@ -58,13 +75,20 @@ function vektor(d: unknown, name: string): Vec3 {
 export class BauwerkSerializer {
   zuJson(bauwerk: Bauwerk): BauwerkJson {
     return {
-      version: 1,
+      version: 2,
       gruppen: bauwerk.gruppen.map((g) => this.gruppeZuJson(g)),
       stangen: bauwerk.freieStangen.map((s) => ({
         id: s.id,
         start: s.start.toArray(),
         ende: s.ende.toArray(),
         durchmesser: s.durchmesser,
+      })),
+      seile: bauwerk.seile.map((s) => ({ id: s.id, start: s.start.toArray(), ende: s.ende.toArray() })),
+      baeume: bauwerk.baeume.map((b) => ({
+        id: b.id,
+        position: b.position.toArray(),
+        durchmesser: b.params.durchmesser,
+        hoehe: b.params.hoehe,
       })),
     };
   }
@@ -86,14 +110,19 @@ export class BauwerkSerializer {
 
   private lies(daten: unknown): Bauwerk {
     const o = objekt(daten, 'Bauwerk');
-    if (o.version !== 1) throw new Error('unbekannte Version');
+    if (o.version !== 1 && o.version !== 2) throw new Error('unbekannte Version');
     const rohGruppen = liste(o.gruppen, 'gruppen');
     const rohStangen = liste(o.stangen, 'stangen');
-    if (rohGruppen.length + rohStangen.length > MAX_TEILE) throw new Error(`mehr als ${MAX_TEILE} Teile`);
-    const gruppen = rohGruppen.map((g) => this.liesGruppe(g));
-    const stangen = rohStangen.map((s) => this.liesStange(s));
-    const mitGruppen = gruppen.reduce((b, g) => b.mitGruppe(g), Bauwerk.leer());
-    return stangen.reduce((b, s) => b.mitStange(s), mitGruppen);
+    // Version 1 kannte noch keine Seile und Bäume.
+    const rohSeile = o.version === 2 ? liste(o.seile, 'seile') : [];
+    const rohBaeume = o.version === 2 ? liste(o.baeume, 'baeume') : [];
+    if (rohGruppen.length + rohStangen.length + rohSeile.length + rohBaeume.length > MAX_TEILE) {
+      throw new Error(`mehr als ${MAX_TEILE} Teile`);
+    }
+    const mitGruppen = rohGruppen.map((g) => this.liesGruppe(g)).reduce((b, g) => b.mitGruppe(g), Bauwerk.leer());
+    const mitStangen = rohStangen.map((s) => this.liesStange(s)).reduce((b, s) => b.mitStange(s), mitGruppen);
+    const mitBaeumen = rohBaeume.map((b) => this.liesBaum(b)).reduce((bw, b) => bw.mitBaum(b), mitStangen);
+    return rohSeile.map((s) => this.liesSeil(s)).reduce((b, s) => b.mitSeil(s), mitBaeumen);
   }
 
   private liesGruppe(daten: unknown): Baugruppe {
@@ -123,5 +152,18 @@ export class BauwerkSerializer {
   private liesStange(daten: unknown): Stange {
     const o = objekt(daten, 'Stange');
     return new Stange(text(o.id, 'id'), vektor(o.start, 'start'), vektor(o.ende, 'ende'), zahl(o.durchmesser, 'durchmesser'));
+  }
+
+  private liesSeil(daten: unknown): Seil {
+    const o = objekt(daten, 'Seil');
+    return new Seil(text(o.id, 'id'), vektor(o.start, 'start'), vektor(o.ende, 'ende'));
+  }
+
+  private liesBaum(daten: unknown): Baum {
+    const o = objekt(daten, 'Baum');
+    return new Baum(text(o.id, 'id'), vektor(o.position, 'position'), {
+      durchmesser: zahl(o.durchmesser, 'durchmesser'),
+      hoehe: zahl(o.hoehe, 'hoehe'),
+    });
   }
 }

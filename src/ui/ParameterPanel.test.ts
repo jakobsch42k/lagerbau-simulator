@@ -2,7 +2,12 @@
 import { describe, expect, it } from 'vitest';
 import { kochstelle } from '../beispiele/kochstelle';
 import { Editor } from '../editor/Editor';
+import { Bauwerk } from '../model/Bauwerk';
+import { Baum } from '../model/Baum';
 import { Dreibein } from '../model/Dreibein';
+import { STANDARD_BAUM } from '../model/params';
+import { Seil } from '../model/Seil';
+import { Vec3 } from '../model/Vec3';
 import { ParameterPanel } from './ParameterPanel';
 
 const aufbau = (): { wurzel: HTMLElement; editor: Editor } => {
@@ -27,6 +32,16 @@ const tippe = (input: HTMLInputElement, wert: string): void => {
   input.dispatchEvent(new Event('change'));
 };
 
+const panelMit = (bauwerk: Bauwerk, id: string): { wurzel: HTMLElement; editor: Editor } => {
+  const wurzel = document.createElement('section');
+  const editor = new Editor(bauwerk);
+  const panel = new ParameterPanel(wurzel, editor);
+  editor.abonniere((z) => panel.zeige(z));
+  editor.waehle(id);
+  panel.zeige(editor.zustand());
+  return { wurzel, editor };
+};
+
 describe('ParameterPanel', () => {
   it('setzt ein abgelehntes Feld auf den Modellwert zurück und zeigt die Meldung', () => {
     const { wurzel, editor } = aufbau();
@@ -48,5 +63,24 @@ describe('ParameterPanel', () => {
     const vorher = feld(wurzel, 'Stangenlänge');
     editor.zeigeMeldung('Link kopiert.');
     expect(feld(wurzel, 'Stangenlänge')).toBe(vorher);
+  });
+
+  it('zeigt beim Baum Stammdurchmesser und Höhe und setzt unsinnige Werte zurück', () => {
+    const { wurzel, editor } = panelMit(Bauwerk.leer().mitBaum(new Baum('b', Vec3.NULL, STANDARD_BAUM)), 'b');
+    tippe(feld(wurzel, 'Höhe'), '0');
+    expect(editor.zustand().meldung).toBe('Baumhöhe muss größer als 0 sein');
+    expect(feld(wurzel, 'Höhe').value).toBe('8');
+    tippe(feld(wurzel, 'Höhe'), '');
+    expect(feld(wurzel, 'Höhe').value).toBe('8');
+    tippe(feld(wurzel, 'Höhe'), '12');
+    expect(editor.bauwerk.baum('b')?.params.hoehe).toBe(12);
+    expect(feld(wurzel, 'Stammdurchmesser').value).toBe('30');
+  });
+
+  it('zeigt beim Seil Länge und Winkel ohne Eingabefelder', () => {
+    const { wurzel } = panelMit(Bauwerk.leer().mitSeil(new Seil('s', new Vec3(0, 2, 0), new Vec3(2, 0, 0))), 's');
+    expect(wurzel.querySelectorAll('input')).toHaveLength(0);
+    expect(wurzel.textContent).toContain('Länge 2.83 m · Winkel zum Boden 45°');
+    expect(wurzel.textContent).toContain('Löschen');
   });
 });

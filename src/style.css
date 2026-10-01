@@ -36,6 +36,8 @@ label.feld input { display: block; width: 100%; }
 #hinweise li.warnung { border-left-color: var(--warn); }
 #stangenliste { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 #stangenliste th, #stangenliste td { padding: 2px 4px; text-align: right; border-bottom: 1px solid var(--rand); }
+#platzbedarf { margin: 6px 0 0; font-size: 0.9rem; }
+#platzbedarf:empty { display: none; }
 #meldung { position: fixed; left: 50%; bottom: 48px; transform: translateX(-50%); margin: 0; padding: 6px 12px; background: var(--text); color: #fff; border-radius: 4px; }
 #meldung:empty { display: none; }
 body.ansicht { grid-template-columns: 1fr 280px; grid-template-areas: 'kopf kopf' 'ansicht rechts' 'fuss fuss'; }
