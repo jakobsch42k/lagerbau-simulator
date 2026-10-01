@@ -1,5 +1,6 @@
 import type { Bauwerk } from '../model/Bauwerk';
 import { BauwerkSerializer } from '../share/BauwerkSerializer';
+import { pruefeDateigroesse } from '../share/grenzen';
 import { UrlCodec } from '../share/UrlCodec';
 
 /** Link kopieren, als Datei speichern und laden. */
@@ -28,6 +29,7 @@ export class Teilen {
   }
 
   async lade(datei: File): Promise<Bauwerk> {
+    pruefeDateigroesse(datei.size);
     let daten: unknown;
     try {
       daten = JSON.parse(await datei.text());

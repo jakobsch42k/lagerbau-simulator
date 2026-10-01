@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { kochstelle } from '../beispiele/kochstelle';
 import { BauwerkSerializer } from './BauwerkSerializer';
+import LZString from 'lz-string';
+import { MAX_HASH_ZEICHEN, MAX_JSON_ZEICHEN, MAX_TEILE, pruefeDateigroesse } from './grenzen';
 import { UrlCodec } from './UrlCodec';
 
 const serializer = new BauwerkSerializer();
@@ -52,5 +54,37 @@ describe('UrlCodec', () => {
   it('meldet einen beschädigten Link', () => {
     expect(() => codec.ausHash('#b=%%%kaputt')).toThrow(/Link ist beschädigt|Ungültige Bauwerk-Daten/);
     expect(() => codec.dekodiere('')).toThrow('Link ist beschädigt');
+  });
+});
+
+describe('Größengrenzen', () => {
+  const stangen = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ id: `s${i}`, start: [i, 0, 0], ende: [i, 2, 0], durchmesser: 0.08 }));
+
+  it('lehnt einen zu langen Hash als beschädigten Link ab', () => {
+    const hash = UrlCodec.PRAEFIX + 'a'.repeat(MAX_HASH_ZEICHEN);
+    expect(() => codec.ausHash(hash)).toThrow('Link ist beschädigt');
+  });
+
+  it('lehnt zu große entpackte Daten als beschädigten Link ab', () => {
+    const json = JSON.stringify({ version: 1, gruppen: [], stangen: [], fuell: 'x'.repeat(MAX_JSON_ZEICHEN) });
+    const text = LZString.compressToEncodedURIComponent(json);
+    expect(text.length).toBeLessThan(MAX_HASH_ZEICHEN);
+    expect(() => codec.dekodiere(text)).toThrow('Link ist beschädigt');
+  });
+
+  it('nimmt genau MAX_TEILE Teile an und lehnt einen mehr ab', () => {
+    expect(serializer.ausJson({ version: 1, gruppen: [], stangen: stangen(MAX_TEILE) }).freieStangen).toHaveLength(MAX_TEILE);
+    expect(() => serializer.ausJson({ version: 1, gruppen: [], stangen: stangen(MAX_TEILE + 1) })).toThrow(/^Ungültige Bauwerk-Daten: /);
+  });
+
+  it('zählt Gruppen und Stangen zusammen', () => {
+    const gruppe = { id: 'g', typ: 'dreibein', position: [0, 0, 0], drehung: 0, params: { stangenlaenge: 2.4, fusskreisradius: 0.7, durchmesser: 0.08 } };
+    expect(() => serializer.ausJson({ version: 1, gruppen: [gruppe], stangen: stangen(MAX_TEILE) })).toThrow(/^Ungültige Bauwerk-Daten: /);
+  });
+
+  it('lehnt zu große Dateien vor dem Einlesen ab', () => {
+    expect(() => pruefeDateigroesse(MAX_JSON_ZEICHEN)).not.toThrow();
+    expect(() => pruefeDateigroesse(MAX_JSON_ZEICHEN + 1)).toThrow('Die Datei ist kein gültiges JSON');
   });
 });

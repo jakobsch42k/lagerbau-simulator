@@ -5,6 +5,7 @@ import { Dreibein } from '../model/Dreibein';
 import type { ABockParams, DreibeinParams } from '../model/params';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
+import { MAX_TEILE } from './grenzen';
 
 type V3 = readonly [number, number, number];
 
@@ -86,8 +87,11 @@ export class BauwerkSerializer {
   private lies(daten: unknown): Bauwerk {
     const o = objekt(daten, 'Bauwerk');
     if (o.version !== 1) throw new Error('unbekannte Version');
-    const gruppen = liste(o.gruppen, 'gruppen').map((g) => this.liesGruppe(g));
-    const stangen = liste(o.stangen, 'stangen').map((s) => this.liesStange(s));
+    const rohGruppen = liste(o.gruppen, 'gruppen');
+    const rohStangen = liste(o.stangen, 'stangen');
+    if (rohGruppen.length + rohStangen.length > MAX_TEILE) throw new Error(`mehr als ${MAX_TEILE} Teile`);
+    const gruppen = rohGruppen.map((g) => this.liesGruppe(g));
+    const stangen = rohStangen.map((s) => this.liesStange(s));
     const mitGruppen = gruppen.reduce((b, g) => b.mitGruppe(g), Bauwerk.leer());
     return stangen.reduce((b, s) => b.mitStange(s), mitGruppen);
   }

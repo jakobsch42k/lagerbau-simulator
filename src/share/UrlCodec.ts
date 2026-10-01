@@ -1,6 +1,7 @@
 import LZString from 'lz-string';
 import type { Bauwerk } from '../model/Bauwerk';
 import { BauwerkSerializer } from './BauwerkSerializer';
+import { MAX_HASH_ZEICHEN, MAX_JSON_ZEICHEN } from './grenzen';
 
 /** Packt ein Bauwerk komprimiert in den URL-Hash (#b=…) und wieder heraus. */
 export class UrlCodec {
@@ -16,7 +17,7 @@ export class UrlCodec {
     let daten: unknown;
     try {
       const json = LZString.decompressFromEncodedURIComponent(text);
-      if (!json) throw new Error('leer');
+      if (!json || json.length > MAX_JSON_ZEICHEN) throw new Error('leer oder zu groß');
       daten = JSON.parse(json);
     } catch {
       throw new Error('Link ist beschädigt');
@@ -29,6 +30,7 @@ export class UrlCodec {
   }
 
   ausHash(hash: string): Bauwerk | null {
+    if (hash.length > MAX_HASH_ZEICHEN) throw new Error('Link ist beschädigt');
     return hash.startsWith(UrlCodec.PRAEFIX) ? this.dekodiere(hash.slice(UrlCodec.PRAEFIX.length)) : null;
   }
 }
