@@ -2,12 +2,13 @@ import { _electron as electron, expect, test, type ElectronApplication, type Pag
 
 const PAGES = 'https://jakobsch42k.github.io/lagerbau-simulator/';
 const NUR_LOKAL = /^(file|blob|data):/;
+const PROGRAMM = 'release/win-unpacked/Lagerbau-Simulator.exe';
 
 let programm: ElectronApplication;
 let fenster: Page;
 
 test.beforeEach(async () => {
-  programm = await electron.launch({ args: ['.'] });
+  programm = await electron.launch({ executablePath: PROGRAMM });
   fenster = await programm.firstWindow();
   await fenster.waitForLoadState('domcontentloaded');
 });

@@ -2,9 +2,6 @@
   "name": "lagerbau-simulator",
   "version": "1.0.0",
   "description": "3D-Planer für Pfadfinder-Lagerbauten mit Faustregel-Hinweisen",
-  "directories": {
-    "doc": "docs"
-  },
   "scripts": {
     "test": "vitest run --coverage",
     "dev": "vite",
@@ -14,24 +11,25 @@
     "e2e": "playwright test",
     "build:desktop": "tsc --noEmit && vite build --base=./ --outDir dist-desktop",
     "desktop": "npm run build:desktop && electron .",
-    "e2e:desktop": "npm run build:desktop && playwright test -c playwright.desktop.config.ts"
+    "icon": "node scripts/render-icon.mjs",
+    "dist": "npm run build:desktop && electron-builder --win",
+    "e2e:desktop": "npm run dist && playwright test -c playwright.desktop.config.ts"
   },
   "keywords": [],
-  "author": "",
+  "author": "jakobsch42k",
   "license": "MIT",
   "type": "module",
   "main": "desktop/main.mjs",
   "private": true,
-  "dependencies": {
-    "lz-string": "^1.5.0",
-    "three": "^0.186.1"
-  },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/three": "^0.186.0",
     "@vitest/coverage-v8": "^5.0.3",
     "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
     "happy-dom": "^20.14.5",
+    "lz-string": "^1.5.0",
+    "three": "^0.186.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.1",
     "vitest": "^5.0.3"
