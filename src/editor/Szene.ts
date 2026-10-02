@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Baum } from '../model/Baum';
 import type { Bauwerk } from '../model/Bauwerk';
 import { Platzbedarf } from '../model/Platzbedarf';
+import type { Plane } from '../model/Plane';
 import type { Seil } from '../model/Seil';
 import type { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
@@ -18,6 +19,9 @@ const KRONE = new THREE.MeshLambertMaterial({ color: 0x3f7d3a });
 const HERING = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
 const UNSICHTBAR = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
 const PLATZ = new THREE.LineDashedMaterial({ color: 0x1d2733, dashSize: 0.2, gapSize: 0.1 });
+// Beidseitig, damit man die Plane auch von unten sieht; polygonOffset verhindert Flimmern einer Bodenplane auf dem Boden.
+const PLANE = new THREE.MeshLambertMaterial({ color: 0x7d7a4f, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+const PLANE_MARKIERT = new THREE.MeshLambertMaterial({ color: 0xd9480f, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
 const Y_ACHSE = new THREE.Vector3(0, 1, 0);
 const SEIL_RADIUS = 0.005; // Ø 1 cm, nur optisch
 const SEIL_GREIFRADIUS = 0.05; // unsichtbarer Mantel, damit man ein dünnes Seil anklicken kann
@@ -68,6 +72,7 @@ export class Szene {
     for (const s of bauwerk.seile) this.bau.add(...this.seilMeshes(s, markiert.has(s.id)));
     for (const h of bauwerk.heringe()) this.bau.add(this.heringMesh(h.position));
     for (const b of bauwerk.baeume) this.bau.add(...this.baumMeshes(b, markiert.has(b.id)));
+    for (const p of bauwerk.planen) this.bau.add(this.planenMesh(p, markiert.has(p.id)));
     const platz = Platzbedarf.aus(bauwerk);
     if (platz) this.bau.add(this.platzRahmen(platz));
     if (stangenStart) this.bau.add(this.kugel(stangenStart, 0.1, START));
@@ -129,6 +134,16 @@ export class Szene {
     const krone = new THREE.Mesh(new THREE.SphereGeometry(Math.max(1, hoehe * 0.25), 12, 8), KRONE);
     krone.position.set(b.position.x, hoehe, b.position.z);
     return [stamm, krone];
+  }
+
+  /** Jede Fläche als zwei Dreiecke. Ein Mesh pro Plane, damit ein Klick sie als Ganzes trifft. */
+  private planenMesh(p: Plane, markiert: boolean): THREE.Mesh {
+    const ecken = p.flaechen.flatMap(([a, b, c, d]) => [a, b, c, a, c, d]);
+    const geometrie = new THREE.BufferGeometry().setFromPoints(ecken.map((v) => new THREE.Vector3(v.x, v.y, v.z)));
+    geometrie.computeVertexNormals();
+    const mesh = new THREE.Mesh(geometrie, markiert ? PLANE_MARKIERT : PLANE);
+    mesh.userData.planeId = p.id;
+    return mesh;
   }
 
   private platzRahmen(p: Platzbedarf): THREE.LineLoop {
