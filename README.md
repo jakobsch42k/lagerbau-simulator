@@ -1,6 +1,6 @@
 # Lagerbau-Simulator
 
-3D-Planer für Pfadfinder-Lagerbauten (Dreibein, A-Bock, freie Stangen, Abspannungen, Bäume) mit Faustregel-Hinweisen, Materialliste und Platzbedarf.
+3D-Planer für Pfadfinder-Lagerbauten (Dreibein, A-Bock, freie Stangen, Abspannungen, Bäume, Planen) mit Faustregel-Hinweisen, Materialliste und Platzbedarf.
 **Planungshilfe. Ersetzt nicht Sichtprüfung und Probebelastung durch Leiter.**
 
 Online: https://jakobsch42k.github.io/lagerbau-simulator/
@@ -23,3 +23,4 @@ Das Programm ist nicht signiert, deshalb zeigt Windows beim ersten Start „Der 
 „Weitere Informationen“ → „Trotzdem ausführen“.
 „Link kopieren“ erzeugt einen Link auf die Web-Version, den man z. B. am Handy öffnet.
 Links und Dateien aus Version 1.1 (mit Seilen und Bäumen) öffnet nur die neue .exe ab 1.1.0; ältere zeigen „Ungültige Bauwerk-Daten“.
+Links und Dateien aus Version 1.2 (mit Planen) öffnet nur die neue .exe ab 1.2.0; ältere zeigen „Ungültige Bauwerk-Daten“.
