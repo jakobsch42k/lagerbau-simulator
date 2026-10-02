@@ -2,26 +2,34 @@ import type { Baugruppe } from './Baugruppe';
 import type { Baum } from './Baum';
 import { type Bund, BundFinder } from './Bund';
 import { Fuss } from './Fuss';
+import type { Plane } from './Plane';
 import type { Seil } from './Seil';
 import type { Stange } from './Stange';
 import type { Vec3 } from './Vec3';
 import { type Hering, type Verankerung, VerankerungsFinder } from './Verankerung';
 
-/** Unveränderliches Aggregat aus Baugruppen, freien Stangen, Seilen und Bäumen. Bünde und Füße werden abgeleitet. */
+/** Unveränderliches Aggregat aus Baugruppen, freien Stangen, Seilen, Bäumen und Planen. Bünde und Füße werden abgeleitet. */
 export class Bauwerk {
   private constructor(
     readonly gruppen: readonly Baugruppe[],
     readonly freieStangen: readonly Stange[],
     readonly seile: readonly Seil[],
     readonly baeume: readonly Baum[],
+    readonly planen: readonly Plane[],
   ) {}
 
   static leer(): Bauwerk {
-    return new Bauwerk([], [], [], []);
+    return new Bauwerk([], [], [], [], []);
   }
 
   get istLeer(): boolean {
-    return this.gruppen.length === 0 && this.freieStangen.length === 0 && this.seile.length === 0 && this.baeume.length === 0;
+    return (
+      this.gruppen.length === 0 &&
+      this.freieStangen.length === 0 &&
+      this.seile.length === 0 &&
+      this.baeume.length === 0 &&
+      this.planen.length === 0
+    );
   }
 
   stangen(): readonly Stange[] {
@@ -44,8 +52,18 @@ export class Bauwerk {
     return this.baeume.find((b) => b.id === id);
   }
 
+  plane(id: string): Plane | undefined {
+    return this.planen.find((p) => p.id === id);
+  }
+
   enthaelt(id: string): boolean {
-    return this.gruppe(id) !== undefined || this.stange(id) !== undefined || this.seil(id) !== undefined || this.baum(id) !== undefined;
+    return (
+      this.gruppe(id) !== undefined ||
+      this.stange(id) !== undefined ||
+      this.seil(id) !== undefined ||
+      this.baum(id) !== undefined ||
+      this.plane(id) !== undefined
+    );
   }
 
   /** Klickt man eine Gruppenstange an, wird die ganze Gruppe ausgewählt. */
@@ -55,7 +73,7 @@ export class Bauwerk {
 
   mitGruppe(gruppe: Baugruppe): Bauwerk {
     this.pruefeNeu([gruppe.id, ...gruppe.stangen().map((s) => s.id)]);
-    return new Bauwerk([...this.gruppen, gruppe], this.freieStangen, this.seile, this.baeume);
+    return new Bauwerk([...this.gruppen, gruppe], this.freieStangen, this.seile, this.baeume, this.planen);
   }
 
   ersetzeGruppe(gruppe: Baugruppe): Bauwerk {
@@ -65,13 +83,14 @@ export class Bauwerk {
       this.freieStangen,
       this.seile,
       this.baeume,
+      this.planen,
     );
   }
 
   mitStange(stange: Stange): Bauwerk {
     if (stange.gruppeId !== null) throw new Error('Nur freie Stangen können direkt hinzugefügt werden');
     this.pruefeNeu([stange.id]);
-    return new Bauwerk(this.gruppen, [...this.freieStangen, stange], this.seile, this.baeume);
+    return new Bauwerk(this.gruppen, [...this.freieStangen, stange], this.seile, this.baeume, this.planen);
   }
 
   ersetzeStange(stange: Stange): Bauwerk {
@@ -81,17 +100,18 @@ export class Bauwerk {
       this.freieStangen.map((s) => (s.id === stange.id ? stange : s)),
       this.seile,
       this.baeume,
+      this.planen,
     );
   }
 
   mitSeil(seil: Seil): Bauwerk {
     this.pruefeNeu([seil.id]);
-    return new Bauwerk(this.gruppen, this.freieStangen, [...this.seile, seil], this.baeume);
+    return new Bauwerk(this.gruppen, this.freieStangen, [...this.seile, seil], this.baeume, this.planen);
   }
 
   mitBaum(baum: Baum): Bauwerk {
     this.pruefeNeu([baum.id]);
-    return new Bauwerk(this.gruppen, this.freieStangen, this.seile, [...this.baeume, baum]);
+    return new Bauwerk(this.gruppen, this.freieStangen, this.seile, [...this.baeume, baum], this.planen);
   }
 
   ersetzeBaum(baum: Baum): Bauwerk {
@@ -101,6 +121,23 @@ export class Bauwerk {
       this.freieStangen,
       this.seile,
       this.baeume.map((b) => (b.id === baum.id ? baum : b)),
+      this.planen,
+    );
+  }
+
+  mitPlane(plane: Plane): Bauwerk {
+    this.pruefeNeu([plane.id]);
+    return new Bauwerk(this.gruppen, this.freieStangen, this.seile, this.baeume, [...this.planen, plane]);
+  }
+
+  ersetzePlane(plane: Plane): Bauwerk {
+    if (!this.plane(plane.id)) throw new Error(`Plane ${plane.id} gibt es nicht`);
+    return new Bauwerk(
+      this.gruppen,
+      this.freieStangen,
+      this.seile,
+      this.baeume,
+      this.planen.map((p) => (p.id === plane.id ? plane : p)),
     );
   }
 
@@ -110,6 +147,7 @@ export class Bauwerk {
       this.freieStangen.filter((s) => s.id !== id),
       this.seile.filter((s) => s.id !== id),
       this.baeume.filter((b) => b.id !== id),
+      this.planen.filter((p) => p.id !== id),
     );
   }
 
@@ -125,9 +163,9 @@ export class Bauwerk {
     return new VerankerungsFinder().heringe(this.seile);
   }
 
-  /** Woran ein Punkt hängt (Hering, Baum, Stange oder frei), z. B. ein Seilende. */
+  /** Woran ein Punkt hängt (Hering, Plane, Baum, Stange oder frei), z. B. ein Seilende. */
   verankerung(punkt: Vec3): Verankerung {
-    return new VerankerungsFinder().finde(punkt, this.stangen(), this.baeume);
+    return new VerankerungsFinder().finde(punkt, this.stangen(), this.baeume, this.planen);
   }
 
   private pruefeNeu(ids: readonly string[]): void {

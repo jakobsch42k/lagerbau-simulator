@@ -1,6 +1,7 @@
 import type { Baum } from './Baum';
 import { clustereNachNaehe, mittelpunkt } from './Bund';
 import { BUND_CLUSTER_RADIUS, BUND_TOLERANZ, FUSS_TOLERANZ } from './konstanten';
+import type { Plane } from './Plane';
 import type { Seil } from './Seil';
 import type { Stange } from './Stange';
 import type { Vec3 } from './Vec3';
@@ -8,6 +9,7 @@ import type { Vec3 } from './Vec3';
 /** Woran ein Seilende hängt. Wird aus der Geometrie abgeleitet, nie gespeichert. */
 export type Verankerung =
   | { readonly art: 'hering' }
+  | { readonly art: 'plane'; readonly planeId: string }
   | { readonly art: 'baum'; readonly baumId: string }
   | { readonly art: 'bau'; readonly stangeId: string }
   | { readonly art: 'frei' };
@@ -34,17 +36,28 @@ export class VerankerungsFinder {
     private readonly clusterRadius = BUND_CLUSTER_RADIUS,
   ) {}
 
-  /** Reihenfolge: Boden vor Baum vor Stange. Bei mehreren Stangen in Reichweite zählt die nächste. */
-  finde(punkt: Vec3, stangen: readonly Stange[], baeume: readonly Baum[]): Verankerung {
+  /**
+   * Reihenfolge: Boden vor Plane vor Baum vor Stange (Spec v2b, D1). Bei mehreren Teilen in Reichweite zählt das nächste.
+   * Ein Ende an der Öse einer Bodenplane ist ein Hering, wie beim Abstecken.
+   */
+  finde(punkt: Vec3, stangen: readonly Stange[], baeume: readonly Baum[], planen: readonly Plane[] = []): Verankerung {
     if (punkt.y <= this.bodenToleranz) return { art: 'hering' };
-    const baum = baeume.find((b) => b.abstandZumStamm(punkt) <= this.toleranz);
+    const plane = this.naechstes(planen, (p) => p.abstandZurOese(punkt));
+    if (plane) return { art: 'plane', planeId: plane.id };
+    const baum = this.naechstes(baeume, (b) => b.abstandZumStamm(punkt));
     if (baum) return { art: 'baum', baumId: baum.id };
-    let naechste: { readonly id: string; readonly abstand: number } | null = null;
-    for (const s of stangen) {
-      const abstand = s.naechsterPunkt(punkt).distanceTo(punkt);
-      if (abstand <= this.toleranz && (naechste === null || abstand < naechste.abstand)) naechste = { id: s.id, abstand };
+    const stange = this.naechstes(stangen, (s) => s.naechsterPunkt(punkt).distanceTo(punkt));
+    return stange ? { art: 'bau', stangeId: stange.id } : { art: 'frei' };
+  }
+
+  /** Das nächste Teil innerhalb der Toleranz, sonst null. Gleiche Frage, gleiche Antwort für Planen, Bäume und Stangen. */
+  private naechstes<T>(teile: readonly T[], abstand: (teil: T) => number): T | null {
+    let bestes: { readonly teil: T; readonly abstand: number } | null = null;
+    for (const teil of teile) {
+      const a = abstand(teil);
+      if (a <= this.toleranz && (bestes === null || a < bestes.abstand)) bestes = { teil, abstand: a };
     }
-    return naechste ? { art: 'bau', stangeId: naechste.id } : { art: 'frei' };
+    return bestes?.teil ?? null;
   }
 
   heringe(seile: readonly Seil[]): Hering[] {
