@@ -7,6 +7,7 @@ import type { Seil } from '../model/Seil';
 import type { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
 import type { Treffer } from './SnapService';
+import type { KlickZiel } from './Werkzeuge';
 
 const HOLZ = new THREE.MeshLambertMaterial({ color: 0x8b5a2b });
 const MARKIERT = new THREE.MeshLambertMaterial({ color: 0xd9480f });
@@ -20,6 +21,7 @@ const PLATZ = new THREE.LineDashedMaterial({ color: 0x1d2733, dashSize: 0.2, gap
 const Y_ACHSE = new THREE.Vector3(0, 1, 0);
 const SEIL_RADIUS = 0.005; // Ø 1 cm, nur optisch
 const SEIL_GREIFRADIUS = 0.05; // unsichtbarer Mantel, damit man ein dünnes Seil anklicken kann
+const ZIEL_SCHLUESSEL: Record<KlickZiel, string> = { seil: 'seilId', plane: 'planeId' };
 
 /** three.js-Darstellung. Kennt das Modell nur lesend und liefert Klick-Treffer zurück. */
 export class Szene {
@@ -71,11 +73,11 @@ export class Szene {
     if (stangenStart) this.bau.add(this.kugel(stangenStart, 0.1, START));
   }
 
-  treffer(e: PointerEvent, seileFangen: boolean): Treffer | null {
+  treffer(e: PointerEvent, klickZiele: readonly KlickZiel[]): Treffer | null {
     const rect = this.leinwand.getBoundingClientRect();
     const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
     this.raycaster.setFromCamera(ndc, this.kamera);
-    const schluessel = seileFangen ? ['stangeId', 'baumId', 'seilId'] : ['stangeId', 'baumId'];
+    const schluessel = ['stangeId', 'baumId', ...klickZiele.map((z) => ZIEL_SCHLUESSEL[z])];
     const ziele = this.bau.children.filter((k) => schluessel.some((name) => typeof k.userData[name] === 'string'));
     const getroffen = this.raycaster.intersectObjects(ziele, false)[0];
     if (getroffen) {
@@ -83,6 +85,7 @@ export class Szene {
       const daten = getroffen.object.userData;
       if (typeof daten.stangeId === 'string') return { art: 'stange', punkt, stangeId: daten.stangeId };
       if (typeof daten.baumId === 'string') return { art: 'baum', punkt, baumId: daten.baumId };
+      if (typeof daten.planeId === 'string') return { art: 'plane', punkt, planeId: daten.planeId };
       return { art: 'seil', punkt, seilId: daten.seilId as string };
     }
     const aufBoden = this.raycaster.intersectObject(this.boden, false)[0];

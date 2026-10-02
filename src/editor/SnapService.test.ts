@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { Bauwerk } from '../model/Bauwerk';
 import { Dreibein } from '../model/Dreibein';
 import { Baum } from '../model/Baum';
-import { STANDARD_BAUM, STANDARD_DREIBEIN } from '../model/params';
+import { Plane } from '../model/Plane';
+import { STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
 import { Vec3 } from '../model/Vec3';
-import { SnapService } from './SnapService';
+import { SnapService, type Treffer } from './SnapService';
 
 const dreibein = new Dreibein('d', Vec3.NULL, 0, STANDARD_DREIBEIN);
 const bauwerk = Bauwerk.leer().mitGruppe(dreibein);
@@ -60,5 +61,26 @@ describe('SnapService', () => {
     const p = snap.snap({ art: 'seil', punkt: new Vec3(3, 1, 3), seilId: 's' }, bauwerk);
     expect(p.art).toBe('boden');
     expect(p.punkt.equals(new Vec3(3, 0, 3), 1e-9)).toBe(true);
+  });
+
+  it('rastet im Seil-Werkzeug auf die nächste Öse einer getroffenen Plane ein, egal wie weit', () => {
+    // Flach bei z = 5, Richtung −z; Ösen u. a. bei (0 | 2 | 3,5) und (2 | 2 | 5).
+    const plane = new Plane('pl', new Vec3(0, 2, 5), new Vec3(4, 2, 5), { ...STANDARD_PLANE, neigungGrad: 0 });
+    const mitPlane = bauwerk.mitPlane(plane);
+    const treffer: Treffer = { art: 'plane', punkt: new Vec3(1.4, 2, 3.6), planeId: 'pl' };
+    const p = snap.snap(treffer, mitPlane, true);
+    expect(p.art).toBe('oese');
+    expect(p.punkt.equals(new Vec3(0, 2, 3.5), 1e-9)).toBe(true);
+    expect(snap.snap(treffer, mitPlane).art).toBe('boden');
+  });
+
+  it('nimmt Ösen nur im Seil-Werkzeug als nahe Fangpunkte', () => {
+    const bodenplane = new Plane('bp', new Vec3(0, 0, 5), new Vec3(4, 0, 5), { ...STANDARD_PLANE, neigungGrad: 0 });
+    const mitPlane = bauwerk.mitPlane(bodenplane);
+    const klick: Treffer = { art: 'boden', punkt: new Vec3(2.1, 0, 4.9) };
+    const mit = snap.snap(klick, mitPlane, true);
+    expect(mit.art).toBe('oese');
+    expect(mit.punkt.equals(new Vec3(2, 0, 5), 1e-9)).toBe(true);
+    expect(snap.snap(klick, mitPlane).art).toBe('boden');
   });
 });

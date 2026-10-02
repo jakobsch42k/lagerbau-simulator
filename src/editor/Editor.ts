@@ -3,7 +3,7 @@ import type { Vec3 } from '../model/Vec3';
 import { DREH_SCHRITT } from './konstanten';
 import { SnapService, type Treffer } from './SnapService';
 import { Verlauf } from './Verlauf';
-import { type EditorKontext, erzeugeWerkzeug, type Werkzeug, type WerkzeugName } from './Werkzeuge';
+import { type EditorKontext, erzeugeWerkzeug, type KlickZiel, type Werkzeug, type WerkzeugName } from './Werkzeuge';
 
 export interface EditorZustand {
   readonly bauwerk: Bauwerk;
@@ -47,9 +47,9 @@ export class Editor implements EditorKontext {
     return this.verlauf.aktuell;
   }
 
-  /** Ob Klicks auf Seile ankommen sollen (nur im Auswahl-Werkzeug). */
-  get trifftSeile(): boolean {
-    return this.werkzeug.trifftSeile;
+  /** Welche Seile oder Planen Klicks fangen sollen; hängt vom Werkzeug ab (Spec v2b, D2). */
+  get klickZiele(): readonly KlickZiel[] {
+    return this.werkzeug.klickZiele;
   }
 
   aendere(neu: Bauwerk): void {

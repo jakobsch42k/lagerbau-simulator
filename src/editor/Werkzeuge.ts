@@ -3,13 +3,17 @@ import { Baum } from '../model/Baum';
 import type { Bauwerk } from '../model/Bauwerk';
 import { Dreibein } from '../model/Dreibein';
 import { FUSS_TOLERANZ, MIN_SEILLAENGE, MIN_STANGENLAENGE, STANDARD_DURCHMESSER, STANGEN_UEBERSTAND } from '../model/konstanten';
-import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN } from '../model/params';
+import { Plane } from '../model/Plane';
+import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
 import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
 import type { Vec3 } from '../model/Vec3';
 import type { SnapPunkt, SnapService, Treffer } from './SnapService';
 
-export type WerkzeugName = 'dreibein' | 'abock' | 'stange' | 'seil' | 'baum' | 'auswahl';
+export type WerkzeugName = 'dreibein' | 'abock' | 'stange' | 'seil' | 'plane' | 'baum' | 'auswahl';
+
+/** Teile, die einen Klick fangen können, obwohl sie nicht immer sollen. Stangen und Bäume fangen immer. */
+export type KlickZiel = 'seil' | 'plane';
 
 /** Was ein Werkzeug vom Editor sehen und ändern darf. Diese Methoden benachrichtigen nicht. */
 export interface EditorKontext {
@@ -23,8 +27,11 @@ export interface EditorKontext {
 export interface Werkzeug {
   readonly name: WerkzeugName;
   readonly angefangen: Vec3 | null;
-  /** Ob Seile Klicks fangen. Nur das Auswahl-Werkzeug will sie; sonst trifft der Strahl, was dahinter liegt. */
-  readonly trifftSeile: boolean;
+  /**
+   * Welche Seile oder Planen Klicks fangen (Spec v2b, D2). Sonst trifft der Strahl, was dahinter liegt:
+   * Ein großes Regendach blockiert so nicht das Setzen eines Dreibeins darunter.
+   */
+  readonly klickZiele: readonly KlickZiel[];
   onKlick(treffer: Treffer, kontext: EditorKontext): void;
   abbrechen(): void;
 }
@@ -32,7 +39,7 @@ export interface Werkzeug {
 /** Setzt eine Baugruppe mit Standardmaßen auf den angeklickten Bodenpunkt. */
 export class PlaceBaugruppeTool implements Werkzeug {
   readonly angefangen: Vec3 | null = null;
-  readonly trifftSeile = false;
+  readonly klickZiele: readonly KlickZiel[] = [];
 
   constructor(readonly name: 'dreibein' | 'abock') {}
 
@@ -53,7 +60,7 @@ export class PlaceBaugruppeTool implements Werkzeug {
 export class PlaceBaumTool implements Werkzeug {
   readonly name = 'baum' as const;
   readonly angefangen: Vec3 | null = null;
-  readonly trifftSeile = false;
+  readonly klickZiele: readonly KlickZiel[] = [];
 
   onKlick(treffer: Treffer, k: EditorKontext): void {
     if (treffer.art !== 'boden') return;
@@ -68,7 +75,9 @@ export class PlaceBaumTool implements Werkzeug {
 /** Zwei Klicks auf Einrastpunkte; liegen sie zu nah beieinander, passiert nichts. Unterklassen erzeugen daraus ein Teil. */
 abstract class ZweiPunktWerkzeug implements Werkzeug {
   abstract readonly name: WerkzeugName;
-  readonly trifftSeile = false;
+  readonly klickZiele: readonly KlickZiel[] = [];
+  /** Nur das Seil-Werkzeug rastet an Planen-Ösen ein. */
+  protected readonly fangtOesen: boolean = false;
   private start: SnapPunkt | null = null;
 
   constructor(private readonly mindestabstand: number) {}
@@ -78,7 +87,7 @@ abstract class ZweiPunktWerkzeug implements Werkzeug {
   }
 
   onKlick(treffer: Treffer, k: EditorKontext): void {
-    const punkt = k.snap.snap(treffer, k.bauwerk);
+    const punkt = k.snap.snap(treffer, k.bauwerk, this.fangtOesen);
     if (this.start === null) {
       this.start = punkt;
       return;
@@ -125,6 +134,8 @@ export class DrawStangeTool extends ZweiPunktWerkzeug {
 /** Zwei Klicks ergeben ein gerades Seil. Ein Ende am Boden wird automatisch ein Hering (Spec v2a, D1). */
 export class DrawSeilTool extends ZweiPunktWerkzeug {
   readonly name = 'seil' as const;
+  override readonly klickZiele: readonly KlickZiel[] = ['plane'];
+  protected override readonly fangtOesen = true;
 
   constructor() {
     super(MIN_SEILLAENGE);
@@ -137,11 +148,41 @@ export class DrawSeilTool extends ZweiPunktWerkzeug {
   }
 }
 
-/** Klick auf eine Stange wählt sie (bzw. ihre Gruppe), auf ein Seil oder einen Baum wählt diesen, auf den Boden hebt die Auswahl auf. */
+/** Zwei Klicks ergeben die Aufhängelinie einer Plane mit Startmaßen (Spec v2b, D2). */
+export class DrawPlaneTool extends ZweiPunktWerkzeug {
+  readonly name = 'plane' as const;
+
+  constructor() {
+    super(MIN_SEILLAENGE);
+  }
+
+  /**
+   * Beide Enden am Boden: Bodenplane mit 0°. Sonst 30°, oder die größte ganze Gradzahl darunter, bei der keine Öse im Boden liegt.
+   * Passt nicht einmal 0°, fliegt der RangeError der Plane bis zum Editor; der zeigt ihn als Meldung.
+   */
+  static startPlane(id: string, start: Vec3, ende: Vec3): Plane {
+    const amBoden = start.y <= FUSS_TOLERANZ && ende.y <= FUSS_TOLERANZ;
+    for (let grad = amBoden ? 0 : STANDARD_PLANE.neigungGrad; ; grad -= 1) {
+      try {
+        return new Plane(id, start, ende, { ...STANDARD_PLANE, neigungGrad: grad });
+      } catch (e) {
+        if (!(e instanceof RangeError) || grad === 0) throw e;
+      }
+    }
+  }
+
+  protected erzeuge(start: SnapPunkt, ende: SnapPunkt, k: EditorKontext): void {
+    const plane = DrawPlaneTool.startPlane(k.neueId('plane'), start.punkt, ende.punkt);
+    k.aendere(k.bauwerk.mitPlane(plane));
+    k.waehle(plane.id);
+  }
+}
+
+/** Klick auf eine Stange wählt sie (bzw. ihre Gruppe), auf ein Seil, einen Baum oder eine Plane wählt diese, auf den Boden hebt die Auswahl auf. */
 export class SelectTool implements Werkzeug {
   readonly name = 'auswahl' as const;
   readonly angefangen: Vec3 | null = null;
-  readonly trifftSeile = true;
+  readonly klickZiele: readonly KlickZiel[] = ['seil', 'plane'];
 
   onKlick(treffer: Treffer, k: EditorKontext): void {
     switch (treffer.art) {
@@ -153,6 +194,9 @@ export class SelectTool implements Werkzeug {
         break;
       case 'seil':
         k.waehle(treffer.seilId);
+        break;
+      case 'plane':
+        k.waehle(treffer.planeId);
         break;
       case 'boden':
         k.waehle(null);
@@ -172,6 +216,8 @@ export function erzeugeWerkzeug(name: WerkzeugName): Werkzeug {
       return new DrawStangeTool();
     case 'seil':
       return new DrawSeilTool();
+    case 'plane':
+      return new DrawPlaneTool();
     case 'baum':
       return new PlaceBaumTool();
     case 'auswahl':
