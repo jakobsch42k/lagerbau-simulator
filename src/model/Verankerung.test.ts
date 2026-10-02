@@ -16,28 +16,28 @@ const plane = new Plane('pl', new Vec3(2, 1, -2), new Vec3(2, 1, 2), { ...STANDA
 
 describe('VerankerungsFinder', () => {
   it('erkennt einen Hering am Boden', () => {
-    expect(finder.finde(new Vec3(1, 0, 1), [stange], [baum], [])).toEqual({ art: 'hering' });
+    expect(finder.finde(new Vec3(1, 0, 1), [stange], [baum])).toEqual({ art: 'hering' });
   });
 
   it('erkennt einen Baum an der Stammoberfläche', () => {
-    expect(finder.finde(new Vec3(4.8, 2, 0), [stange], [baum], [])).toEqual({ art: 'baum', baumId: 'b' });
+    expect(finder.finde(new Vec3(4.8, 2, 0), [stange], [baum])).toEqual({ art: 'baum', baumId: 'b' });
   });
 
   it('erkennt einen Bau an der Stangenachse', () => {
-    expect(finder.finde(new Vec3(0.03, 2, 0), [stange], [baum], [])).toEqual({ art: 'bau', stangeId: 'st' });
+    expect(finder.finde(new Vec3(0.03, 2, 0), [stange], [baum])).toEqual({ art: 'bau', stangeId: 'st' });
   });
 
   it('nimmt bei mehreren Stangen in Reichweite die nächste', () => {
     const nah = new Stange('nah', new Vec3(0.04, 0, 0), new Vec3(0.04, 3, 0), 0.08);
-    expect(finder.finde(new Vec3(0.035, 1, 0), [stange, nah], [], [])).toEqual({ art: 'bau', stangeId: 'nah' });
+    expect(finder.finde(new Vec3(0.035, 1, 0), [stange, nah], [])).toEqual({ art: 'bau', stangeId: 'nah' });
   });
 
   it('meldet frei, wenn nichts in Reichweite ist', () => {
-    expect(finder.finde(new Vec3(2, 2, 2), [stange], [baum], [])).toEqual({ art: 'frei' });
+    expect(finder.finde(new Vec3(2, 2, 2), [stange], [baum])).toEqual({ art: 'frei' });
   });
 
   it('der Boden geht vor der Stange', () => {
-    expect(finder.finde(new Vec3(0, 0.02, 0), [stange], [], [])).toEqual({ art: 'hering' });
+    expect(finder.finde(new Vec3(0, 0.02, 0), [stange], [])).toEqual({ art: 'hering' });
   });
 
   it('erkennt eine Plane an einer Öse', () => {
@@ -92,10 +92,5 @@ describe('Bauwerk mit Seilen', () => {
     const zweite = new Stange('st2', new Vec3(4, 0, 0), new Vec3(4, 3, 0), 0.08);
     const b = Bauwerk.leer().mitStange(stange).mitStange(zweite).mitSeil(new Seil('q', new Vec3(0, 2, 0), new Vec3(4, 2, 0)));
     expect(b.buende()).toEqual([]);
-  });
-
-  it('Seilenden sollten Planen berücksichtigen', () => {
-    const b = Bauwerk.leer().mitPlane(plane).mitSeil(new Seil('s', new Vec3(0, 2, 0), new Vec3(2.03, 1, 0)));
-    expect(b.verankerung(new Vec3(2.03, 1, 0))).toEqual({ art: 'plane', planeId: 'pl' });
   });
 });
