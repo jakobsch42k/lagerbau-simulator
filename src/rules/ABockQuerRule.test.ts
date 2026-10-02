@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ABock } from '../model/ABock';
 import { Bauwerk } from '../model/Bauwerk';
-import { STANDARD_ABOCK } from '../model/params';
+import { Plane } from '../model/Plane';
+import { STANDARD_ABOCK, STANDARD_PLANE } from '../model/params';
 import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
@@ -57,5 +58,16 @@ describe('ABockQuerRule (R1)', () => {
     const umgekehrt = new Seil('r', new Vec3(1.5, 0, 0), abock.spitze());
     expect(pruefe(mitSeilen(seil('l', -1.5), umgekehrt))).toEqual([]);
     expect(pruefe(mitSeilen(umgekehrt))).toHaveLength(1);
+  });
+
+  it('zählt Seile zu Planen nicht als Sicherung (Spec v2b, D3)', () => {
+    // Ösen bei (−2 | 1 | 3) und (2 | 1 | 3), also auf beiden Seiten der A-Ebene x = 0.
+    const plane = new Plane('pl', new Vec3(-2, 1, 3), new Vec3(2, 1, 3), { ...STANDARD_PLANE, neigungGrad: 0, breite: 1 });
+    const b = Bauwerk.leer()
+      .mitGruppe(abock)
+      .mitPlane(plane)
+      .mitSeil(new Seil('l', abock.spitze(), new Vec3(-2, 1, 3)))
+      .mitSeil(new Seil('r', abock.spitze(), new Vec3(2, 1, 3)));
+    expect(pruefe(b)).toHaveLength(1);
   });
 });

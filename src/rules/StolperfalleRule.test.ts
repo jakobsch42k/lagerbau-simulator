@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Baum } from '../model/Baum';
 import { Bauwerk } from '../model/Bauwerk';
+import { Plane } from '../model/Plane';
+import { STANDARD_PLANE } from '../model/params';
 import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
@@ -37,5 +39,12 @@ describe('StolperfalleRule (R7)', () => {
 
   it('überlässt Seile mit freiem Ende R8', () => {
     expect(pruefe(new Seil('f', new Vec3(0, 1, 0), new Vec3(2, 1, 2)))).toEqual([]);
+  });
+
+  it('meldet ein tiefes Seil von einer Planen-Öse zum Baum (Spec v2b, D3)', () => {
+    // Linie entlang z bei x = 4, Öse in der Mitte bei (4 | 1 | 6); der Baumstamm hat seine Oberfläche bei (0,2 | y | 6).
+    const plane = new Plane('pl', new Vec3(4, 1, 4), new Vec3(4, 1, 8), { ...STANDARD_PLANE, neigungGrad: 0, breite: 1 });
+    const seil = new Seil('ob', new Vec3(4, 1, 6), new Vec3(0.2, 1, 6));
+    expect(regel.pruefe(new Analyse(basis.mitPlane(plane).mitSeil(seil)))).toHaveLength(1);
   });
 });

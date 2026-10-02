@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Bauwerk } from '../model/Bauwerk';
+import { Plane } from '../model/Plane';
+import { STANDARD_PLANE } from '../model/params';
 import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
@@ -19,5 +21,11 @@ describe('LosesSeilRule (R8)', () => {
 
   it('schweigt, wenn beide Enden verankert sind', () => {
     expect(pruefe(new Seil('s', new Vec3(0, 2, 0), new Vec3(2, 0, 0)))).toEqual([]);
+  });
+
+  it('zählt ein Seilende an einer Planen-Öse als befestigt (Spec v2b, D3)', () => {
+    const plane = new Plane('pl', new Vec3(2, 1, -2), new Vec3(2, 1, 2), { ...STANDARD_PLANE, neigungGrad: 0, breite: 1 });
+    const b = Bauwerk.leer().mitStange(pfosten).mitPlane(plane).mitSeil(new Seil('s', new Vec3(0, 2, 0), new Vec3(2, 1, 0)));
+    expect(new LosesSeilRule().pruefe(new Analyse(b))).toEqual([]);
   });
 });
