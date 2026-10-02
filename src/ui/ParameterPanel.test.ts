@@ -5,7 +5,8 @@ import { Editor } from '../editor/Editor';
 import { Bauwerk } from '../model/Bauwerk';
 import { Baum } from '../model/Baum';
 import { Dreibein } from '../model/Dreibein';
-import { STANDARD_BAUM } from '../model/params';
+import { Plane } from '../model/Plane';
+import { STANDARD_BAUM, STANDARD_PLANE } from '../model/params';
 import { Seil } from '../model/Seil';
 import { Vec3 } from '../model/Vec3';
 import { ParameterPanel } from './ParameterPanel';
@@ -41,6 +42,29 @@ const panelMit = (bauwerk: Bauwerk, id: string): { wurzel: HTMLElement; editor: 
   panel.zeige(editor.zustand());
   return { wurzel, editor };
 };
+
+const form = (wurzel: HTMLElement): HTMLSelectElement => {
+  const auswahl = wurzel.querySelector('select');
+  if (!auswahl) throw new Error('Form-Auswahl fehlt');
+  return auswahl;
+};
+
+const waehleForm = (wurzel: HTMLElement, wert: string): void => {
+  const auswahl = form(wurzel);
+  auswahl.value = wert;
+  auswahl.dispatchEvent(new Event('change'));
+};
+
+const knopftexte = (wurzel: HTMLElement): string[] => [...wurzel.querySelectorAll('button')].map((b) => b.textContent ?? '');
+
+const knopf = (wurzel: HTMLElement, text: string): HTMLButtonElement => {
+  const k = [...wurzel.querySelectorAll('button')].find((b) => b.textContent === text);
+  if (!k) throw new Error(`Knopf ${text} fehlt`);
+  return k;
+};
+
+const dach = (y: number, art: 'eben' | 'satteldach' = 'eben'): Plane =>
+  new Plane('pl', new Vec3(0, y, 0), new Vec3(4, y, 0), { ...STANDARD_PLANE, form: art });
 
 describe('ParameterPanel', () => {
   it('setzt ein abgelehntes Feld auf den Modellwert zurück und zeigt die Meldung', () => {
@@ -82,5 +106,44 @@ describe('ParameterPanel', () => {
     expect(wurzel.querySelectorAll('input')).toHaveLength(0);
     expect(wurzel.textContent).toContain('Länge 2.83 m · Winkel zum Boden 45°');
     expect(wurzel.textContent).toContain('Löschen');
+  });
+
+  it('zeigt bei der Plane Breite, Länge und Neigung und setzt unsinnige Werte zurück', () => {
+    const { wurzel, editor } = panelMit(Bauwerk.leer().mitPlane(dach(2)), 'pl');
+    expect(feld(wurzel, 'Breite').value).toBe('3');
+    expect(feld(wurzel, 'Länge').value).toBe('4');
+    expect(feld(wurzel, 'Neigung').value).toBe('30');
+    expect(feld(wurzel, 'Neigung').step).toBe('1');
+    expect(wurzel.textContent).toContain('Aufhängelinie 4.00 m');
+    tippe(feld(wurzel, 'Breite'), '5'); // 2 − 5 · sin 30° = −0,5 m
+    expect(editor.zustand().meldung).toBe('Plane reicht in den Boden: Neigung, Breite oder Länge verringern.');
+    expect(feld(wurzel, 'Breite').value).toBe('3');
+    tippe(feld(wurzel, 'Neigung'), '120');
+    expect(editor.zustand().meldung).toBe('Neigung muss zwischen 0 und 90° liegen');
+    expect(feld(wurzel, 'Neigung').value).toBe('30');
+    tippe(feld(wurzel, 'Länge'), '');
+    expect(feld(wurzel, 'Länge').value).toBe('4');
+    tippe(feld(wurzel, 'Neigung'), '10');
+    expect(editor.bauwerk.plane('pl')?.params.neigungGrad).toBe(10);
+  });
+
+  it('wechselt Seite und Form; „Seite wechseln" gibt es nur bei eben', () => {
+    const { wurzel, editor } = panelMit(Bauwerk.leer().mitPlane(dach(2)), 'pl');
+    expect(form(wurzel).value).toBe('eben');
+    knopf(wurzel, 'Seite wechseln').click();
+    expect(editor.bauwerk.plane('pl')?.params.seite).toBe(-1);
+    waehleForm(wurzel, 'satteldach');
+    expect(editor.bauwerk.plane('pl')?.params.form).toBe('satteldach');
+    expect(knopftexte(wurzel)).not.toContain('Seite wechseln');
+    expect(knopftexte(wurzel)).toContain('Löschen (Entf)');
+  });
+
+  it('setzt die Form zurück, wenn die Plane damit in den Boden reicht', () => {
+    // Satteldach auf 1 m: Hälften 1,5 m, Unterkante 0,25 m. Eben hinge die volle Breite 1,5 m tief.
+    const { wurzel, editor } = panelMit(Bauwerk.leer().mitPlane(dach(1, 'satteldach')), 'pl');
+    waehleForm(wurzel, 'eben');
+    expect(editor.zustand().meldung).toBe('Plane reicht in den Boden: Neigung, Breite oder Länge verringern.');
+    expect(form(wurzel).value).toBe('satteldach');
+    expect(editor.bauwerk.plane('pl')?.params.form).toBe('satteldach');
   });
 });
