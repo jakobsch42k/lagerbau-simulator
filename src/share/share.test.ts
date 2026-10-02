@@ -3,8 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { kochstelle } from '../beispiele/kochstelle';
 import { Baum } from '../model/Baum';
 import { Bauwerk } from '../model/Bauwerk';
+import { Plane } from '../model/Plane';
 import { Seil } from '../model/Seil';
 import { Vec3 } from '../model/Vec3';
+import { STANDARD_PLANE } from '../model/params';
 import { BauwerkSerializer } from './BauwerkSerializer';
 import { MAX_HASH_ZEICHEN, MAX_JSON_ZEICHEN, MAX_TEILE, pruefeDateigroesse } from './grenzen';
 import { UrlCodec } from './UrlCodec';
@@ -12,10 +14,13 @@ import { UrlCodec } from './UrlCodec';
 const serializer = new BauwerkSerializer();
 const codec = new UrlCodec();
 
+const planeJson = { id: 'p', start: [0, 2, 0], ende: [4, 2, 0], breite: 3, laenge: 4, form: 'eben', neigung: 30, seite: 1 };
+const v3 = (planen: readonly object[]) => ({ version: 3, gruppen: [], stangen: [], seile: [], baeume: [], planen });
+
 describe('BauwerkSerializer', () => {
   it('speichert Gruppen als Parameter und nur freie Stangen einzeln', () => {
     const json = serializer.zuJson(kochstelle());
-    expect(json.version).toBe(2);
+    expect(json.version).toBe(3);
     expect(json.gruppen.map((g) => g.typ)).toEqual(['abock', 'dreibein']);
     expect(json.stangen.map((s) => s.id)).toEqual(['first']);
   });
@@ -29,7 +34,12 @@ describe('BauwerkSerializer', () => {
 
   it.each([
     ['kein Objekt', 'hallo'],
-    ['falsche Version', { version: 3, gruppen: [], stangen: [], seile: [], baeume: [] }],
+    ['falsche Version', { version: 4, gruppen: [], stangen: [], seile: [], baeume: [], planen: [] }],
+    ['v3 ohne Planen-Liste', { version: 3, gruppen: [], stangen: [], seile: [], baeume: [] }],
+    ['Plane mit unbekannter Form', v3([{ ...planeJson, form: 'schief' }])],
+    ['Plane mit Seite 0', v3([{ ...planeJson, seite: 0 }])],
+    ['Plane ohne Neigung', v3([{ ...planeJson, neigung: undefined }])],
+    ['Plane im Boden', v3([{ ...planeJson, start: [0, 0.5, 0], ende: [4, 0.5, 0], neigung: 90 }])],
     ['v2 ohne Seil-Liste', { version: 2, gruppen: [], stangen: [], baeume: [] }],
     ['zu kurzes Seil', { version: 2, gruppen: [], stangen: [], seile: [{ id: 's', start: [0, 0, 0], ende: [0.1, 0, 0] }], baeume: [] }],
     ['Baum ohne Höhe', { version: 2, gruppen: [], stangen: [], seile: [], baeume: [{ id: 'b', position: [0, 0, 0], durchmesser: 0.3, hoehe: 0 }] }],
@@ -61,6 +71,28 @@ describe('BauwerkSerializer', () => {
     expect(b.freieStangen).toHaveLength(1);
     expect(b.seile).toEqual([]);
     expect(b.baeume).toEqual([]);
+  });
+
+  it('übersteht die Rundreise mit Planen (Version 3)', () => {
+    const plane = new Plane('plane', new Vec3(0, 2, 0), new Vec3(4, 2, 0), { ...STANDARD_PLANE, form: 'satteldach' });
+    const json = serializer.zuJson(kochstelle().mitPlane(plane));
+    expect(json.version).toBe(3);
+    expect(json.planen).toEqual([
+      { id: 'plane', start: [0, 2, 0], ende: [4, 2, 0], breite: 3, laenge: 4, form: 'satteldach', neigung: 30, seite: 1 },
+    ]);
+    const zurueck = serializer.ausJson(JSON.parse(JSON.stringify(json)));
+    expect(serializer.zuJson(zurueck)).toEqual(json);
+  });
+
+  it('liest v2-Daten ohne Planen', () => {
+    const b = serializer.ausJson({ version: 2, gruppen: [], stangen: [], seile: [], baeume: [] });
+    expect(b.planen).toEqual([]);
+  });
+
+  it('zählt Planen zu den Teilen', () => {
+    const planen = Array.from({ length: MAX_TEILE }, (_, i) => ({ ...planeJson, id: `plane${i}` }));
+    expect(serializer.ausJson(v3(planen)).planen).toHaveLength(MAX_TEILE);
+    expect(() => serializer.ausJson(v3([...planen, { ...planeJson, id: 'zuviel' }]))).toThrow(/^Ungültige Bauwerk-Daten: /);
   });
 });
 

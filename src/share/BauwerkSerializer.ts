@@ -3,7 +3,8 @@ import type { Baugruppe } from '../model/Baugruppe';
 import { Baum } from '../model/Baum';
 import { Bauwerk } from '../model/Bauwerk';
 import { Dreibein } from '../model/Dreibein';
-import type { ABockParams, DreibeinParams } from '../model/params';
+import { Plane } from '../model/Plane';
+import type { ABockParams, DreibeinParams, PlanenForm } from '../model/params';
 import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
@@ -35,12 +36,25 @@ export interface BaumJson {
   readonly hoehe: number;
 }
 
+export interface PlaneJson {
+  readonly id: string;
+  readonly start: V3;
+  readonly ende: V3;
+  readonly breite: number;
+  readonly laenge: number;
+  readonly form: PlanenForm;
+  /** Grad. */
+  readonly neigung: number;
+  readonly seite: 1 | -1;
+}
+
 export interface BauwerkJson {
-  readonly version: 2;
+  readonly version: 3;
   readonly gruppen: readonly GruppeJson[];
   readonly stangen: readonly StangeJson[];
   readonly seile: readonly SeilJson[];
   readonly baeume: readonly BaumJson[];
+  readonly planen: readonly PlaneJson[];
 }
 
 type Roh = Record<string, unknown>;
@@ -75,7 +89,7 @@ function vektor(d: unknown, name: string): Vec3 {
 export class BauwerkSerializer {
   zuJson(bauwerk: Bauwerk): BauwerkJson {
     return {
-      version: 2,
+      version: 3,
       gruppen: bauwerk.gruppen.map((g) => this.gruppeZuJson(g)),
       stangen: bauwerk.freieStangen.map((s) => ({
         id: s.id,
@@ -89,6 +103,16 @@ export class BauwerkSerializer {
         position: b.position.toArray(),
         durchmesser: b.params.durchmesser,
         hoehe: b.params.hoehe,
+      })),
+      planen: bauwerk.planen.map((p) => ({
+        id: p.id,
+        start: p.start.toArray(),
+        ende: p.ende.toArray(),
+        breite: p.params.breite,
+        laenge: p.params.laenge,
+        form: p.params.form,
+        neigung: p.params.neigungGrad,
+        seite: p.params.seite,
       })),
     };
   }
@@ -110,19 +134,20 @@ export class BauwerkSerializer {
 
   private lies(daten: unknown): Bauwerk {
     const o = objekt(daten, 'Bauwerk');
-    if (o.version !== 1 && o.version !== 2) throw new Error('unbekannte Version');
+    if (o.version !== 1 && o.version !== 2 && o.version !== 3) throw new Error('unbekannte Version');
     const rohGruppen = liste(o.gruppen, 'gruppen');
     const rohStangen = liste(o.stangen, 'stangen');
-    // Version 1 kannte noch keine Seile und Bäume.
-    const rohSeile = o.version === 2 ? liste(o.seile, 'seile') : [];
-    const rohBaeume = o.version === 2 ? liste(o.baeume, 'baeume') : [];
-    if (rohGruppen.length + rohStangen.length + rohSeile.length + rohBaeume.length > MAX_TEILE) {
-      throw new Error(`mehr als ${MAX_TEILE} Teile`);
-    }
+    // Version 1 kannte noch keine Seile und Bäume, Version 2 noch keine Planen.
+    const rohSeile = o.version === 1 ? [] : liste(o.seile, 'seile');
+    const rohBaeume = o.version === 1 ? [] : liste(o.baeume, 'baeume');
+    const rohPlanen = o.version === 3 ? liste(o.planen, 'planen') : [];
+    const anzahl = rohGruppen.length + rohStangen.length + rohSeile.length + rohBaeume.length + rohPlanen.length;
+    if (anzahl > MAX_TEILE) throw new Error(`mehr als ${MAX_TEILE} Teile`);
     const mitGruppen = rohGruppen.map((g) => this.liesGruppe(g)).reduce((b, g) => b.mitGruppe(g), Bauwerk.leer());
     const mitStangen = rohStangen.map((s) => this.liesStange(s)).reduce((b, s) => b.mitStange(s), mitGruppen);
     const mitBaeumen = rohBaeume.map((b) => this.liesBaum(b)).reduce((bw, b) => bw.mitBaum(b), mitStangen);
-    return rohSeile.map((s) => this.liesSeil(s)).reduce((b, s) => b.mitSeil(s), mitBaeumen);
+    const mitPlanen = rohPlanen.map((p) => this.liesPlane(p)).reduce((b, p) => b.mitPlane(p), mitBaeumen);
+    return rohSeile.map((s) => this.liesSeil(s)).reduce((b, s) => b.mitSeil(s), mitPlanen);
   }
 
   private liesGruppe(daten: unknown): Baugruppe {
@@ -164,6 +189,21 @@ export class BauwerkSerializer {
     return new Baum(text(o.id, 'id'), vektor(o.position, 'position'), {
       durchmesser: zahl(o.durchmesser, 'durchmesser'),
       hoehe: zahl(o.hoehe, 'hoehe'),
+    });
+  }
+
+  private liesPlane(daten: unknown): Plane {
+    const o = objekt(daten, 'Plane');
+    const form = o.form;
+    if (form !== 'eben' && form !== 'satteldach') throw new Error('form unbekannt');
+    const seite = o.seite;
+    if (seite !== 1 && seite !== -1) throw new Error('seite muss 1 oder -1 sein');
+    return new Plane(text(o.id, 'id'), vektor(o.start, 'start'), vektor(o.ende, 'ende'), {
+      breite: zahl(o.breite, 'breite'),
+      laenge: zahl(o.laenge, 'laenge'),
+      form,
+      neigungGrad: zahl(o.neigung, 'neigung'),
+      seite,
     });
   }
 }
