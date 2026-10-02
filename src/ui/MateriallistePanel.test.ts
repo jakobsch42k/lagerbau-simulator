@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { ABock } from '../model/ABock';
 import { Bauwerk } from '../model/Bauwerk';
 import { Materialliste } from '../model/Materialliste';
-import { STANDARD_ABOCK } from '../model/params';
+import { Plane } from '../model/Plane';
+import { STANDARD_ABOCK, STANDARD_PLANE } from '../model/params';
 import { Seil } from '../model/Seil';
 import { Vec3 } from '../model/Vec3';
 import { MateriallistePanel } from './MateriallistePanel';
@@ -34,6 +35,16 @@ describe('MateriallistePanel', () => {
     const { tabelle, platz } = zeige(Bauwerk.leer());
     expect(tabelle.textContent).not.toContain('Seil');
     expect(tabelle.textContent).not.toContain('Heringe');
+    expect(tabelle.textContent).not.toContain('Plane');
     expect(platz.textContent).toBe('');
+  });
+
+  it('zeigt Planen nach Größe mit der kleineren Seite zuerst', () => {
+    const bodenplane = (id: string, breite: number, laenge: number): Plane =>
+      new Plane(id, Vec3.NULL, new Vec3(4, 0, 0), { ...STANDARD_PLANE, neigungGrad: 0, breite, laenge });
+    const { tabelle } = zeige(Bauwerk.leer().mitPlane(bodenplane('a', 3, 4)).mitPlane(bodenplane('b', 4, 3)));
+    const zeilen = [...tabelle.querySelectorAll('tr')].map((tr) => [...tr.children].map((zelle) => zelle.textContent));
+    expect(zeilen).toContainEqual(['Plane', '', 'Anzahl']);
+    expect(zeilen).toContainEqual(['3.0 × 4.0 m', '', '2']);
   });
 });
