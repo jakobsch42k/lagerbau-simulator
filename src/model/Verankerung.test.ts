@@ -44,9 +44,18 @@ describe('VerankerungsFinder', () => {
     expect(finder.finde(new Vec3(2.03, 1, 0), [stange], [baum], [plane])).toEqual({ art: 'plane', planeId: 'pl' });
   });
 
-  it('nimmt eine Öse vor einem Baum an derselben Stelle', () => {
+  it('nimmt einen Baum vor einer Öse an derselben Stelle', () => {
     const amStamm = new Plane('st', new Vec3(4.8, 2, -2), new Vec3(4.8, 2, 2), { ...STANDARD_PLANE, neigungGrad: 0, breite: 1 });
-    expect(finder.finde(new Vec3(4.8, 2, 0), [stange], [baum], [amStamm])).toEqual({ art: 'plane', planeId: 'st' });
+    expect(finder.finde(new Vec3(4.8, 2, 0), [stange], [baum], [amStamm])).toEqual({ art: 'baum', baumId: 'b' });
+  });
+
+  it('nimmt eine Stange vor einer Öse an derselben Stelle', () => {
+    const ander = new Plane('sp', new Vec3(0, 2, -2), new Vec3(0, 2, 2), { ...STANDARD_PLANE, neigungGrad: 0, breite: 1 });
+    expect(finder.finde(new Vec3(0.03, 2, 0), [stange], [baum], [ander])).toEqual({ art: 'bau', stangeId: 'st' });
+  });
+
+  it('erkennt eine Öse fern von Baum und Stange als Plane', () => {
+    expect(finder.finde(new Vec3(3, 1, 0), [stange], [baum], [plane])).toEqual({ art: 'plane', planeId: 'pl' });
   });
 
   it('macht ein Seilende an der Öse einer Bodenplane zum Hering', () => {

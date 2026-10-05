@@ -37,17 +37,17 @@ export class VerankerungsFinder {
   ) {}
 
   /**
-   * Reihenfolge: Boden vor Plane vor Baum vor Stange (Spec v2b, D1). Bei mehreren Teilen in Reichweite zählt das nächste.
+   * Reihenfolge: Boden vor Baum vor Stange vor Plane (Spec v2b, D1, geändert nach dem Final Review). Ein Knoten an Stange oder Stamm gehört zum Bau; eine Öse gewinnt nur, wo nichts Tragendes in Reichweite ist. Bei mehreren Teilen einer Art in Reichweite zählt das nächste.
    * Ein Ende an der Öse einer Bodenplane ist ein Hering, wie beim Abstecken.
    */
   finde(punkt: Vec3, stangen: readonly Stange[], baeume: readonly Baum[], planen: readonly Plane[] = []): Verankerung {
     if (punkt.y <= this.bodenToleranz) return { art: 'hering' };
-    const plane = this.naechstes(planen, (p) => p.abstandZurOese(punkt));
-    if (plane) return { art: 'plane', planeId: plane.id };
     const baum = this.naechstes(baeume, (b) => b.abstandZumStamm(punkt));
     if (baum) return { art: 'baum', baumId: baum.id };
     const stange = this.naechstes(stangen, (s) => s.naechsterPunkt(punkt).distanceTo(punkt));
-    return stange ? { art: 'bau', stangeId: stange.id } : { art: 'frei' };
+    if (stange) return { art: 'bau', stangeId: stange.id };
+    const plane = this.naechstes(planen, (p) => p.abstandZurOese(punkt));
+    return plane ? { art: 'plane', planeId: plane.id } : { art: 'frei' };
   }
 
   /** Das nächste Teil innerhalb der Toleranz, sonst null. Gleiche Frage, gleiche Antwort für Planen, Bäume und Stangen. */
