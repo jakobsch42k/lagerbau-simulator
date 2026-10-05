@@ -25,8 +25,10 @@ export class SnapService {
 
   /** @param mitOesen nur im Seil-Werkzeug: Planen-Ösen sind dann Fangpunkte (Spec v2b, D2). */
   snap(treffer: Treffer, bauwerk: Bauwerk, mitOesen = false): SnapPunkt {
-    // Ein Klick auf eine Plane rastet auf ihre nächste Öse ein, egal wie weit; so hängt kein Seilende in der Luft.
+    // Ein Klick auf eine Plane rastet auf eine Spitze, einen Bund oder ein Ende in Reichweite ein, sonst auf ihre nächste Öse, egal wie weit; so hängt kein Seilende in der Luft.
     if (mitOesen && treffer.art === 'plane') {
+      const baut = this.naechsterKandidat(treffer.punkt, bauwerk, false);
+      if (baut) return baut;
       const plane = bauwerk.plane(treffer.planeId);
       if (plane) return { punkt: plane.naechsteOese(treffer.punkt), art: 'oese' };
     }

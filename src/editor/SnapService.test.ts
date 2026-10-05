@@ -83,4 +83,15 @@ describe('SnapService', () => {
     expect(mit.punkt.equals(new Vec3(2, 0, 5), 1e-9)).toBe(true);
     expect(snap.snap(klick, mitPlane).art).toBe('boden');
   });
+
+  it('lässt im Seil-Werkzeug eine Spitze in Reichweite vor der Öse der getroffenen Plane gewinnen', () => {
+    // Linie von der Spitze 3 m entlang x; Länge 4 m: die nächste Öse liegt 0,5 m neben der Spitze.
+    const spitze = dreibein.spitze();
+    const plane = new Plane('pl', spitze, spitze.add(new Vec3(3, 0, 0)), { ...STANDARD_PLANE, neigungGrad: 0 });
+    const mitPlane = bauwerk.mitPlane(plane);
+    const treffer: Treffer = { art: 'plane', punkt: spitze.add(new Vec3(0.07, 0, 0)), planeId: 'pl' };
+    const p = snap.snap(treffer, mitPlane, true);
+    expect(p.art).toBe('spitze');
+    expect(p.punkt.equals(spitze)).toBe(true);
+  });
 });
