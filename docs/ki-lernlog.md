@@ -128,3 +128,9 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Final Review über den ganzen Branch (nachgestellt mit einem Test).
 **Richtig ist:** Reihenfolge Hering → Baum → Bau → Plane; Integrationstest „abgespannter A-Bock + Öse an der Spitze → Hinweise unverändert“.
 **Lehre:** Bei einer Vorrangregel jeden Fall durchspielen, in dem zwei Arten am selben Punkt zusammenfallen — gerade den häufigsten (Plane an der Spitze).
+
+### 2026-10-05 — R2 sah nur das einzelne Viereck
+**Was die KI gemacht hat:** R2 prüfte jedes ebene Viereck lokal (Diagonale oder gemeinsamer Knoten) und ignorierte, dass Ecken schon über andere Dreiecke (Dreibein, A-Bock + Firststange, Füße) oder Abspannseile festliegen; ein stehender Lagerplatz-Bau bekam 9 Warnungen.
+**Gefunden durch:** Jakob beim Ausprobieren eines eigenen Baus.
+**Richtig ist:** Feste Knoten über Dreiecke weitergeben (`FesteKnoten`), R2 nur bei Vierecken mit losem Knoten.
+**Lehre:** Steifigkeit ist eine Eigenschaft des ganzen Baus, nicht eines einzelnen Vierecks; Regeln an echten, größeren Bauten testen, nicht nur am kleinsten Beispiel.
