@@ -127,7 +127,7 @@ describe('ParameterPanel', () => {
     expect(editor.bauwerk.plane('pl')?.params.neigungGrad).toBe(10);
   });
 
-  it('wechselt Seite und Form; „Seite wechseln" gibt es nur bei eben', () => {
+  it('wechselt Seite und Form; „Seite wechseln“ gibt es nur bei eben', () => {
     const { wurzel, editor } = panelMit(Bauwerk.leer().mitPlane(dach(2)), 'pl');
     expect(form(wurzel).value).toBe('eben');
     knopf(wurzel, 'Seite wechseln').click();

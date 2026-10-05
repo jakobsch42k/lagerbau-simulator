@@ -34,5 +34,5 @@ export const STANDARD_ABOCK: ABockParams = { stangenlaenge: 2.4, fussabstand: 1.
 /** Startmaße für „Baum setzen". Nur Darstellung und Einrasten, keine Regel-Schwellwerte. */
 export const STANDARD_BAUM: BaumParams = { durchmesser: 0.3, hoehe: 8 };
 
-/** Startmaße für „Plane spannen" (Spec v2b, D2). Keine Regel-Schwellwerte. */
+/** Startmaße für „Plane spannen“ (Spec v2b, D2). Keine Regel-Schwellwerte. */
 export const STANDARD_PLANE: PlanenParams = { breite: 3, laenge: 4, form: 'eben', neigungGrad: 30, seite: 1 };

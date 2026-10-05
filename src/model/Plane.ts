@@ -28,7 +28,7 @@ export class Plane {
     const linie = ende.sub(start);
     const linienLaenge = linie.length();
     if (!Number.isFinite(linienLaenge) || linienLaenge < MIN_SEILLAENGE) throw new RangeError('Aufhängelinie zu kurz.');
-    // Ohne waagrechten Anteil gibt es keine Richtung „quer zur Linie".
+    // Ohne waagrechten Anteil gibt es keine Richtung „quer zur Linie“.
     if (Math.hypot(linie.x, linie.z) < MIN_SEILLAENGE) throw new RangeError('Aufhängelinie zu steil.');
     const u = linie.normalize();
     const mitte = mitteVon(start, ende);
