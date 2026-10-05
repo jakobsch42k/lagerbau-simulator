@@ -13,7 +13,7 @@ Bisher ist der Simulator ein reiner **Bauwerk-Editor**:
 Die Leiterteams sollen damit künftig **ganze Lagerplätze** planen können: wo Zelte, Kochstelle, Feuerstelle und Lagerbauten auf dem echten Platz stehen, wie die Bauten in ihrer Umgebung aussehen und welches Material das ganze Lager braucht.
 
 Diese Spec legt zweierlei fest:
-- die **Etappen E0–E7** mit Reihenfolge und Abgrenzung. Jede Etappe ab E1 bekommt eine eigene Spec;
+- die **Etappen E0–E6** mit Reihenfolge und Abgrenzung. Jede Etappe ab E1 bekommt eine eigene Spec;
 - das Design von **E0 „Fundament“** im Detail.
 
 Im Code stellt E0 zwei Dinge ab: Eine neue Objektart berührt heute rund zehn Dateien, und die Szene baut bei jedem Klick alles neu.
@@ -24,10 +24,11 @@ Im Code stellt E0 zwei Dinge ab: Eine neue Objektart berührt heute rund zehn Da
 |---|---|---|
 | 1 | Zweck | Lager-Layout planen, Bauten im Kontext sehen, Materialliste fürs ganze Lager. Präsentieren ist kein eigenes Ziel; der Teilen-Link bleibt, wie er ist |
 | 2 | Gelände | **Luftbild als Boden:** Bild laden, Maßstab mit zwei Klicks setzen. Der Boden bleibt flach (y = 0). Verworfen: flache Wiese ohne Bild (der echte Platz müsste nachgebaut werden); Gelände mit Höhen (alle Bauten, Füße, Heringe und Regeln setzen y = 0 voraus) |
-| 3 | Umfang | alle Etappen E0–E7, nacheinander |
-| 4 | Zelte | **beides:** ganze Zelte nach Typ (**Jurte, Hanger, Doppelkegler**) und ein Bahnen-Baukasten für Sonderbauten. Maße und Material pro Typ liefert Jakob |
+| 3 | Umfang | alle Etappen E0–E6, nacheinander |
+| 4 | Zelte | **ganze Zelte nach Typ:** **Jurte** (5er, 6er, 8er; jeweils Komplettdach + 3 Seitenwände, jede Wand einzeln weglassbar), **Hanger** und **Doppelkegler** (beide gekaufte Gruppenzelte). Startwerte aus einer Online-Recherche, Jakob bestätigt oder misst nach. Ursprünglich war zusätzlich ein Bahnen-Baukasten geplant (E7); er wurde am 05.10.2026 gestrichen, weil die Gruppen keine Kohten- oder Jurtenbahnen verwenden |
 | 5 | Platzregeln | **ja, Abstandsregeln.** Welche Regeln mit welchen Abständen gelten, legt Jakob fest; bis dahin `CHECK MANUALLY` |
 | 6 | Architektur | **Eine Welt:** Alles liegt in einem Koordinatensystem. Ein „Bau“ ist eine automatisch erkannte Gruppe verbundener Stangen. Vorher kommt der Umbau auf ein gemeinsames Objekt-Modell (E0). Verworfen: zwei Ebenen (Platz mit Bau-Blöcken plus eigener Bau-Editor), weil Seile vom Bau zu einem Baum am Platz dann über zwei Ebenen laufen würden; ohne Umbau weitermachen (rund 10 Dateien je Art bei etwa 12 neuen Arten) |
+| 7 | Einstellbarkeit (nachgetragen 05.10.2026) | **So einstellbar wie möglich:** Maße, Formen, Namen, Farben und Materialwerte sind Felder im Panel. Feste Objekttypen werden zu **Vorlagen**, die die Felder vorbelegen, plus jeweils „Eigenes“. Zelttypen (E4) sind Vorlagen mit recherchierten, von Jakob bestätigten Startwerten und je Zelt änderbar. Die Abstände der Platzregeln (E6) lassen sich im Programm einstellen und auf den Standard zurücksetzen |
 
 ## Etappen
 
@@ -37,17 +38,17 @@ Im Code stellt E0 zwei Dinge ab: Eine neue Objektart berührt heute rund zehn Da
 | E1 | Editor-Grundlagen | Verschieben per Ziehen (Objekt oder ganzer Bau; angehängte Seile und Planen wandern mit), Mehrfachauswahl, Kopieren/Einfügen/Duplizieren, Drehen für alle Objekte, Draufsicht + „Alles zeigen“, Messwerkzeug + Maßstabsleiste | — |
 | E2 | Luftbild als Boden | Bild laden (PNG/JPG, verkleinert), Maßstab mit zwei Klicks + Meterangabe, Nordpfeil, Deckkraft; die Bodenfläche richtet sich nach dem Bild. Das Bild steckt in der Datei, **nicht im Teilen-Link** (zu groß) | ein echtes Luftbild eines Lagerplatzes zum Testen |
 | E3 | Platz-Objekte | Punkt-Objekte (Feuerstelle, Fahnenmast, Latrine, Wasserstelle, Holzlager), Text-Beschriftungen, Zonen als Polygon (Name, Farbe), Wege und Zäune als Linienzug | Bestätigung der Objektliste |
-| E4 | Zelte als Ganzes | Zelt-Objekt mit Typ (Jurte, Hanger, Doppelkegler), Größe und Drehung; vereinfachter 3D-Körper; Heringe und Abspannung abgeleitet | Maße und Material je Typ (Bahnen, Stangen, Heringe, Seile) |
+| E4 | Zelte als Ganzes | Zelt-Objekt mit Typ (Jurte 5er/6er/8er, Hanger, Doppelkegler) als Vorlage, Maße je Zelt einstellbar, Drehung; bei der Jurte jede der 3 Seitenwände einzeln an/aus (z. B. offenes Küchenzelt); vereinfachter 3D-Körper; Heringe und Abspannung abgeleitet | Bestätigung der recherchierten Startwerte; Maße des Hangers |
 | E5 | Gesamt-Materialliste | gruppiert nach Bau (benennbar), Zelttyp und Platz-Objekten, mit Gesamtsumme; Druckansicht. Dazu der Typ `Bau` und die Regeln R1–R8 je Bau | — |
 | E6 | Platzregeln | Abstandsregeln (z. B. Feuer ↔ Zelt, Latrine ↔ Küche/Wasser, Zelt unter Baum) neben R1–R8 | Regelliste + Abstände |
-| E7 | Bahnen-Baukasten | einzelne Bahnen an Stangen knöpfen (das frühere v2c), z. B. eine Jurtenburg | Bahnen-Geometrie (Formen, Maße, Knopflöcher) |
+| ~~E7~~ | ~~Bahnen-Baukasten~~ | **gestrichen (05.10.2026):** Die Gruppen verwenden keine Kohten- oder Jurtenbahnen. Weglassbare Jurtenwände kommen stattdessen in E4 | — |
 
 **Reihenfolge:**
 - **E0 zuerst:** Sonst kostet jede der rund zwölf neuen Arten etwa zehn Dateien.
 - **E1 vor den Platz-Objekten:** Ohne Verschieben lässt sich kein Layout planen.
 - **E2 früh:** Das Luftbild ist die Arbeitsfläche für alles Weitere.
 - **E6 nach den Objekten:** Die Regeln brauchen Objekte, auf die sie sich beziehen.
-- **E7 zuletzt:** Dort ist die Unsicherheit am größten, und für das Layout bringt es am wenigsten.
+- **E7 gestrichen:** Der Bahnen-Baukasten entfällt (siehe Entscheidung 4).
 
 **Nicht geplant** (kann später als eigene Etappe kommen): Gelände mit Höhen, Bearbeiten am Handy oder Tablet, Sonnenstand und Schatten, Bild-Export, Vorlagen-Bibliothek (das Duplizieren aus E1 deckt das Meiste ab).
 
