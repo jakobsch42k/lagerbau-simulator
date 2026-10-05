@@ -1,6 +1,7 @@
 import type { Vec3 } from '../model/Vec3';
 import type { Analyse } from './Analyse';
 import { R2_PLANAR_TOLERANZ_RELATIV } from './constants';
+import { FesteKnoten } from './FesteKnoten';
 import { BODEN, type Kante, type Knoten, KnotenGraph } from './KnotenGraph';
 import { type Hinweis, hinweis, type Rule } from './Rule';
 
@@ -9,7 +10,7 @@ interface Viereck {
   readonly seiten: readonly [string, string, string, string];
 }
 
-/** R2: Ein ebenes Viereck aus Stangen (und Boden) ohne Diagonale kann sich zum Parallelogramm verziehen. */
+/** R2: Ein ebenes Viereck aus Stangen (und Boden) ohne Diagonale kann sich zum Parallelogramm verziehen, sofern nicht alle Ecken schon anderweitig fest liegen. */
 export class ViereckRule implements Rule {
   readonly name = 'R2';
 
@@ -17,6 +18,7 @@ export class ViereckRule implements Rule {
 
   pruefe(a: Analyse): Hinweis[] {
     const graph = new KnotenGraph(a);
+    const feste = new FesteKnoten(a, graph);
     const nachEcken = new Map<string, { viereck: Viereck; ausgesteift: boolean }>();
     for (const v of this.vierecke(graph)) {
       if (!this.istEben(v)) continue;
@@ -28,7 +30,7 @@ export class ViereckRule implements Rule {
       });
     }
     return [...nachEcken.values()]
-      .filter((e) => !e.ausgesteift)
+      .filter((e) => !e.ausgesteift && e.viereck.knoten.some((k) => !feste.istFest(k)))
       .map((e) => hinweis(this.name, 'Dieses Viereck kann sich verziehen, eine Diagonale fehlt.', e.viereck.seiten.filter((s) => s !== BODEN)));
   }
 
