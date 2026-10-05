@@ -62,6 +62,17 @@ describe('FesteKnoten', () => {
     expect(fest.istFest(bei(new Vec3(0, spitze.y, 0)))).toBe(false);
   });
 
+  it('Seil zwischen zwei Bau-Knoten gibt Festigkeit weiter: abgespannter A-Bock hält die Spitze des zweiten', () => {
+    const zweiter = new ABock('zweiter', new Vec3(4, 0, 0), Math.PI / 2, STANDARD_ABOCK);
+    const bau = einzelnerABock
+      .mitGruppe(zweiter)
+      .mitSeil(new Seil('quer', spitze, new Vec3(-1.5, 0, 0)))
+      .mitSeil(new Seil('brueck', spitze, zweiter.spitze()));
+    const { fest, bei } = aufbau(bau);
+    expect(fest.istFest(bei(zweiter.spitze()))).toBe(true);
+    expect(fest.istFest(aufbau(bau.ohne('quer')).bei(zweiter.spitze()))).toBe(false);
+  });
+
   it('Seil zu einer Plane zählt nicht', () => {
     const plane = new Plane('pl', new Vec3(-1.5, 2.5, -2), new Vec3(-1.5, 2.5, 2), { ...STANDARD_PLANE, neigungGrad: 0 });
     const mitPlane = einzelnerABock.mitPlane(plane).mitSeil(new Seil('s', spitze, new Vec3(-1.5, 2.5, 0)));
