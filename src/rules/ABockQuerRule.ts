@@ -1,8 +1,12 @@
 import { ABock } from '../model/ABock';
 import { BUND_TOLERANZ } from '../model/konstanten';
+import type { Verankerung } from '../model/Verankerung';
 import type { Analyse } from './Analyse';
 import { R1_MIN_WINKEL_ZUR_EBENE_GRAD } from './constants';
 import { type Hinweis, hinweis, type Rule } from './Rule';
+
+/** Nur diese Enden halten einen A-Bock seitlich. Eine Plane hält ihn nicht, ein freies Ende auch nicht (Spec v2b, D3). */
+const HAELT_SEITLICH: ReadonlySet<Verankerung['art']> = new Set(['hering', 'baum', 'bau']);
 
 /** R1: Ein A-Bock ist nur in seiner Ebene steif. Er braucht eine Stange, die aus dieser Ebene herausführt. */
 export class ABockQuerRule implements Rule {
@@ -29,13 +33,13 @@ export class ABockQuerRule implements Rule {
       .some((id) => Math.abs(a.stange(id).richtung.dot(normale)) >= this.minSinus);
   }
 
-  /** Spec v2a, D3: je mindestens ein verankertes Seil auf beiden Seiten der A-Ebene. Enden in der Ebene zählen nicht. */
+  /** Spec v2a/v2b, D3: je mindestens ein Seil zu Hering, Baum oder Bau auf beiden Seiten der A-Ebene. Enden in der Ebene zählen nicht. */
   private istBeidseitigAbgespannt(abock: ABock, a: Analyse): boolean {
     const eigene = new Set(abock.stangen().map((s) => s.id));
     const normale = abock.ebenenNormale();
     const seiten = a
       .seileAn(eigene)
-      .filter((x) => x.anderes.art !== 'frei')
+      .filter((x) => HAELT_SEITLICH.has(x.anderes.art))
       .map((x) => x.anderesEnde.sub(abock.position).dot(normale))
       .filter((abstand) => Math.abs(abstand) >= BUND_TOLERANZ)
       .map((abstand) => Math.sign(abstand));

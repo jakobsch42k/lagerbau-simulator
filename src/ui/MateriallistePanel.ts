@@ -18,13 +18,19 @@ export class MateriallistePanel {
   ) {}
 
   zeige(liste: Materialliste): void {
-    const { stangen, seile, anzahlHeringe, platzbedarf } = liste;
+    const { stangen, seile, anzahlHeringe, planen, platzbedarf } = liste;
     this.tabelle.replaceChildren(
       zeile('th', ['Länge', 'Ø', 'Anzahl']),
       ...stangen.zeilen.map((z) => zeile('td', [`${z.laenge.toFixed(1)} m`, `${z.durchmesserCm} cm`, String(z.anzahl)])),
       zeile('td', ['Bünde', '', String(stangen.anzahlBuende)]),
       ...(seile.length > 0 ? [zeile('th', ['Seil', '', 'Anzahl']), ...seile.map((s) => zeile('td', [`${s.laenge} m`, '', String(s.anzahl)]))] : []),
       ...(anzahlHeringe > 0 ? [zeile('td', ['Heringe', '', String(anzahlHeringe)])] : []),
+      ...(planen.length > 0
+        ? [
+            zeile('th', ['Plane', '', 'Anzahl']),
+            ...planen.map((p) => zeile('td', [`${p.breite.toFixed(1)} × ${p.laenge.toFixed(1)} m`, '', String(p.anzahl)])),
+          ]
+        : []),
     );
     this.platz.textContent = platzbedarf ? `Platzbedarf: ${platzbedarf.laenge.toFixed(1)} × ${platzbedarf.breite.toFixed(1)} m` : '';
   }

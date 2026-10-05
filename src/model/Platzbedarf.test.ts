@@ -3,7 +3,8 @@ import { kochstelle } from '../beispiele/kochstelle';
 import { ABock } from './ABock';
 import { Baum } from './Baum';
 import { Bauwerk } from './Bauwerk';
-import { STANDARD_ABOCK, STANDARD_BAUM } from './params';
+import { Plane } from './Plane';
+import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_PLANE } from './params';
 import { Platzbedarf } from './Platzbedarf';
 import { Seil } from './Seil';
 import { Vec3 } from './Vec3';
@@ -42,5 +43,19 @@ describe('Platzbedarf', () => {
   it('gibt es ohne Füße und Heringe nicht', () => {
     expect(Platzbedarf.aus(Bauwerk.leer())).toBeNull();
     expect(Platzbedarf.aus(Bauwerk.leer().mitBaum(new Baum('b', Vec3.NULL, STANDARD_BAUM)))).toBeNull();
+  });
+
+  it('zählt alle Ösen einer Plane mit, auch den Überstand eines Regendachs', () => {
+    const regendach = new Plane('dach', new Vec3(0, 2, 0), new Vec3(3, 2, 0), STANDARD_PLANE); // 30°, 3 × 4 m
+    const p = Platzbedarf.aus(kochstelle().mitPlane(regendach));
+    expect(p?.laenge).toBeCloseTo(4, 9); // x von −0,5 bis 3,5
+    expect(p?.breite).toBeCloseTo(0.8 + 3 * Math.cos(Math.PI / 6), 9); // z von −2,6 bis 0,8
+  });
+
+  it('gibt auch einer Plane allein einen Platzbedarf', () => {
+    const plane = new Plane('pl', new Vec3(0, 1, 0), new Vec3(4, 1, 0), { ...STANDARD_PLANE, neigungGrad: 0 });
+    const p = Platzbedarf.aus(Bauwerk.leer().mitPlane(plane));
+    expect(p?.laenge).toBeCloseTo(4, 9);
+    expect(p?.breite).toBeCloseTo(3, 9);
   });
 });

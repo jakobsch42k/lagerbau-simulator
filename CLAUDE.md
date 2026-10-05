@@ -15,8 +15,8 @@
 
 TypeScript + Vite + three.js, Vitest (+ happy-dom für DOM-Tests), Playwright (Browser + Electron). Statisch, kein Backend. Deploy: GitHub Pages via Actions. Windows-Programm: Electron + electron-builder. Repo `jakobsch42k/lagerbau-simulator` (öffentlich, MIT).
 
-- `src/model/` — Domain (immutable), kein three.js: Stange, Bund, Fuss, Baugruppen, Seil, Baum, Verankerung/Hering (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
-- `src/rules/` — `Rule`-Klassen R1–R8 + `RuleEngine`, kein three.js (R6–R8: Seile; Spec v2a)
+- `src/model/` — Domain (immutable), kein three.js: Stange, Bund, Fuss, Baugruppen, Seil, Baum, Plane (Ösen aus der Geometrie), Verankerung/Hering (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
+- `src/rules/` — `Rule`-Klassen R1–R8 + `RuleEngine`, kein three.js (R6–R8: Seile; Spec v2a). Planen haben bewusst keine Regeln (Spec v2b)
 - `src/editor/` — three.js-Szene, Einrasten, Werkzeuge, Undo
 - `src/share/` — Serializer, URL-Codec (`lz-string`)
 - `src/ui/` — Panels, Ansichtsmodus

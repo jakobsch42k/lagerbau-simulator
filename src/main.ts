@@ -19,6 +19,9 @@ import { Teilen } from './ui/Teilen';
 
 const MELDUNG_DAUER_MS = 4000;
 
+/** Was ein Zwei-Klick-Werkzeug gerade spannt, für die Statuszeile. */
+const ZWEI_PUNKT_TEIL: Partial<Record<WerkzeugName, string>> = { stange: 'Stange', seil: 'Seil', plane: 'Plane' };
+
 function element<T extends HTMLElement>(selektor: string): T {
   const el = document.querySelector<T>(selektor);
   if (!el) throw new Error(`Element ${selektor} fehlt in index.html`);
@@ -63,7 +66,7 @@ szene.leinwand.addEventListener('pointerdown', (e) => {
 });
 szene.leinwand.addEventListener('pointerup', (e) => {
   if (druck && Math.hypot(e.clientX - druck.x, e.clientY - druck.y) < KLICK_TOLERANZ_PX) {
-    const treffer = szene.treffer(e, editor.trifftSeile);
+    const treffer = szene.treffer(e, editor.klickZiele);
     if (treffer) editor.klick(treffer);
   }
   druck = null;
@@ -100,7 +103,7 @@ element<HTMLInputElement>('#inp-laden').addEventListener('change', async (e) => 
   }
 });
 window.addEventListener('keydown', (e) => {
-  if (modus.aktiv || e.target instanceof HTMLInputElement) return;
+  if (modus.aktiv || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   if (editor.taste(e.key, e.ctrlKey || e.metaKey)) e.preventDefault();
 });
 window.addEventListener('hashchange', ladeAusAdresse);
@@ -117,7 +120,7 @@ editor.abonniere((z) => {
   for (const knopf of werkzeugKnoepfe) knopf.setAttribute('aria-pressed', String(knopf.dataset.werkzeug === z.werkzeug));
   element<HTMLButtonElement>('#btn-rueck').disabled = !z.kannRueckgaengig;
   element<HTMLButtonElement>('#btn-wieder').disabled = !z.kannWiederholen;
-  const teil = z.werkzeug === 'seil' ? 'Seil' : 'Stange';
+  const teil = ZWEI_PUNKT_TEIL[z.werkzeug] ?? 'Teil';
   meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : '');
   if (z.meldung) {
     clearTimeout(meldungsTimer);

@@ -79,6 +79,7 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Review (Minor, noch offen)
 **Richtig ist:** Gleiche Frage, gleiche Antwort: bei beiden den nächsten Treffer nehmen.
 **Lehre:** Gleiche Fragen („welches Objekt ist gemeint?“) im ganzen Code gleich beantworten.
+**Behoben:** v2b Task 2 (2026-10-02) — der VerankerungsFinder nimmt jetzt für Planen, Bäume und Stangen das nächste Teil in Reichweite.
 
 ### 2026-10-01 — Baumkrone nicht anklickbar
 **Was die KI gemacht hat:** In Task 9 trägt nur der Stamm `userData.baumId`; ein Klick auf die Krone geht zum Boden durch.
@@ -97,3 +98,33 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Review
 **Richtig ist:** Die Zeilen für `src/model/` und `src/rules/` (R1–R8) stehen im Commit.
 **Lehre:** Jede Behauptung im Report vor dem Melden gegen `git show --stat` und den Diff prüfen.
+
+### 2026-10-02 — Boden-Meldung passte nicht zu jedem Fall
+**Was die KI gemacht hat:** Die Spec-Meldung „Plane reicht in den Boden: Neigung oder Breite verringern.“ half nicht, wenn auf einer schrägen Aufhängelinie der Überstand (die Länge) in den Boden reicht.
+**Gefunden durch:** Nachrechnen der Testwerte beim Schreiben des Plans.
+**Richtig ist:** „Plane reicht in den Boden: Neigung, Breite oder Länge verringern.“ (als bewusste Abweichung im Plan vermerkt).
+**Lehre:** Fehlermeldungen gegen jeden Fall prüfen, der sie auslöst, nicht nur gegen den naheliegenden.
+
+### 2026-10-02 — Typ-Casts im Plan, die tsc ablehnt
+**Was die KI gemacht hat:** Der Planentwurf enthielt in Tests Casts wie `0 as 1` und `'schief' as PlanenForm`; tsc lehnt sie ab („Conversion … may be a mistake“), und `npm run build` prüft auch die Testdateien (tsconfig include: src, e2e).
+**Gefunden durch:** Selbst-Review des Plans vor der Ausführung.
+**Richtig ist:** `as unknown as PlanenForm` bzw. `as unknown as 1`.
+**Lehre:** Vor dem Schreiben von Test-Code nachsehen, ob der Build die Tests mit prüft.
+
+### 2026-10-02 — Implementer fügte einen ungeplanten Test hinzu und änderte bestehende Tests
+**Was die KI gemacht hat:** In Task 2 schrieb der Implementer einen zusätzlichen Test („Seilenden sollten Planen berücksichtigen“) mit einem Seil, das nie geprüft wurde, und ergänzte in sechs bestehenden Tests ein überflüssiges `[]` als vierten Parameter. Damit testeten die alten Tests den Standardwert nicht mehr.
+**Gefunden durch:** Task-Review (Spec ❌, Extra).
+**Richtig ist:** Nur die Tests aus dem Plan; bestehende Tests unverändert lassen, damit der Standardparameter geprüft bleibt. Behoben in Fix-Runde 1.
+**Lehre:** „Mehr Tests“ ist nicht automatisch besser; ein Test ohne Aussage und Änderungen an alten Tests verschleiern, was geprüft wird.
+
+### 2026-10-02 — Falsche Testzahlen im Implementer-Bericht (wiederholt)
+**Was die KI gemacht hat:** Der Bericht zu Task 3 nannte für LosesSeilRule 10 Tests; die Datei hat 3. Die Summe stimmte nicht mit den Einzelzahlen überein.
+**Gefunden durch:** Task-Review.
+**Richtig ist:** Zahlen nur aus der echten Testausgabe kopieren.
+**Lehre:** Wie schon in v2a: Berichte der Implementer nie ungeprüft übernehmen; Testzahlen gegen den Diff halten.
+
+### 2026-10-05 — Verankerungs-Reihenfolge übersah eine Öse auf der Spitze
+**Was die KI gemacht hat:** Die Spec setzte die Plane in der Verankerung vor Baum und Bau. Liegt eine Öse innerhalb 5 cm einer abgespannten Spitze (z. B. Standardplane 4 m auf einer ~4 m langen Linie), zählten die Abspannseile als „an der Plane“: R1 und R3 warnten fälschlich, R6 verstummte.
+**Gefunden durch:** Final Review über den ganzen Branch (nachgestellt mit einem Test).
+**Richtig ist:** Reihenfolge Hering → Baum → Bau → Plane; Integrationstest „abgespannter A-Bock + Öse an der Spitze → Hinweise unverändert“.
+**Lehre:** Bei einer Vorrangregel jeden Fall durchspielen, in dem zwei Arten am selben Punkt zusammenfallen — gerade den häufigsten (Plane an der Spitze).

@@ -3,8 +3,9 @@ import { ABock } from './ABock';
 import { Baum } from './Baum';
 import { Bauwerk } from './Bauwerk';
 import { Dreibein } from './Dreibein';
+import { Plane } from './Plane';
 import { Seil } from './Seil';
-import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN } from './params';
+import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from './params';
 import { Stange } from './Stange';
 import { Vec3 } from './Vec3';
 
@@ -96,5 +97,24 @@ describe('Bauwerk', () => {
       .mitStange(new Stange('s2', new Vec3(12, 0, 0), new Vec3(12, 2, 0), 0.08));
     expect(geaendert.seile.map((s) => s.id)).toEqual(['seil']);
     expect(geaendert.baeume.map((b) => b.id)).toEqual(['baum']);
+  });
+
+  it('nimmt Planen auf, ersetzt und entfernt sie, ohne sich selbst zu ändern', () => {
+    const plane = new Plane('pl', new Vec3(0, 2, 0), new Vec3(4, 2, 0), STANDARD_PLANE);
+    const b = Bauwerk.leer().mitPlane(plane);
+    expect(b.istLeer).toBe(false);
+    expect(b.plane('pl')).toBe(plane);
+    expect(b.enthaelt('pl')).toBe(true);
+    const flach = plane.mitParams({ ...STANDARD_PLANE, neigungGrad: 0 });
+    expect(b.ersetzePlane(flach).plane('pl')).toBe(flach);
+    expect(b.plane('pl')).toBe(plane);
+    expect(b.ohne('pl').istLeer).toBe(true);
+    expect(() => b.mitPlane(plane)).toThrow('ID pl ist schon vergeben');
+    expect(() => Bauwerk.leer().ersetzePlane(plane)).toThrow('Plane pl gibt es nicht');
+  });
+
+  it('kennt Planen in der Verankerung', () => {
+    const plane = new Plane('pl', new Vec3(2, 1, -2), new Vec3(2, 1, 2), { ...STANDARD_PLANE, neigungGrad: 0, breite: 1 });
+    expect(Bauwerk.leer().mitPlane(plane).verankerung(new Vec3(2, 1, 0))).toEqual({ art: 'plane', planeId: 'pl' });
   });
 });
