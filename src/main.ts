@@ -103,7 +103,7 @@ element<HTMLInputElement>('#inp-laden').addEventListener('change', async (e) => 
   }
 });
 window.addEventListener('keydown', (e) => {
-  if (modus.aktiv || e.target instanceof HTMLInputElement) return;
+  if (modus.aktiv || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   if (editor.taste(e.key, e.ctrlKey || e.metaKey)) e.preventDefault();
 });
 window.addEventListener('hashchange', ladeAusAdresse);
