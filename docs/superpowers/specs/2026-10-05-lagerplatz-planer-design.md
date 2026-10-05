@@ -38,16 +38,16 @@ Im Code stellt E0 zwei Dinge ab: Eine neue Objektart berührt heute rund zehn Da
 | E2 | Luftbild als Boden | Bild laden (PNG/JPG, verkleinert), Maßstab mit zwei Klicks + Meterangabe, Nordpfeil, Deckkraft; die Bodenfläche richtet sich nach dem Bild. Das Bild steckt in der Datei, **nicht im Teilen-Link** (zu groß) | ein echtes Luftbild eines Lagerplatzes zum Testen |
 | E3 | Platz-Objekte | Punkt-Objekte (Feuerstelle, Fahnenmast, Latrine, Wasserstelle, Holzlager), Text-Beschriftungen, Zonen als Polygon (Name, Farbe), Wege und Zäune als Linienzug | Bestätigung der Objektliste |
 | E4 | Zelte als Ganzes | Zelt-Objekt mit Typ (Jurte, Hanger, Doppelkegler), Größe und Drehung; vereinfachter 3D-Körper; Heringe und Abspannung abgeleitet | Maße und Material je Typ (Bahnen, Stangen, Heringe, Seile) |
-| E5 | Bahnen-Baukasten | einzelne Bahnen an Stangen knöpfen (das frühere v2c), z. B. eine Jurtenburg | Bahnen-Geometrie (Formen, Maße, Knopflöcher) |
-| E6 | Gesamt-Materialliste | gruppiert nach Bau (benennbar), Zelttyp und Platz-Objekten, mit Gesamtsumme; Druckansicht. Dazu der Typ `Bau` und die Regeln R1–R8 je Bau | — |
-| E7 | Platzregeln | Abstandsregeln (z. B. Feuer ↔ Zelt, Latrine ↔ Küche/Wasser, Zelt unter Baum) neben R1–R8 | Regelliste + Abstände |
+| E5 | Gesamt-Materialliste | gruppiert nach Bau (benennbar), Zelttyp und Platz-Objekten, mit Gesamtsumme; Druckansicht. Dazu der Typ `Bau` und die Regeln R1–R8 je Bau | — |
+| E6 | Platzregeln | Abstandsregeln (z. B. Feuer ↔ Zelt, Latrine ↔ Küche/Wasser, Zelt unter Baum) neben R1–R8 | Regelliste + Abstände |
+| E7 | Bahnen-Baukasten | einzelne Bahnen an Stangen knöpfen (das frühere v2c), z. B. eine Jurtenburg | Bahnen-Geometrie (Formen, Maße, Knopflöcher) |
 
 **Reihenfolge:**
 - **E0 zuerst:** Sonst kostet jede der rund zwölf neuen Arten etwa zehn Dateien.
 - **E1 vor den Platz-Objekten:** Ohne Verschieben lässt sich kein Layout planen.
 - **E2 früh:** Das Luftbild ist die Arbeitsfläche für alles Weitere.
-- **E7 nach den Objekten:** Die Regeln brauchen Objekte, auf die sie sich beziehen.
-- **E5 zuletzt:** Dort ist die Unsicherheit am größten, und für das Layout bringt es am wenigsten.
+- **E6 nach den Objekten:** Die Regeln brauchen Objekte, auf die sie sich beziehen.
+- **E7 zuletzt:** Dort ist die Unsicherheit am größten, und für das Layout bringt es am wenigsten.
 
 **Nicht geplant** (kann später als eigene Etappe kommen): Gelände mit Höhen, Bearbeiten am Handy oder Tablet, Sonnenstand und Schatten, Bild-Export, Vorlagen-Bibliothek (das Duplizieren aus E1 deckt das Meiste ab).
 
@@ -166,8 +166,8 @@ Die Signatur von `Szene.zeige(…)` bleibt; `main.ts` ändert sich nicht.
 ### Nicht in E0
 
 - sichtbare neue Funktionen;
-- Regeln oder Materialliste je Bau (kommen mit E6);
-- ein Materialbeitrag je Art (E6);
+- Regeln oder Materialliste je Bau (kommen mit E5);
+- ein Materialbeitrag je Art (E5);
 - Ziehen, Kopieren, Draufsicht (E1);
 - variable Bodengröße (E2).
 
