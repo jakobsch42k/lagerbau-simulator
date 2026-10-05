@@ -122,3 +122,9 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Task-Review.
 **Richtig ist:** Zahlen nur aus der echten Testausgabe kopieren.
 **Lehre:** Wie schon in v2a: Berichte der Implementer nie ungeprüft übernehmen; Testzahlen gegen den Diff halten.
+
+### 2026-10-05 — Verankerungs-Reihenfolge übersah eine Öse auf der Spitze
+**Was die KI gemacht hat:** Die Spec setzte die Plane in der Verankerung vor Baum und Bau. Liegt eine Öse innerhalb 5 cm einer abgespannten Spitze (z. B. Standardplane 4 m auf einer ~4 m langen Linie), zählten die Abspannseile als „an der Plane“: R1 und R3 warnten fälschlich, R6 verstummte.
+**Gefunden durch:** Final Review über den ganzen Branch (nachgestellt mit einem Test).
+**Richtig ist:** Reihenfolge Hering → Baum → Bau → Plane; Integrationstest „abgespannter A-Bock + Öse an der Spitze → Hinweise unverändert“.
+**Lehre:** Bei einer Vorrangregel jeden Fall durchspielen, in dem zwei Arten am selben Punkt zusammenfallen — gerade den häufigsten (Plane an der Spitze).

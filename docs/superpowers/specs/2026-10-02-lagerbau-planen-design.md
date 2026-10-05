@@ -33,7 +33,7 @@ v2b ist der zweite der drei Teile aus der v2a-Spec: v2a Abspannungen (fertig) �
   - eine Öse tiefer als `−FUSS_TOLERANZ` → „Plane reicht in den Boden: Neigung oder Breite verringern."
 - Unveränderliche Updates: `mitParams(...)` liefert eine neue `Plane` und prüft dabei alles neu.
 - **`Bauwerk`** bekommt die Liste `planen` mit `mitPlane`, `ersetzePlane`, `plane(id)`. `ohne(id)` entfernt auch Planen, `enthaelt(id)` kennt sie, Ids sind über alle Teile eindeutig.
-- **Verankerung** bekommt die Art `{ art: 'plane'; planeId }`: Ein Seilende höchstens `BUND_TOLERANZ` von einer Öse entfernt hängt an dieser Plane. Neue Reihenfolge: **Hering → Plane → Baum → Bau → frei.** Ein Seil zu einer Öse einer Bodenplane am Boden ist also ein Hering, genau wie beim Abstecken einer Bodenplane.
+- **Verankerung** bekommt die Art `{ art: 'plane'; planeId }`: Ein Seilende höchstens `BUND_TOLERANZ` von einer Öse entfernt hängt an dieser Plane. Neue Reihenfolge: **Hering → Baum → Bau → Plane → frei.** Ein Seil zu einer Öse einer Bodenplane am Boden ist also ein Hering, genau wie beim Abstecken einer Bodenplane. Geändert nach dem Final Review (2026-10-05): Eine Öse, die auf einer Spitze, einem Bund oder an einem Baum liegt, übernimmt sonst die Abspannseile des Baus; der Knoten sitzt dort am Bau.
 - **Seile wandern nicht mit**, wenn eine Plane geändert oder neu gespannt wird (wie in v2a). Die alten Seilenden hängen dann in der Luft, und R8 meldet sie.
 - Das Tool prüft nicht, ob die Plane selbst richtig auf Stangen aufliegt oder hängt.
 
@@ -91,7 +91,7 @@ Keine neue Regel, keine Hinweise zu Planen selbst. Anpassungen an bestehenden Re
 - **Unit (TDD):**
   - `Plane`: `eben` bei 0°, 30°, 90°; Satteldach; eine schräge Linie ergibt ein Rechteck mit rechten Winkeln; Überstand mittig; immer 8 Ösen; jede Fehlerart aus D1 mit ihrer Meldung; `mitParams` prüft neu.
   - `Bauwerk`: `mitPlane`, `ersetzePlane`, `plane(id)`; `ohne` entfernt Planen; eindeutige Ids.
-  - Verankerung: `plane` an einer Öse; Reihenfolge (Öse am Boden → Hering, Öse an einem Baum → Plane).
+  - Verankerung: `plane` an einer Öse; Reihenfolge (Öse am Boden → Hering, Öse an einem Baum → Baum; Öse fern von Baum und Stange → Plane).
   - Regeln: R1 ignoriert Seile zu Planen; R7 feuert für ein tiefes Seil Öse ↔ Baum; R8 still bei Seilen zu Planen.
   - Serializer: Rundreise v3; v1- und v2-Links lesen; Grenze inkl. Planen; ungültige Planenwerte abgelehnt.
   - Materialliste: Gruppierung, 4 × 3 = 3 × 4, Rundung, Sortierung. Platzbedarf mit Plane, auch eine Plane allein.
