@@ -148,6 +148,10 @@ export class DrawSeilTool extends ZweiPunktWerkzeug {
   }
 }
 
+/** Beim Anlegen gibt es noch keine Plane, deren Maße man ändern könnte; die Meldung des Modells („Neigung, Breite oder Länge verringern“) passt nur zum Bearbeiten im Panel. */
+const PLANE_BODEN_MODELLFEHLER = 'Plane reicht in den Boden';
+const PLANE_BODEN_BEIM_ERSTELLEN = 'Plane reicht in den Boden: Aufhängelinie höher oder waagrechter spannen.';
+
 /** Zwei Klicks ergeben die Aufhängelinie einer Plane mit Startmaßen (Spec v2b, D2). */
 export class DrawPlaneTool extends ZweiPunktWerkzeug {
   readonly name = 'plane' as const;
@@ -166,7 +170,8 @@ export class DrawPlaneTool extends ZweiPunktWerkzeug {
       try {
         return new Plane(id, start, ende, { ...STANDARD_PLANE, neigungGrad: grad });
       } catch (e) {
-        if (!(e instanceof RangeError) || grad === 0) throw e;
+        if (!(e instanceof RangeError)) throw e;
+        if (grad === 0) throw e.message.startsWith(PLANE_BODEN_MODELLFEHLER) ? new RangeError(PLANE_BODEN_BEIM_ERSTELLEN) : e;
       }
     }
   }

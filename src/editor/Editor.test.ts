@@ -238,7 +238,7 @@ describe('Editor', () => {
     e.klick(boden(0, 0));
     e.klick({ art: 'stange', punkt: new Vec3(2, 1, 0), stangeId: 'p' });
     expect(e.bauwerk.planen).toHaveLength(0);
-    expect(e.zustand().meldung).toBe('Plane reicht in den Boden: Neigung, Breite oder Länge verringern.');
+    expect(e.zustand().meldung).toBe('Plane reicht in den Boden: Aufhängelinie höher oder waagrechter spannen.');
     expect(e.zustand().stangenStart).toBeNull();
   });
 
