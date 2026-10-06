@@ -17,12 +17,12 @@ export interface PlanenZeile {
 
 const aufZehntel = (x: number): number => Math.round(x * 10) / 10;
 
-/** Alles, was man zum Aufbauen holen muss: Stangen, Seile, Heringe, Planen, dazu der Platzbedarf. */
+/** Alles, was man zum Aufbauen holen muss: Stangen, Seile, Haringe, Planen, dazu der Platzbedarf. */
 export class Materialliste {
   private constructor(
     readonly stangen: Stangenliste,
     readonly seile: readonly SeilZeile[],
-    readonly anzahlHeringe: number,
+    readonly anzahlHaringe: number,
     readonly planen: readonly PlanenZeile[],
     readonly platzbedarf: Platzbedarf | null,
   ) {}
@@ -38,7 +38,7 @@ export class Materialliste {
     return new Materialliste(
       Stangenliste.aus(bauwerk),
       seile,
-      bauwerk.heringe().length,
+      bauwerk.haringe().length,
       Materialliste.planen(bauwerk),
       Platzbedarf.aus(bauwerk),
     );

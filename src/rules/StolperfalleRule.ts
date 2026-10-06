@@ -2,7 +2,7 @@ import type { Analyse } from './Analyse';
 import { R7_MIN_HOEHE } from './constants';
 import { type Hinweis, hinweis, type Rule } from './Rule';
 
-/** R7: Ein Querseil (beide Enden an Bau, Baum oder Plane) darf nicht tief hängen. Seile zum Hering sind normal, freie Enden meldet R8. */
+/** R7: Ein Querseil (beide Enden an Bau, Baum oder Plane) darf nicht tief hängen. Seile zum Haring sind normal, freie Enden meldet R8. */
 export class StolperfalleRule implements Rule {
   readonly name = 'R7';
 

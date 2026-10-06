@@ -33,7 +33,7 @@ v2b ist der zweite der drei Teile aus der v2a-Spec: v2a Abspannungen (fertig) �
   - eine Öse tiefer als `−FUSS_TOLERANZ` → „Plane reicht in den Boden: Neigung oder Breite verringern."
 - Unveränderliche Updates: `mitParams(...)` liefert eine neue `Plane` und prüft dabei alles neu.
 - **`Bauwerk`** bekommt die Liste `planen` mit `mitPlane`, `ersetzePlane`, `plane(id)`. `ohne(id)` entfernt auch Planen, `enthaelt(id)` kennt sie, Ids sind über alle Teile eindeutig.
-- **Verankerung** bekommt die Art `{ art: 'plane'; planeId }`: Ein Seilende höchstens `BUND_TOLERANZ` von einer Öse entfernt hängt an dieser Plane. Neue Reihenfolge: **Hering → Baum → Bau → Plane → frei.** Ein Seil zu einer Öse einer Bodenplane am Boden ist also ein Hering, genau wie beim Abstecken einer Bodenplane. Geändert nach dem Final Review (2026-10-05): Eine Öse, die auf einer Spitze, einem Bund oder an einem Baum liegt, übernimmt sonst die Abspannseile des Baus; der Knoten sitzt dort am Bau.
+- **Verankerung** bekommt die Art `{ art: 'plane'; planeId }`: Ein Seilende höchstens `BUND_TOLERANZ` von einer Öse entfernt hängt an dieser Plane. Neue Reihenfolge: **Haring → Baum → Bau → Plane → frei.** Ein Seil zu einer Öse einer Bodenplane am Boden ist also ein Haring, genau wie beim Abstecken einer Bodenplane. Geändert nach dem Final Review (2026-10-05): Eine Öse, die auf einer Spitze, einem Bund oder an einem Baum liegt, übernimmt sonst die Abspannseile des Baus; der Knoten sitzt dort am Bau.
 - **Seile wandern nicht mit**, wenn eine Plane geändert oder neu gespannt wird (wie in v2a). Die alten Seilenden hängen dann in der Luft, und R8 meldet sie.
 - Das Tool prüft nicht, ob die Plane selbst richtig auf Stangen aufliegt oder hängt.
 
@@ -64,10 +64,10 @@ v2b ist der zweite der drei Teile aus der v2a-Spec: v2a Abspannungen (fertig) �
 Keine neue Regel, keine Hinweise zu Planen selbst. Anpassungen an bestehenden Regeln, damit die neue Verankerungsart richtig zählt:
 
 - **R1 „A-Bock quer":** Ein Seil, dessen anderes Ende an einer Plane hängt, zählt **nicht** als Sicherung des A-Bocks. Eine Plane hält einen A-Bock nicht seitlich. (Heute filtert R1 nur `frei` aus; künftig auch `plane`.)
-- **R6 „Abspannwinkel":** unverändert, gilt nur für Seile Bau → Hering.
-- **R7 „Stolperfalle":** gilt wie in der v2a-Spec für jedes Seil, bei dem **kein** Ende ein Hering ist. Ein Ende an einer Plane zählt dabei wie Bau oder Baum: Ein tiefes Seil von einer Öse zu einem Baum feuert R7. (Heute erkennt der Code ein Querseil nur an `bau`/`baum`; `plane` kommt dazu. Ein freies Ende bleibt bei R8.)
+- **R6 „Abspannwinkel":** unverändert, gilt nur für Seile Bau → Haring.
+- **R7 „Stolperfalle":** gilt wie in der v2a-Spec für jedes Seil, bei dem **kein** Ende ein Haring ist. Ein Ende an einer Plane zählt dabei wie Bau oder Baum: Ein tiefes Seil von einer Öse zu einem Baum feuert R7. (Heute erkennt der Code ein Querseil nur an `bau`/`baum`; `plane` kommt dazu. Ein freies Ende bleibt bei R8.)
 - **R8 „Seil hängt in der Luft":** unverändert; `plane` gilt als verankert.
-- R3 (Standfläche) zählt weiter nur Heringe von Seilen am Bau. Planen ändern die Standfläche nicht.
+- R3 (Standfläche) zählt weiter nur Haringe von Seilen am Bau. Planen ändern die Standfläche nicht.
 
 ## D4 Materialliste & Platzbedarf
 
@@ -76,8 +76,8 @@ Keine neue Regel, keine Hinweise zu Planen selbst. Anpassungen an bestehenden Re
   - Gruppierung nach den auf 0,1 m gerundeten Maßen, damit nie zwei Zeilen mit gleichem Text entstehen;
   - Anzeige wie bisher mit Punkt: `3.0 × 4.0 m`;
   - Sortierung: größere Seite absteigend, dann kleinere Seite absteigend.
-- Seile und Heringe bleiben wie in v2a; Seile an Planen werden normal mitgezählt.
-- **Platzbedarf:** Das Rechteck umfasst zusätzlich alle Ösen aller Planen, auf den Boden projiziert. Der Überstand eines Regendachs zählt also mit. Eine einzelne Plane zwischen zwei Bäumen hat damit einen Platzbedarf, auch ohne Füße und Heringe. Bäume zählen weiterhin nicht.
+- Seile und Haringe bleiben wie in v2a; Seile an Planen werden normal mitgezählt.
+- **Platzbedarf:** Das Rechteck umfasst zusätzlich alle Ösen aller Planen, auf den Boden projiziert. Der Überstand eines Regendachs zählt also mit. Eine einzelne Plane zwischen zwei Bäumen hat damit einen Platzbedarf, auch ohne Füße und Haringe. Bäume zählen weiterhin nicht.
 
 ## D5 Daten (Teilen/Speichern)
 
@@ -91,7 +91,7 @@ Keine neue Regel, keine Hinweise zu Planen selbst. Anpassungen an bestehenden Re
 - **Unit (TDD):**
   - `Plane`: `eben` bei 0°, 30°, 90°; Satteldach; eine schräge Linie ergibt ein Rechteck mit rechten Winkeln; Überstand mittig; immer 8 Ösen; jede Fehlerart aus D1 mit ihrer Meldung; `mitParams` prüft neu.
   - `Bauwerk`: `mitPlane`, `ersetzePlane`, `plane(id)`; `ohne` entfernt Planen; eindeutige Ids.
-  - Verankerung: `plane` an einer Öse; Reihenfolge (Öse am Boden → Hering, Öse an einem Baum → Baum; Öse fern von Baum und Stange → Plane).
+  - Verankerung: `plane` an einer Öse; Reihenfolge (Öse am Boden → Haring, Öse an einem Baum → Baum; Öse fern von Baum und Stange → Plane).
   - Regeln: R1 ignoriert Seile zu Planen; R7 feuert für ein tiefes Seil Öse ↔ Baum; R8 still bei Seilen zu Planen.
   - Serializer: Rundreise v3; v1- und v2-Links lesen; Grenze inkl. Planen; ungültige Planenwerte abgelehnt.
   - Materialliste: Gruppierung, 4 × 3 = 3 × 4, Rundung, Sortierung. Platzbedarf mit Plane, auch eine Plane allein.
@@ -116,5 +116,5 @@ Hinweise für Planen, Prüfung, ob eine Plane trägt oder richtig hängt, Durchh
 - Manuell (Jakob):
   - ein Satteldach über die Firststange der Kochstelle spannen, die Neigung ändern, die Form auf „eben" stellen und die Seite wechseln;
   - eine Bodenplane, eine Wand und ein Regendach zwischen zwei Bäumen spannen;
-  - ein Seil von einer Öse zu einem Hering spannen; die Plane danach ändern, und R8 meldet das Seil;
+  - ein Seil von einer Öse zu einem Haring spannen; die Plane danach ändern, und R8 meldet das Seil;
   - die Materialliste nennt die Planengrößen, und der Platzbedarf umfasst den Überstand.

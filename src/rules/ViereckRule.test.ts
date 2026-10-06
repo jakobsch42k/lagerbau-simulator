@@ -6,6 +6,7 @@ import { STANDARD_ABOCK, STANDARD_DREIBEIN } from '../model/params';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
 import { Analyse } from './Analyse';
+import { lagertor } from './lagertor.fixture';
 import { ViereckRule } from './ViereckRule';
 
 const regel = new ViereckRule(0.05);
@@ -45,5 +46,17 @@ describe('ViereckRule (R2)', () => {
     const riegelSchief = Stange.zwischen('r', new Vec3(0, 2, 0), punktAufSchief, 0.08);
     const verwunden = Bauwerk.leer().mitStange(pfosten0).mitStange(schief).mitStange(riegelSchief);
     expect(pruefe(verwunden)).toEqual([]);
+  });
+
+  describe('feste Ecken (Lagertor aus zwei A-Böcken mit Firststange)', () => {
+    it('ohne Seile: die Spitzen sind lose, beide Vierecke werden gemeldet', () => {
+      const h = pruefe(lagertor(false));
+      expect(h).toHaveLength(2);
+      expect(h.every((x) => x.regel === 'R2')).toBe(true);
+    });
+
+    it('mit Längsabspannung je Spitze: alle Ecken fest, keine R2-Hinweise', () => {
+      expect(pruefe(lagertor(true))).toEqual([]);
+    });
   });
 });

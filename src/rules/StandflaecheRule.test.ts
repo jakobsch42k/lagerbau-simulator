@@ -44,7 +44,7 @@ describe('StandflaecheRule (R3)', () => {
     expect(h[0]?.betroffeneTeile).not.toContain('b-bein-0');
   });
 
-  it('zählt die Heringe angebundener Seile zur Standfläche', () => {
+  it('zählt die Haringe angebundener Seile zur Standfläche', () => {
     const abock = new ABock('a', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK);
     const allein = Bauwerk.leer().mitGruppe(abock);
     expect(pruefe(allein)).toHaveLength(1);
@@ -54,7 +54,7 @@ describe('StandflaecheRule (R3)', () => {
     expect(pruefe(abgespannt)).toEqual([]);
   });
 
-  it('zählt Heringe von Seilen, die nicht am Bau hängen, nicht', () => {
+  it('zählt Haringe von Seilen, die nicht am Bau hängen, nicht', () => {
     const abock = new ABock('a', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK);
     const fremd = new Seil('x', new Vec3(5, 2, 0), new Vec3(5, 0, 3));
     expect(pruefe(Bauwerk.leer().mitGruppe(abock).mitSeil(fremd))).toHaveLength(1);

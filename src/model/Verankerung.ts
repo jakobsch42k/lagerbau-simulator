@@ -8,14 +8,14 @@ import type { Vec3 } from './Vec3';
 
 /** Woran ein Seilende hängt. Wird aus der Geometrie abgeleitet, nie gespeichert. */
 export type Verankerung =
-  | { readonly art: 'hering' }
+  | { readonly art: 'haring' }
   | { readonly art: 'plane'; readonly planeId: string }
   | { readonly art: 'baum'; readonly baumId: string }
   | { readonly art: 'bau'; readonly stangeId: string }
   | { readonly art: 'frei' };
 
-/** Ein Hering oder Pflock am Boden. Seilenden, die nah beieinander am Boden enden, teilen sich einen. */
-export class Hering {
+/** Ein Haring oder Pflock am Boden. Seilenden, die nah beieinander am Boden enden, teilen sich einen. */
+export class Haring {
   constructor(
     readonly id: string,
     readonly position: Vec3,
@@ -38,10 +38,10 @@ export class VerankerungsFinder {
 
   /**
    * Reihenfolge: Boden vor Baum vor Stange vor Plane (Spec v2b, D1, geändert nach dem Final Review). Ein Knoten an Stange oder Stamm gehört zum Bau; eine Öse gewinnt nur, wo nichts Tragendes in Reichweite ist. Bei mehreren Teilen einer Art in Reichweite zählt das nächste.
-   * Ein Ende an der Öse einer Bodenplane ist ein Hering, wie beim Abstecken.
+   * Ein Ende an der Öse einer Bodenplane ist ein Haring, wie beim Abstecken.
    */
   finde(punkt: Vec3, stangen: readonly Stange[], baeume: readonly Baum[], planen: readonly Plane[] = []): Verankerung {
-    if (punkt.y <= this.bodenToleranz) return { art: 'hering' };
+    if (punkt.y <= this.bodenToleranz) return { art: 'haring' };
     const baum = this.naechstes(baeume, (b) => b.abstandZumStamm(punkt));
     if (baum) return { art: 'baum', baumId: baum.id };
     const stange = this.naechstes(stangen, (s) => s.naechsterPunkt(punkt).distanceTo(punkt));
@@ -60,7 +60,7 @@ export class VerankerungsFinder {
     return bestes?.teil ?? null;
   }
 
-  heringe(seile: readonly Seil[]): Hering[] {
+  haringe(seile: readonly Seil[]): Haring[] {
     const enden: Bodenende[] = seile.flatMap((s) =>
       s
         .endpunkte()
@@ -68,7 +68,7 @@ export class VerankerungsFinder {
         .map((punkt) => ({ punkt, seilId: s.id })),
     );
     return clustereNachNaehe(enden, (e) => e.punkt, this.clusterRadius).map(
-      (gruppe, i) => new Hering(`hering-${i}`, mittelpunkt(gruppe.map((e) => e.punkt)), [...new Set(gruppe.map((e) => e.seilId))]),
+      (gruppe, i) => new Haring(`haring-${i}`, mittelpunkt(gruppe.map((e) => e.punkt)), [...new Set(gruppe.map((e) => e.seilId))]),
     );
   }
 }

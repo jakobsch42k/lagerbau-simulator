@@ -33,7 +33,7 @@ describe('StolperfalleRule (R7)', () => {
     expect(pruefe(new Seil('grenze', new Vec3(0, 2, 0), new Vec3(4, 2, 0)))).toEqual([]);
   });
 
-  it('meldet Seile zum Hering nie', () => {
+  it('meldet Seile zum Haring nie', () => {
     expect(pruefe(new Seil('h', new Vec3(0, 1, 0), new Vec3(2, 0, 0)))).toEqual([]);
   });
 

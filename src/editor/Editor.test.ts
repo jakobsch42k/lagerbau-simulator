@@ -152,7 +152,7 @@ describe('Editor', () => {
     expect(e.bauwerk.baum('baum-1')?.position.equals(new Vec3(3, 0, 1), 1e-9)).toBe(true);
   });
 
-  it('spannt ein Seil von der Spitze zum Boden; das Bodenende wird ein Hering', () => {
+  it('spannt ein Seil von der Spitze zum Boden; das Bodenende wird ein Haring', () => {
     const e = neuerEditor(Bauwerk.leer().mitGruppe(dreibein));
     e.waehleWerkzeug('seil');
     e.klick({ art: 'stange', punkt: dreibein.spitze(), stangeId: dreibein.stangen()[0]!.id });
@@ -161,7 +161,7 @@ describe('Editor', () => {
     const seil = e.bauwerk.seil('seil-1');
     expect(seil?.start.equals(dreibein.spitze(), 1e-9)).toBe(true);
     expect(seil?.ende.equals(new Vec3(3, 0, 0), 1e-9)).toBe(true);
-    expect(e.bauwerk.heringe()).toHaveLength(1);
+    expect(e.bauwerk.haringe()).toHaveLength(1);
     expect(e.zustand().auswahl).toBe('seil-1');
   });
 

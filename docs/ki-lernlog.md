@@ -89,7 +89,7 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 
 ### 2026-10-01 — Seil-Treffer beim Einrasten nicht behandelt
 **Was die KI gemacht hat:** In Task 8/9 kann der unsichtbare Greifmantel eines Seils den Raycast vor einer Stange gewinnen. `SnapService` hat keinen Zweig für `'seil'` und fällt auf „Boden“ zurück. Ein neues Seilende neben einem alten könnte so am Boden statt an der Stange landen.
-**Gefunden durch:** Review (zuerst Minor); das Abschluss-Review der ganzen Branch fand, dass es weiter reicht: Der Greifmantel blockierte auch das Setzen von Dreibein, A-Bock und Baum hinter einem Seil, und Stangenfüße und Hering landeten neben dem geklickten Bodenpunkt.
+**Gefunden durch:** Review (zuerst Minor); das Abschluss-Review der ganzen Branch fand, dass es weiter reicht: Der Greifmantel blockierte auch das Setzen von Dreibein, A-Bock und Baum hinter einem Seil, und Stangenfüße und Haring landeten neben dem geklickten Bodenpunkt.
 **Richtig ist:** Seile fangen Klicks nur im Auswahl-Werkzeug; für alle anderen Werkzeuge überspringt `Szene.treffer` sie, der Strahl trifft Stange, Baum oder Boden dahinter. Behoben mit `fix: let ropes catch clicks only in the select tool`.
 **Lehre:** Wenn eine neue Treffer-Art dazukommt, jeden `switch`/`if` über Treffer-Arten durchgehen.
 
@@ -126,5 +126,17 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 ### 2026-10-05 — Verankerungs-Reihenfolge übersah eine Öse auf der Spitze
 **Was die KI gemacht hat:** Die Spec setzte die Plane in der Verankerung vor Baum und Bau. Liegt eine Öse innerhalb 5 cm einer abgespannten Spitze (z. B. Standardplane 4 m auf einer ~4 m langen Linie), zählten die Abspannseile als „an der Plane“: R1 und R3 warnten fälschlich, R6 verstummte.
 **Gefunden durch:** Final Review über den ganzen Branch (nachgestellt mit einem Test).
-**Richtig ist:** Reihenfolge Hering → Baum → Bau → Plane; Integrationstest „abgespannter A-Bock + Öse an der Spitze → Hinweise unverändert“.
+**Richtig ist:** Reihenfolge Haring → Baum → Bau → Plane; Integrationstest „abgespannter A-Bock + Öse an der Spitze → Hinweise unverändert“.
 **Lehre:** Bei einer Vorrangregel jeden Fall durchspielen, in dem zwei Arten am selben Punkt zusammenfallen — gerade den häufigsten (Plane an der Spitze).
+
+### 2026-10-05 — R2 sah nur das einzelne Viereck
+**Was die KI gemacht hat:** R2 prüfte jedes ebene Viereck lokal (Diagonale oder gemeinsamer Knoten) und ignorierte, dass Ecken schon über andere Dreiecke (Dreibein, A-Bock + Firststange, Füße) oder Abspannseile festliegen; ein stehender Lagerplatz-Bau bekam 9 Warnungen.
+**Gefunden durch:** Jakob beim Ausprobieren eines eigenen Baus.
+**Richtig ist:** Feste Knoten über Dreiecke weitergeben (`FesteKnoten`), R2 nur bei Vierecken mit losem Knoten.
+**Lehre:** Steifigkeit ist eine Eigenschaft des ganzen Baus, nicht eines einzelnen Vierecks; Regeln an echten, größeren Bauten testen, nicht nur am kleinsten Beispiel.
+
+### 2026-10-06 — „Hering“ statt „Haring“
+**Was die KI gemacht hat:** Seit v2a hieß der Erdnagel in Oberfläche, Code und Doku „Hering“, das bundesdeutsche Wort.
+**Gefunden durch:** Jakob („es heißt nicht Hering sondern Haring“).
+**Richtig ist:** Die Nutzer sind österreichische Leiterteams; dort heißt es „Haring“ (Mehrzahl „Haringe“). Überall umbenannt, auch in Bezeichnern (`Haring`, `haringe()`, Verankerungsart `'haring'`); das Dateiformat war nicht betroffen, weil Haringe aus der Geometrie abgeleitet und nie gespeichert werden.
+**Lehre:** Fachwörter in der Sprache der Nutzer wählen, nicht im Standarddeutsch des Modells; bei Pfadfinder-Begriffen (Bünde, Haringe, Zeltnamen) im Zweifel nachfragen.
