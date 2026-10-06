@@ -2,6 +2,8 @@ import type { ObjektRegister } from '../arten/ObjektRegister';
 import { standardArten } from '../arten/standardArten';
 import type { Bauwerk } from '../model/Bauwerk';
 import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
+import type { Luftbild } from '../model/Luftbild';
+import { massstabAusPunkten } from '../model/Massstab';
 import { kopiere, mitte } from '../model/Duplikat';
 import { bewege, mitgenommen } from '../model/Mitbewegung';
 import { Vec3 } from '../model/Vec3';
@@ -164,6 +166,39 @@ export class Editor implements EditorKontext {
       }, this.bauwerk);
       if (neu !== this.bauwerk) this.aendere(neu);
     });
+  }
+
+  /** Lädt ein Luftbild als Boden (ein Undo-Schritt) und startet sofort das Werkzeug „Maßstab setzen“ (Spec E2, D2). */
+  ladeLuftbild(luftbild: Luftbild): void {
+    if (this.aendereMit((b) => b.mitLuftbild(luftbild))) this.waehleWerkzeug('massstab');
+  }
+
+  /**
+   * „Übernehmen“ im Panel: Die zwei Klicks des Werkzeugs „Maßstab setzen“ sind `meter` lang (ein Undo-Schritt).
+   * Danach ist wieder die Auswahl aktiv. Bei zu nahen Punkten oder Meter ≤ 0 bleibt alles, wie es war; die Meldung steht im Zustand.
+   */
+  setzeMassstab(meter: number): boolean {
+    const strecke = this.messungWert;
+    const ok = this.aendereMit((b) => {
+      if (!b.luftbild) throw new RangeError('Kein Luftbild geladen');
+      if (!strecke?.bis) throw new RangeError('Erst zwei Punkte auf dem Bild anklicken');
+      return b.mitLuftbild(b.luftbild.mitMassstab(massstabAusPunkten(strecke.von, strecke.bis, meter, b.luftbild.meterProPixel)));
+    });
+    if (ok) this.waehleWerkzeug('auswahl');
+    return ok;
+  }
+
+  /** Deckkraft des Luftbilds, 0 bis 1 (ein Undo-Schritt). */
+  setzeDeckkraft(deckkraft: number): boolean {
+    return this.aendereMit((b) => {
+      if (!b.luftbild) throw new RangeError('Kein Luftbild geladen');
+      return b.mitLuftbild(b.luftbild.mitDeckkraft(deckkraft));
+    });
+  }
+
+  /** Entfernt das Luftbild (ein Undo-Schritt). Das Werkzeug „Maßstab setzen“ endet damit. */
+  entferneLuftbild(): void {
+    if (this.aendereMit((b) => b.mitLuftbild(null)) && this.werkzeug.name === 'massstab') this.waehleWerkzeug('auswahl');
   }
 
   /** Löscht die ganze Auswahl in einem Undo-Schritt. */

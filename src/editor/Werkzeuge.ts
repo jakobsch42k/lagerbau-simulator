@@ -5,10 +5,11 @@ import { Bau } from '../model/Bau';
 import type { Bauwerk } from '../model/Bauwerk';
 import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
 import type { Vec3 } from '../model/Vec3';
+import { MassstabTool } from './MassstabTool';
 import { Messung } from './Messung';
 import type { SnapPunkt, SnapService, Treffer } from './SnapService';
 
-export type WerkzeugName = ArtName | 'auswahl' | 'messen';
+export type WerkzeugName = ArtName | 'auswahl' | 'messen' | 'massstab';
 
 /** Was ein Werkzeug vom Editor sehen und ändern darf. Diese Methoden benachrichtigen nicht. */
 export interface EditorKontext {
@@ -175,6 +176,7 @@ export class MessTool implements Werkzeug {
 export function erzeugeWerkzeug(name: WerkzeugName, arten: ObjektRegister = standardArten()): Werkzeug {
   if (name === 'auswahl') return new SelectTool(arten.wahlweise());
   if (name === 'messen') return new MessTool(arten.mitOesen(), true);
+  if (name === 'massstab') return new MassstabTool();
   const art = arten.art(name);
   const fangtOesen = art.platzieren.modus === 'linie' && art.platzieren.fangtOesen;
   return new PlatziereTool(art, fangtOesen ? arten.mitOesen() : []);

@@ -1,4 +1,5 @@
 import type { Bauwerk } from '../model/Bauwerk';
+import type { Luftbild } from '../model/Luftbild';
 import { Vec3 } from '../model/Vec3';
 
 /** Spec E1, D5: 10 % Rand um alles beim „Alles zeigen“. */
@@ -11,6 +12,10 @@ const MIN_HALBE_AUSDEHNUNG = 1;
 const MASSSTAB_LAENGEN = [1, 2, 5, 10, 20, 50] as const;
 export const MASSSTAB_MIN_PX = 80;
 export const MASSSTAB_MAX_PX = 160;
+
+/** Spec E2, D3: Die neutrale Bodenfläche ist mindestens so groß (m) und ragt rundum so weit über das Luftbild hinaus (zusammen 20 m mehr). */
+export const MIN_BODEN = 40;
+export const BODEN_ZUGABE = 20;
 
 export type AnsichtsArt = 'plan' | 'drei-d';
 
@@ -37,13 +42,34 @@ export interface DreiDAusschnitt {
   readonly abstand: number;
 }
 
-/** Alle Punkte, die „Alles zeigen“ sehen muss: Platzpunkte, Drehpunkte (Bäume, Seile), Stangenenden und Haringe. */
+/**
+ * Alle Punkte, die „Alles zeigen“ sehen muss: Platzpunkte, Drehpunkte (Bäume, Seile), Stangenenden und Haringe.
+ * Gibt es keine Objekte, aber ein Luftbild, sind es dessen Ecken (Spec E2, D3).
+ */
 export function sichtbarePunkte(bauwerk: Bauwerk): readonly Vec3[] {
-  return [
+  const punkte = [
     ...bauwerk.objekte.flatMap((o) => [...o.platzPunkte(), o.drehpunkt()]),
     ...bauwerk.stangen().flatMap((s) => [s.start, s.ende]),
     ...bauwerk.haringe().map((h) => h.position),
   ];
+  return punkte.length === 0 && bauwerk.luftbild ? bauwerk.luftbild.ecken() : punkte;
+}
+
+/** Größe der neutralen Bodenfläche in m: mindestens 40 × 40 und mindestens Bildgröße + 20 m (Spec E2, D3). */
+export function bodenGroesse(luftbild: Luftbild | null): { readonly breite: number; readonly tiefe: number } {
+  return {
+    breite: Math.max(MIN_BODEN, (luftbild?.breiteM ?? 0) + BODEN_ZUGABE),
+    tiefe: Math.max(MIN_BODEN, (luftbild?.hoeheM ?? 0) + BODEN_ZUGABE),
+  };
+}
+
+/**
+ * Wie weit der Nordpfeil auf dem Bildschirm im Uhrzeigersinn aus „oben“ gedreht ist, wenn die Kamera waagrecht
+ * in Richtung (x, z) blickt. Blick nach Norden (−z) ergibt 0°, Blick nach Osten (+x) −90° (Norden liegt links).
+ */
+export function nordwinkelGrad(blickX: number, blickZ: number): number {
+  if (Math.hypot(blickX, blickZ) < 1e-9) return 0;
+  return (Math.atan2(-blickX, -blickZ) * 180) / Math.PI;
 }
 
 /** Der Rahmen um die Punkte; ohne Punkte der Boden mit 40 × 40 m. */

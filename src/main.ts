@@ -6,19 +6,24 @@ import { Szene } from './editor/Szene';
 import { Zeigersteuerung } from './editor/Zeigersteuerung';
 import type { WerkzeugName } from './editor/Werkzeuge';
 import { Bauwerk } from './model/Bauwerk';
+import type { Luftbild } from './model/Luftbild';
 import { Materialliste } from './model/Materialliste';
 import type { Hinweis } from './rules/Rule';
 import { RuleEngine } from './rules/RuleEngine';
 import { SEIL_ZUGABE_PRO_ENDE } from './rules/constants';
 import { LinkBasis } from './share/LinkBasis';
 import { AnsichtsModus } from './ui/AnsichtsModus';
+import { BildLader } from './ui/BildLader';
 import { HinweisPanel } from './ui/HinweisPanel';
+import { LuftbildPanel } from './ui/LuftbildPanel';
 import { ParameterPanel } from './ui/ParameterPanel';
 import { RegelnPanel } from './ui/RegelnPanel';
 import { MateriallistePanel } from './ui/MateriallistePanel';
 import { Teilen } from './ui/Teilen';
 
 const MELDUNG_DAUER_MS = 4000;
+const MASSSTAB_HINWEIS = 'Klicke zwei Punkte, deren Abstand du kennst.';
+const LUFTBILD_NUR_IN_DATEI = 'Das Luftbild ist nur in der gespeicherten Datei enthalten.';
 
 
 function element<T extends HTMLElement>(selektor: string): T {
@@ -40,6 +45,8 @@ function setzeModus(ansicht: boolean): void {
   regelnPanel.zeige(editor.bauwerk.regelEinstellungen);
 }
 const parameter = new ParameterPanel(element('#parameter'), editor, arten);
+const luftbildPanel = new LuftbildPanel(element('#luftbild'), element('#btn-luftbild'), editor, szene);
+const bildLader = new BildLader();
 const hinweisPanel = new HinweisPanel(element('#hinweise'), (h) => editor.markiere(h.betroffeneTeile));
 const materialPanel = new MateriallistePanel(element('#stangenliste'), element('#platzbedarf'));
 const meldung = element<HTMLParagraphElement>('#meldung');
@@ -61,11 +68,19 @@ function ladeUndZeigeAlles(bauwerk: Bauwerk): void {
   szene.zeigeAlles(bauwerk);
 }
 
+/** Ein neues Luftbild wird eingepasst: „Alles zeigen“ auf ein Bauwerk, das nur das Bild enthält. */
+function ladeLuftbild(bild: Luftbild): void {
+  editor.ladeLuftbild(bild);
+  szene.zeigeAlles(Bauwerk.leer().mitLuftbild(bild));
+}
+
 function ladeAusAdresse(): void {
   try {
-    const bauwerk = teilen.ausAdresse();
-    if (bauwerk) ladeUndZeigeAlles(bauwerk);
-    setzeModus(bauwerk !== null);
+    const gelesen = teilen.ausAdresseMitHinweis();
+    if (gelesen) ladeUndZeigeAlles(gelesen.bauwerk);
+    setzeModus(gelesen !== null);
+    // Das Bild steckt nicht im Link (Spec E2, D4); die Meldung kommt nach dem Laden, das sie sonst löschen würde.
+    if (gelesen?.luftbildEntfernt) editor.zeigeMeldung(LUFTBILD_NUR_IN_DATEI);
   } catch (e) {
     setzeModus(false);
     editor.zeigeMeldung((e as Error).message);
@@ -114,6 +129,17 @@ element<HTMLInputElement>('#inp-laden').addEventListener('change', async (e) => 
     editor.zeigeMeldung((fehler as Error).message);
   }
 });
+element<HTMLInputElement>('#inp-luftbild').addEventListener('change', async (e) => {
+  const input = e.currentTarget as HTMLInputElement;
+  const datei = input.files?.[0];
+  input.value = '';
+  if (!datei) return;
+  try {
+    ladeLuftbild(await bildLader.lade(datei));
+  } catch (fehler) {
+    editor.zeigeMeldung((fehler as Error).message);
+  }
+});
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   const ansichtstaste = e.ctrlKey || e.metaKey || e.altKey ? '' : e.key.toLowerCase();
@@ -135,13 +161,15 @@ editor.abonniere((z) => {
   parameter.zeige(z);
   hinweisPanel.zeige(hinweise);
   regelnPanel.zeige(z.bauwerk.regelEinstellungen);
+  luftbildPanel.zeige(z);
   materialPanel.zeige(liste);
   for (const knopf of werkzeugKnoepfe) knopf.setAttribute('aria-pressed', String(knopf.dataset.werkzeug === z.werkzeug));
   element<HTMLButtonElement>('#btn-rueck').disabled = !z.kannRueckgaengig;
   element<HTMLButtonElement>('#btn-wieder').disabled = !z.kannWiederholen;
   // Nur Zwei-Klick-Werkzeuge haben einen Startpunkt; ihr Label ist „Stange“, „Seil“ oder „Plane“.
-  const teil = z.werkzeug === 'auswahl' ? 'Teil' : z.werkzeug === 'messen' ? 'Messen' : arten.art(z.werkzeug).label;
-  meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : '');
+  const teil = z.werkzeug === 'auswahl' ? 'Teil' : z.werkzeug === 'messen' ? 'Messen' : z.werkzeug === 'massstab' ? '' : arten.art(z.werkzeug).label;
+  const massstab = z.werkzeug === 'massstab' && !z.messung?.bis ? MASSSTAB_HINWEIS : '';
+  meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : massstab);
   if (z.meldung) {
     clearTimeout(meldungsTimer);
     meldungsTimer = window.setTimeout(() => editor.zeigeMeldung(null), MELDUNG_DAUER_MS);
