@@ -87,6 +87,8 @@ export function dreiDEinpassen(rahmen: Rahmen, seitenverhaeltnis: number, senkre
 }
 
 /** Länge der Maßstabsleiste: die kleinste runde Länge, die mindestens 80 px breit ist (meist bis 160 px), sonst die größte. */
+// Die Reihe 1/2/5/10/20/50 trifft nicht immer 80–160 px: Die Stufen springen um Faktor 2 bis 2,5, die Leiste kann bis rund 200 px breit werden;
+// bei sehr starkem Zoom (1 m breiter als 160 px) ist schon die kürzeste breiter, bei sehr weitem (über 50 m) bleibt die längste unter 80 px.
 export function massstabsLaenge(meterProPixel: number): { readonly meter: number; readonly pixel: number } {
   const laengen = MASSSTAB_LAENGEN.map((meter) => ({ meter, pixel: meter / meterProPixel }));
   return laengen.find((l) => l.pixel >= MASSSTAB_MIN_PX) ?? laengen[laengen.length - 1]!;

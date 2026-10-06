@@ -7,35 +7,16 @@ import { bewege, mitgenommen } from '../model/Mitbewegung';
 import { Vec3 } from '../model/Vec3';
 import { idsImRechteck, type Rechteck } from './Rahmenwahl';
 import type { Messung } from './Messung';
-import { DREH_SCHRITT, DUPLIKAT_VERSATZ, PFEIL_SCHRITT, PFEIL_SCHRITT_GROSS } from './konstanten';
+import { DREH_SCHRITT, DUPLIKAT_VERSATZ } from './konstanten';
 import { SnapService, type Treffer } from './SnapService';
+import type { EditorOptionen, EditorZustand } from './EditorZustand';
+import { Tastatur } from './Tastatur';
 import { Verlauf } from './Verlauf';
 import { Ziehvorgang } from './Ziehvorgang';
+import { Zwischenablage } from './Zwischenablage';
 import { type EditorKontext, erzeugeWerkzeug, type KlickOptionen, type Werkzeug, type WerkzeugName } from './Werkzeuge';
 
-export interface EditorZustand {
-  readonly bauwerk: Bauwerk;
-  /** Beim Ziehen der Zwischenstand, den die Szene zeigt (kein Verlaufseintrag, die Hinweise rechnen am `bauwerk`); sonst null. */
-  readonly vorschau: Bauwerk | null;
-  /** Alle ausgewählten Objekte (Spec v3, D6). Ids, die das Bauwerk nicht kennt, fallen heraus. */
-  readonly ausgewaehlt: ReadonlySet<string>;
-  /** Die eine ausgewählte id; null, wenn nichts oder mehr als ein Objekt ausgewählt ist. */
-  readonly auswahl: string | null;
-  readonly markiert: ReadonlySet<string>;
-  readonly werkzeug: WerkzeugName;
-  readonly stangenStart: Vec3 | null;
-  /** Die angezeigte Messung (nicht im Bauwerk, nicht gespeichert); sonst null. */
-  readonly messung: Messung | null;
-  readonly meldung: string | null;
-  readonly kannRueckgaengig: boolean;
-  readonly kannWiederholen: boolean;
-}
-
-export interface EditorOptionen {
-  readonly arten?: ObjektRegister;
-  readonly snap?: SnapService;
-  readonly neueId?: (praefix: string) => string;
-}
+export type { EditorOptionen, EditorZustand } from './EditorZustand';
 
 const zufallsId = (praefix: string): string => `${praefix}-${crypto.randomUUID().slice(0, 8)}`;
 
@@ -53,10 +34,9 @@ export class Editor implements EditorKontext {
   private meldung: string | null = null;
   private messungWert: Messung | null = null;
   private ziehen: Ziehvorgang | null = null;
-  private zwischenablage: readonly LagerObjekt[] = [];
+  private readonly zwischenablage = new Zwischenablage();
+  private readonly tastatur = new Tastatur(this);
   private mausPunkt: Vec3 | null = null;
-  /** Blickrichtung der Ansicht (waagrechter Anteil); „oben“ der Pfeiltasten. Standard Norden (-z), wie in der Planansicht. */
-  private blick: Vec3 = new Vec3(0, 0, -1);
   private readonly beobachter: ((z: EditorZustand) => void)[] = [];
   private readonly idErzeuger: (praefix: string) => string;
 
@@ -216,7 +196,7 @@ export class Editor implements EditorKontext {
 
   /** Für die Pfeiltasten: wohin „oben“ zeigt. Nur der waagrechte Anteil zählt. */
   setzeBlickrichtung(richtung: Vec3): void {
-    this.blick = new Vec3(richtung.x, 0, richtung.z);
+    this.tastatur.setzeBlickrichtung(richtung);
   }
 
   /** Der Bodenpunkt unter der Maus für Strg+V; null, wenn die Maus nicht über der Szene ist. Benachrichtigt nicht. */
@@ -279,15 +259,13 @@ export class Editor implements EditorKontext {
 
   /** Strg+C: merkt sich die Auswahl samt Mitnahme, nur innerhalb der App. */
   kopiereAuswahl(): void {
-    this.zwischenablage = this.mitnahme();
+    this.zwischenablage.merke(this.mitnahme());
   }
 
   /** Strg+V: fügt die Zwischenablage mit ihrem Mittelpunkt auf den Bodenpunkt unter der Maus (gerastert) ein, sonst um +1 m versetzt. */
   fuegeEin(): void {
-    const mittelpunkt = mitte(this.zwischenablage);
-    if (mittelpunkt === null) return;
-    const ziel = this.mausPunkt && this.snap.aufRaster(this.mausPunkt);
-    this.fuegeKopienEin(this.zwischenablage, ziel ? ziel.sub(mittelpunkt) : DUPLIKAT_VERSATZ);
+    const dv = this.zwischenablage.einfuegeVersatz(this.mausPunkt && this.snap.aufRaster(this.mausPunkt));
+    if (dv !== null) this.fuegeKopienEin(this.zwischenablage.objekte, dv);
   }
 
   private mitnahme(): readonly LagerObjekt[] {
@@ -300,14 +278,6 @@ export class Editor implements EditorKontext {
       this.aendere(kopie.bauwerk);
       this.setzeAuswahl(kopie.neueIds);
     });
-  }
-
-  /** Pfeiltaste → Verschiebung: „oben“ ist die auf die nächste Weltachse gerundete Blickrichtung. */
-  private pfeilVersatz(taste: string, gross: boolean): Vec3 | null {
-    const vorn = Math.abs(this.blick.x) > Math.abs(this.blick.z) ? new Vec3(Math.sign(this.blick.x), 0, 0) : new Vec3(0, 0, Math.sign(this.blick.z) || -1);
-    const rechts = new Vec3(-vorn.z, 0, vorn.x);
-    const richtung: Record<string, Vec3> = { ArrowUp: vorn, ArrowDown: vorn.scale(-1), ArrowRight: rechts, ArrowLeft: rechts.scale(-1) };
-    return richtung[taste]?.scale(gross ? PFEIL_SCHRITT_GROSS : PFEIL_SCHRITT) ?? null;
   }
 
   rueckgaengig(): void {
@@ -334,45 +304,15 @@ export class Editor implements EditorKontext {
 
   /** Tastenkürzel. Liefert true, wenn die Taste behandelt wurde. */
   taste(taste: string, strg: boolean, umschalt = false): boolean {
-    const klein = taste.toLowerCase();
-    if (taste === 'Escape') return this.escape();
-    if (this.ziehen !== null) return false;
-    if (strg) return this.strgTaste(klein);
-    if (taste === 'Delete' || taste === 'Backspace') this.loescheAuswahl();
-    else if (klein === 'r') this.dreheAuswahl(umschalt ? -DREH_SCHRITT : DREH_SCHRITT);
-    else if (taste.startsWith('Arrow')) return this.pfeil(taste, umschalt);
-    else return false;
-    return true;
+    return this.tastatur.verarbeite(taste, strg, umschalt);
   }
 
-  private escape(): boolean {
-    if (this.ziehen !== null) {
-      this.brichZiehenAb();
-      return true;
-    }
+  /** Esc ohne Ziehen: Werkzeug und Messung zurücksetzen, Auswahl aufheben. */
+  abbrechen(): void {
     this.werkzeug.abbrechen();
     this.messungWert = null;
     this.waehle(null);
     this.melde();
-    return true;
-  }
-
-  private strgTaste(klein: string): boolean {
-    if (klein === 'z') this.rueckgaengig();
-    else if (klein === 'y') this.wiederholen();
-    else if (klein === 'a') this.waehleAlle();
-    else if (klein === 'd') this.dupliziere();
-    else if (klein === 'c') this.kopiereAuswahl();
-    else if (klein === 'v') this.fuegeEin();
-    else return false;
-    return true;
-  }
-
-  private pfeil(taste: string, gross: boolean): boolean {
-    const dv = this.pfeilVersatz(taste, gross);
-    if (dv === null || this.zustand().ausgewaehlt.size === 0) return false;
-    this.verschiebeAuswahl(dv);
-    return true;
   }
 
   private fuehreAus(aktion: () => void): boolean {
