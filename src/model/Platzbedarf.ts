@@ -1,6 +1,9 @@
 import type { Bauwerk } from './Bauwerk';
 
-/** Achsparalleles Rechteck am Boden über alle Füße, Haringe und Planen-Ösen (Spec v2a/v2b, D4). Bäume zählen nicht. */
+/**
+ * Achsparalleles Rechteck am Boden über die Platzpunkte aller Objekte (Füße, Planen-Ösen) und die Haringe (Spec v3, D1).
+ * Bäume und Seile haben keine Platzpunkte; die Haringe der Seile werden zusammengefasst wie bisher.
+ */
 export class Platzbedarf {
   private constructor(
     readonly minX: number,
@@ -10,11 +13,7 @@ export class Platzbedarf {
   ) {}
 
   static aus(bauwerk: Bauwerk): Platzbedarf | null {
-    const punkte = [
-      ...bauwerk.fuesse().map((f) => f.position),
-      ...bauwerk.haringe().map((h) => h.position),
-      ...bauwerk.planen.flatMap((p) => p.oesen),
-    ];
+    const punkte = [...bauwerk.objekte.flatMap((o) => o.platzPunkte()), ...bauwerk.haringe().map((h) => h.position)];
     if (punkte.length === 0) return null;
     const xs = punkte.map((p) => p.x);
     const zs = punkte.map((p) => p.z);
