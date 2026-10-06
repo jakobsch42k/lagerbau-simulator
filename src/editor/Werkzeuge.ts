@@ -38,6 +38,11 @@ export interface Werkzeug {
   onKlick(treffer: Treffer, kontext: EditorKontext, optionen?: KlickOptionen): void;
   /** Nur Werkzeuge, die auf Doppelklick reagieren (die Auswahl). */
   onDoppelklick?(treffer: Treffer, kontext: EditorKontext, optionen?: KlickOptionen): void;
+  /**
+   * Nur Werkzeuge ohne halben Zustand, die Objekte bewegen (die Auswahl): Drücken der Maus auf ein Objekt. Wählt es bei Bedarf allein
+   * aus und liefert true, wenn ein Ziehen beginnen darf. Fehlt die Methode, reagiert das Werkzeug nicht auf Ziehen.
+   */
+  onZiehenStart?(treffer: Treffer, kontext: EditorKontext, optionen?: KlickOptionen): boolean;
   abbrechen(): void;
 }
 
@@ -114,6 +119,14 @@ export class SelectTool implements Werkzeug {
     const bau = Bau.von(k.bauwerk, treffer.id).objektIds;
     const ids = bau.length > 0 ? bau : [k.bauwerk.auswahlIdFuer(treffer.id)];
     k.setzeAuswahl(optionen.shift ? [...k.auswahl(), ...ids] : ids);
+  }
+
+  /** Ziehen bewegt die Auswahl; ein Objekt außerhalb der Auswahl wird vorher allein ausgewählt. Auf Boden oder mit Shift beginnt nichts. */
+  onZiehenStart(treffer: Treffer, k: EditorKontext, optionen: KlickOptionen = {}): boolean {
+    if (treffer.art === 'boden' || optionen.shift) return false;
+    const id = k.bauwerk.auswahlIdFuer(treffer.id);
+    if (!k.auswahl().has(id)) k.setzeAuswahl([id]);
+    return true;
   }
 
   abbrechen(): void {}

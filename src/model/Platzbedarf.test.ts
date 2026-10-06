@@ -72,6 +72,10 @@ describe('Platzbedarf', () => {
       gedreht() {
         return this;
       },
+      mitId() {
+        return this;
+      },
+      drehpunkt: () => new Vec3(10, 0, -4),
       platzPunkte: () => [new Vec3(10, 0, -4)],
     };
     const p = Platzbedarf.aus(Bauwerk.von([pflock]));

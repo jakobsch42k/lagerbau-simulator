@@ -32,11 +32,11 @@ export class ParameterPanel {
     this.formular(art.label, art.panel(objekt));
   }
 
-  /** Bei mehreren ausgewählten Objekten: nur die Anzahl und Löschen (Spec E1, D1). */
+  /** Bei mehreren ausgewählten Objekten: nur die Anzahl, Löschen und Duplizieren (Spec E1, D1). */
   private mehrfachauswahl(anzahl: number): void {
     const kopf = document.createElement('h2');
     kopf.textContent = `${anzahl} Objekte ausgewählt`;
-    this.wurzel.append(kopf, this.loeschenKnopf());
+    this.wurzel.append(kopf, this.loeschenKnopf(), this.duplizierenKnopf());
   }
 
   private loeschenKnopf(): HTMLButtonElement {
@@ -44,6 +44,13 @@ export class ParameterPanel {
     loeschen.textContent = 'Löschen (Entf)';
     loeschen.addEventListener('click', () => this.editor.loescheAuswahl());
     return loeschen;
+  }
+
+  private duplizierenKnopf(): HTMLButtonElement {
+    const duplizieren = document.createElement('button');
+    duplizieren.textContent = 'Duplizieren (Strg+D)';
+    duplizieren.addEventListener('click', () => this.editor.dupliziere());
+    return duplizieren;
   }
 
   private formular(titel: string, spec: PanelSpec): void {
@@ -57,7 +64,7 @@ export class ParameterPanel {
     );
     const infoZeile = document.createElement('p');
     infoZeile.textContent = spec.info;
-    this.wurzel.append(kopf, ...eingaben, ...extras, infoZeile, this.loeschenKnopf());
+    this.wurzel.append(kopf, ...eingaben, ...extras, infoZeile, this.loeschenKnopf(), this.duplizierenKnopf());
   }
 
   private zahlenfeld(feld: PanelFeld, werte: Werte, uebernehme: Uebernehme): HTMLLabelElement {

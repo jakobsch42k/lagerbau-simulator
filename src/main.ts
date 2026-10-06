@@ -2,8 +2,8 @@ import './style.css';
 import { standardArten } from './arten/standardArten';
 import { kochstelle } from './beispiele/kochstelle';
 import { Editor } from './editor/Editor';
-import { KLICK_TOLERANZ_PX } from './editor/konstanten';
 import { Szene } from './editor/Szene';
+import { Zeigersteuerung } from './editor/Zeigersteuerung';
 import type { WerkzeugName } from './editor/Werkzeuge';
 import { Bauwerk } from './model/Bauwerk';
 import { Materialliste } from './model/Materialliste';
@@ -66,23 +66,7 @@ function ladeAusAdresse(): void {
   }
 }
 
-// Ein Klick ist ein Drücken und Loslassen ohne nennenswerte Mausbewegung; alles andere dreht die Ansicht.
-let druck: { x: number; y: number } | null = null;
-szene.leinwand.addEventListener('pointerdown', (e) => {
-  druck = e.button === 0 && !modus.aktiv ? { x: e.clientX, y: e.clientY } : null;
-});
-szene.leinwand.addEventListener('pointerup', (e) => {
-  if (druck && Math.hypot(e.clientX - druck.x, e.clientY - druck.y) < KLICK_TOLERANZ_PX) {
-    const treffer = szene.treffer(e, editor.klickZiele);
-    if (treffer) editor.klick(treffer, { shift: e.shiftKey });
-  }
-  druck = null;
-});
-szene.leinwand.addEventListener('dblclick', (e) => {
-  if (modus.aktiv) return;
-  const treffer = szene.treffer(e, editor.klickZiele);
-  if (treffer) editor.doppelklick(treffer, { shift: e.shiftKey });
-});
+new Zeigersteuerung(szene, editor, () => !modus.aktiv);
 
 for (const knopf of werkzeugKnoepfe) {
   knopf.addEventListener('click', () => editor.waehleWerkzeug(knopf.dataset.werkzeug as WerkzeugName));
@@ -116,7 +100,8 @@ element<HTMLInputElement>('#inp-laden').addEventListener('change', async (e) => 
 });
 window.addEventListener('keydown', (e) => {
   if (modus.aktiv || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
-  if (editor.taste(e.key, e.ctrlKey || e.metaKey)) e.preventDefault();
+  if (e.key.startsWith('Arrow')) editor.setzeBlickrichtung(szene.blickrichtung());
+  if (editor.taste(e.key, e.ctrlKey || e.metaKey, e.shiftKey)) e.preventDefault();
 });
 window.addEventListener('hashchange', ladeAusAdresse);
 
@@ -125,7 +110,7 @@ editor.abonniere((z) => {
   const { hinweise, liste } = pruefung(z.bauwerk);
   const markiert = new Set(z.markiert);
   z.ausgewaehlt.forEach((id) => markiert.add(id));
-  szene.zeige(z.bauwerk, markiert, z.stangenStart);
+  szene.zeige(z.vorschau ?? z.bauwerk, markiert, z.stangenStart);
   parameter.zeige(z);
   hinweisPanel.zeige(hinweise);
   regelnPanel.zeige(z.bauwerk.regelEinstellungen);

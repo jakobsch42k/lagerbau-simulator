@@ -19,6 +19,10 @@ export interface LagerObjekt {
    * Ohne `um`: Baugruppe und Baum um ihre Position, Stange, Seil und Plane um die Mitte zwischen Start und Ende.
    */
   gedreht(winkelRad: number, um?: Vec3): LagerObjekt;
+  /** Eine Kopie mit neuer id (bei Baugruppen ändern sich damit auch die Stangen-ids); Lage und Maße bleiben. */
+  mitId(id: string): LagerObjekt;
+  /** Der eigene Drehpunkt, um den `gedreht` ohne `um` dreht: Position bei Baugruppe und Baum, Mitte bei Stange, Seil und Plane. */
+  drehpunkt(): Vec3;
   /** Punkte, die der Platzbedarf umfasst: Füße bei Baugruppen und freien Stangen, Ösen bei Planen. */
   platzPunkte(): readonly Vec3[];
 }

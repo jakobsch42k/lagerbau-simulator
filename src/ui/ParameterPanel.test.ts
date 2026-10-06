@@ -199,4 +199,16 @@ describe('ParameterPanel', () => {
     expect(editor.bauwerk.gruppen).toHaveLength(0);
     expect(wurzel.querySelector('h2')).toBeNull();
   });
+
+  it('Duplizieren kopiert die Auswahl, bei einem Objekt wie bei mehreren', () => {
+    const { wurzel, editor } = aufbau();
+    const duplizieren = (): HTMLButtonElement | undefined => [...wurzel.querySelectorAll('button')].find((k) => k.textContent?.startsWith('Duplizieren'));
+    editor.waehle('abock');
+    duplizieren()?.click();
+    expect(editor.bauwerk.gruppen).toHaveLength(3);
+    expect(editor.zustand().auswahl).not.toBe('abock');
+    editor.waehleMehrere(['abock', 'dreibein']);
+    duplizieren()?.click();
+    expect(editor.bauwerk.gruppen).toHaveLength(5);
+  });
 });

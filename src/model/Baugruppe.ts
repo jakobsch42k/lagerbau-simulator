@@ -31,6 +31,10 @@ export abstract class Baugruppe implements LagerObjekt {
     return [this.id, ...this.stangen().map((s) => s.id)];
   }
 
+  drehpunkt(): Vec3 {
+    return this.position;
+  }
+
   verschobenUm(dv: Vec3): Baugruppe {
     return this.verschoben(this.position.add(dv));
   }
@@ -42,6 +46,7 @@ export abstract class Baugruppe implements LagerObjekt {
       .map((f) => f.position);
   }
 
+  abstract mitId(id: string): Baugruppe;
   abstract stangen(): readonly Stange[];
   abstract spitze(): Vec3;
   abstract hoehe(): number;

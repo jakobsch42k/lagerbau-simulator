@@ -69,6 +69,14 @@ export class Plane implements LagerObjekt {
     return [this.id];
   }
 
+  mitId(id: string): Plane {
+    return new Plane(id, this.start, this.ende, this.params);
+  }
+
+  drehpunkt(): Vec3 {
+    return mitteVon(this.start, this.ende);
+  }
+
   /** Prüft die neue Lage wie der Konstruktor: Reicht sie in den Boden, fliegt ein RangeError. */
   verschobenUm(dv: Vec3): Plane {
     return new Plane(this.id, this.start.add(dv), this.ende.add(dv), this.params);

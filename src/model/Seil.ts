@@ -40,6 +40,14 @@ export class Seil implements LagerObjekt {
     return [this.id];
   }
 
+  mitId(id: string): Seil {
+    return new Seil(id, this.start, this.ende);
+  }
+
+  drehpunkt(): Vec3 {
+    return this.start.add(this.ende).scale(0.5);
+  }
+
   verschobenUm(dv: Vec3): Seil {
     return new Seil(this.id, this.start.add(dv), this.ende.add(dv));
   }

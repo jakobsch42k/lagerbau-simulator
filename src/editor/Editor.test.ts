@@ -293,8 +293,8 @@ describe('Editor', () => {
     expect(e.zustand().auswahl).toBeNull();
     e.waehleMehrere(['l', 'weg']);
     expect(e.zustand().auswahl).toBe('l');
-    e.taste('r', false); // R dreht nur Baugruppen (Spec v3, D6)
-    expect(e.zustand().kannRueckgaengig).toBe(false);
+    e.taste('r', false); // R dreht alle Arten (Spec E1, D3)
+    expect(e.zustand().kannRueckgaengig).toBe(true);
     e.taste('Escape', false);
     expect(e.zustand().ausgewaehlt.size).toBe(0);
   });

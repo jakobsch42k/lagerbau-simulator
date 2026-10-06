@@ -68,6 +68,14 @@ export class Stange implements LagerObjekt {
     return [this.id];
   }
 
+  mitId(id: string): Stange {
+    return new Stange(id, this.start, this.ende, this.durchmesser, this.rolle, this.gruppeId);
+  }
+
+  drehpunkt(): Vec3 {
+    return this.mitte();
+  }
+
   /** Rolle und Gruppe bleiben, damit auch eine Stange einer Baugruppe sie behält. */
   verschobenUm(dv: Vec3): Stange {
     return new Stange(this.id, this.start.add(dv), this.ende.add(dv), this.durchmesser, this.rolle, this.gruppeId);

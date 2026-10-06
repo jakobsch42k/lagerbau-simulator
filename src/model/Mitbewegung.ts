@@ -29,6 +29,15 @@ export function bewege(bauwerk: Bauwerk, ids: readonly string[], bewegung: Beweg
   }
 }
 
+/**
+ * Alles, was bei einer Bewegung der `ids` ganz mitwandert: die Objekte selbst, dazu Planen mit beiden Enden und Seile mit beiden
+ * Enden an Bewegtem (ein Haring-Ende zieht mit). Seile und Planen mit einem festen Ende (Baum, nicht Gewähltes) bleiben draußen.
+ * Das ist die Menge, die Duplizieren und Kopieren mitnehmen. Die Reihenfolge ist die des Bauwerks.
+ */
+export function mitgenommen(bauwerk: Bauwerk, ids: readonly string[]): readonly LagerObjekt[] {
+  return new Mitbewegung(bauwerk, ids, { art: 'verschiebung', dv: Vec3.NULL }).mitgenommene();
+}
+
 class Mitbewegung {
   private readonly bewegte: ReadonlyMap<string, LagerObjekt>;
   private readonly stangen: readonly Stange[];
@@ -55,6 +64,21 @@ class Mitbewegung {
       if (!this.bewegte.has(seil.id)) this.mitSeil(seil, neu);
     }
     return [...neu.values()].reduce((b, o) => b.ersetze(o), this.bauwerk);
+  }
+
+  mitgenommene(): readonly LagerObjekt[] {
+    for (const p of this.bauwerk.planen) if (this.beideAmBewegten(p)) this.planen.set(p.id, p);
+    const mit = new Set<string>(this.bewegte.keys());
+    for (const p of this.planen.keys()) mit.add(p);
+    for (const seil of this.bauwerk.seile) {
+      const [startZieht, endeZieht] = this.zieht2(seil);
+      if (startZieht && endeZieht) mit.add(seil.id);
+    }
+    return this.bauwerk.objekte.filter((o) => mit.has(o.id));
+  }
+
+  private beideAmBewegten(plane: Plane): boolean {
+    return !this.bewegte.has(plane.id) && this.amBewegten(plane.start) && this.amBewegten(plane.ende);
   }
 
   private bewegeObjekt(o: LagerObjekt): LagerObjekt {
@@ -90,12 +114,18 @@ class Mitbewegung {
    * Ein Ende an Baum oder an einem nicht bewegten Teil bleibt liegen, das Seil wird neu gespannt.
    */
   private mitSeil(seil: Seil, neu: Map<string, LagerObjekt>): void {
-    const startMit = this.haengtMit(this.bauwerk.verankerung(seil.start));
-    const endeMit = this.haengtMit(this.bauwerk.verankerung(seil.ende));
-    if (!startMit && !endeMit) return;
-    const startZieht = startMit || (endeMit && this.zieht(this.bauwerk.verankerung(seil.start)));
-    const endeZieht = endeMit || (startMit && this.zieht(this.bauwerk.verankerung(seil.ende)));
+    const [startZieht, endeZieht] = this.zieht2(seil);
+    if (!startZieht && !endeZieht) return;
     neu.set(seil.id, new Seil(seil.id, startZieht ? this.bewegePunkt(seil.start) : seil.start, endeZieht ? this.bewegePunkt(seil.ende) : seil.ende));
+  }
+
+  /** Ob Start und Ende des Seils mitwandern. */
+  private zieht2(seil: Seil): readonly [boolean, boolean] {
+    const start = this.bauwerk.verankerung(seil.start);
+    const ende = this.bauwerk.verankerung(seil.ende);
+    const startMit = this.haengtMit(start);
+    const endeMit = this.haengtMit(ende);
+    return [startMit || (endeMit && this.zieht(start)), endeMit || (startMit && this.zieht(ende))];
   }
 
   private haengtMit(v: Verankerung): boolean {

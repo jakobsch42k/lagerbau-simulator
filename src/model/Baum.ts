@@ -33,6 +33,14 @@ export class Baum implements LagerObjekt {
     return [this.id];
   }
 
+  mitId(id: string): Baum {
+    return new Baum(id, this.position, this.params);
+  }
+
+  drehpunkt(): Vec3 {
+    return this.position;
+  }
+
   /** Der Baum bleibt am Boden: Der Konstruktor setzt y wieder auf 0. */
   verschobenUm(dv: Vec3): Baum {
     return new Baum(this.id, this.position.add(dv), this.params);

@@ -9,6 +9,8 @@ import { standardDarstellungen } from './darstellung/standardDarstellungen';
 import type { Treffer } from './SnapService';
 import { SzenenInhalt } from './SzenenInhalt';
 
+const BODEN_EBENE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+
 /** three.js mit Renderer, Kamera und Boden. Kennt das Modell nur lesend; die Meshes hält der SzenenInhalt. */
 export class Szene {
   private readonly renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -59,14 +61,36 @@ export class Szene {
   }
 
   treffer(e: MouseEvent, klickZiele: readonly ArtName[]): Treffer | null {
-    const rect = this.leinwand.getBoundingClientRect();
-    const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
-    this.raycaster.setFromCamera(ndc, this.kamera);
+    this.strahl(e);
     const getroffen = this.raycaster.intersectObjects(this.inhalt.ziele(klickZiele), false)[0];
     const treffer = getroffen ? SzenenInhalt.treffer(getroffen.object, new Vec3(getroffen.point.x, getroffen.point.y, getroffen.point.z)) : null;
     if (treffer) return treffer;
     const aufBoden = this.raycaster.intersectObject(this.boden, false)[0];
     return aufBoden ? { art: 'boden', punkt: new Vec3(aufBoden.point.x, 0, aufBoden.point.z) } : null;
+  }
+
+  /** Der Punkt auf dem Boden (y = 0) unter der Maus, auch jenseits der Bodenfläche; null, wenn der Strahl nicht nach unten zeigt. */
+  bodenPunkt(e: MouseEvent): Vec3 | null {
+    const punkt = this.strahl(e).intersectPlane(BODEN_EBENE, new THREE.Vector3());
+    return punkt ? new Vec3(punkt.x, 0, punkt.z) : null;
+  }
+
+  /** Schaltet das Drehen und Zoomen mit der Maus ein oder aus (beim Ziehen eines Objekts aus). */
+  setzeKamerasteuerung(aktiv: boolean): void {
+    this.steuerung.enabled = aktiv;
+  }
+
+  /** Wohin die Kamera schaut, nur waagrecht; für „oben“ der Pfeiltasten. */
+  blickrichtung(): Vec3 {
+    const richtung = this.kamera.getWorldDirection(new THREE.Vector3());
+    return new Vec3(richtung.x, 0, richtung.z);
+  }
+
+  private strahl(e: MouseEvent): THREE.Ray {
+    const rect = this.leinwand.getBoundingClientRect();
+    const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+    this.raycaster.setFromCamera(ndc, this.kamera);
+    return this.raycaster.ray;
   }
 
   private passeGroesseAn(): void {
