@@ -1,6 +1,7 @@
 import type { ObjektArt } from '../arten/ObjektArt';
 import type { ObjektRegister } from '../arten/ObjektRegister';
 import { standardArten } from '../arten/standardArten';
+import { Bau } from '../model/Bau';
 import type { Bauwerk } from '../model/Bauwerk';
 import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
 import type { Vec3 } from '../model/Vec3';
@@ -14,7 +15,16 @@ export interface EditorKontext {
   readonly snap: SnapService;
   aendere(neu: Bauwerk): void;
   waehle(id: string | null): void;
+  /** Die ausgewählten ids (Objekte, die das Bauwerk kennt). */
+  auswahl(): ReadonlySet<string>;
+  /** Ersetzt die ganze Auswahl. */
+  setzeAuswahl(ids: Iterable<string>): void;
   neueId(praefix: string): string;
+}
+
+/** Klick-Zusatz: gedrückte Umschalttaste. */
+export interface KlickOptionen {
+  readonly shift?: boolean;
 }
 
 export interface Werkzeug {
@@ -25,7 +35,9 @@ export interface Werkzeug {
    * was dahinter liegt: Ein großes Regendach blockiert so nicht das Setzen eines Dreibeins darunter.
    */
   readonly klickZiele: readonly ArtName[];
-  onKlick(treffer: Treffer, kontext: EditorKontext): void;
+  onKlick(treffer: Treffer, kontext: EditorKontext, optionen?: KlickOptionen): void;
+  /** Nur Werkzeuge, die auf Doppelklick reagieren (die Auswahl). */
+  onDoppelklick?(treffer: Treffer, kontext: EditorKontext, optionen?: KlickOptionen): void;
   abbrechen(): void;
 }
 
@@ -76,15 +88,32 @@ export class PlatziereTool implements Werkzeug {
   }
 }
 
-/** Klick auf ein Objekt wählt es aus (bei einer Gruppenstange die ganze Gruppe), ein Klick auf den Boden hebt die Auswahl auf. */
+/**
+ * Auswahl (Spec E1, D1). Klick wählt ein Teil (bei einer Gruppenstange die ganze Gruppe), Shift+Klick fügt es hinzu oder nimmt es weg,
+ * Doppelklick wählt den ganzen Bau des Teils. Klick auf den Boden hebt die Auswahl auf, mit Shift lässt er sie stehen.
+ */
 export class SelectTool implements Werkzeug {
   readonly name = 'auswahl' as const;
   readonly angefangen: Vec3 | null = null;
 
   constructor(readonly klickZiele: readonly ArtName[]) {}
 
-  onKlick(treffer: Treffer, k: EditorKontext): void {
-    k.waehle(treffer.art === 'boden' ? null : k.bauwerk.auswahlIdFuer(treffer.id));
+  onKlick(treffer: Treffer, k: EditorKontext, optionen: KlickOptionen = {}): void {
+    if (treffer.art === 'boden') {
+      if (!optionen.shift) k.setzeAuswahl([]);
+      return;
+    }
+    const id = k.bauwerk.auswahlIdFuer(treffer.id);
+    if (!optionen.shift) return k.setzeAuswahl([id]);
+    const rest = [...k.auswahl()].filter((x) => x !== id);
+    k.setzeAuswahl(rest.length === k.auswahl().size ? [...rest, id] : rest);
+  }
+
+  onDoppelklick(treffer: Treffer, k: EditorKontext, optionen: KlickOptionen = {}): void {
+    if (treffer.art === 'boden') return this.onKlick(treffer, k, optionen);
+    const bau = Bau.von(k.bauwerk, treffer.id).objektIds;
+    const ids = bau.length > 0 ? bau : [k.bauwerk.auswahlIdFuer(treffer.id)];
+    k.setzeAuswahl(optionen.shift ? [...k.auswahl(), ...ids] : ids);
   }
 
   abbrechen(): void {}

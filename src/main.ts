@@ -74,9 +74,14 @@ szene.leinwand.addEventListener('pointerdown', (e) => {
 szene.leinwand.addEventListener('pointerup', (e) => {
   if (druck && Math.hypot(e.clientX - druck.x, e.clientY - druck.y) < KLICK_TOLERANZ_PX) {
     const treffer = szene.treffer(e, editor.klickZiele);
-    if (treffer) editor.klick(treffer);
+    if (treffer) editor.klick(treffer, { shift: e.shiftKey });
   }
   druck = null;
+});
+szene.leinwand.addEventListener('dblclick', (e) => {
+  if (modus.aktiv) return;
+  const treffer = szene.treffer(e, editor.klickZiele);
+  if (treffer) editor.doppelklick(treffer, { shift: e.shiftKey });
 });
 
 for (const knopf of werkzeugKnoepfe) {
@@ -119,7 +124,7 @@ let meldungsTimer: number | undefined;
 editor.abonniere((z) => {
   const { hinweise, liste } = pruefung(z.bauwerk);
   const markiert = new Set(z.markiert);
-  if (z.auswahl) markiert.add(z.auswahl);
+  z.ausgewaehlt.forEach((id) => markiert.add(id));
   szene.zeige(z.bauwerk, markiert, z.stangenStart);
   parameter.zeige(z);
   hinweisPanel.zeige(hinweise);

@@ -58,7 +58,7 @@ export class Szene {
     this.inhalt.zeige(bauwerk, markiert, stangenStart);
   }
 
-  treffer(e: PointerEvent, klickZiele: readonly ArtName[]): Treffer | null {
+  treffer(e: MouseEvent, klickZiele: readonly ArtName[]): Treffer | null {
     const rect = this.leinwand.getBoundingClientRect();
     const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
     this.raycaster.setFromCamera(ndc, this.kamera);

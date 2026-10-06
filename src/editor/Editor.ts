@@ -6,7 +6,7 @@ import type { Vec3 } from '../model/Vec3';
 import { DREH_SCHRITT } from './konstanten';
 import { SnapService, type Treffer } from './SnapService';
 import { Verlauf } from './Verlauf';
-import { type EditorKontext, erzeugeWerkzeug, type Werkzeug, type WerkzeugName } from './Werkzeuge';
+import { type EditorKontext, erzeugeWerkzeug, type KlickOptionen, type Werkzeug, type WerkzeugName } from './Werkzeuge';
 
 export interface EditorZustand {
   readonly bauwerk: Bauwerk;
@@ -71,7 +71,15 @@ export class Editor implements EditorKontext {
     this.ausgewaehltIds = id === null ? new Set() : new Set([id]);
   }
 
-  /** Wählt mehrere Objekte auf einmal (Spec v3, D6). Die Bedienung dafür kommt mit E1. */
+  auswahl(): ReadonlySet<string> {
+    return this.zustand().ausgewaehlt;
+  }
+
+  setzeAuswahl(ids: Iterable<string>): void {
+    this.ausgewaehltIds = new Set(ids);
+  }
+
+  /** Wählt mehrere Objekte auf einmal (Spec v3, D6). */
   waehleMehrere(ids: readonly string[]): void {
     this.ausgewaehltIds = new Set(ids);
     this.melde();
@@ -101,8 +109,18 @@ export class Editor implements EditorKontext {
     };
   }
 
-  klick(treffer: Treffer): void {
-    this.fuehreAus(() => this.werkzeug.onKlick(treffer, this));
+  klick(treffer: Treffer, optionen: KlickOptionen = {}): void {
+    this.fuehreAus(() => this.werkzeug.onKlick(treffer, this, optionen));
+  }
+
+  /** Doppelklick: wählt den ganzen Bau. Werkzeuge ohne Doppelklick-Verhalten ignorieren ihn. */
+  doppelklick(treffer: Treffer, optionen: KlickOptionen = {}): void {
+    const werkzeug = this.werkzeug;
+    if (werkzeug.onDoppelklick) this.fuehreAus(() => werkzeug.onDoppelklick?.(treffer, this, optionen));
+  }
+
+  waehleAlle(): void {
+    this.waehleMehrere(this.bauwerk.objekte.map((o) => o.id));
   }
 
   waehleWerkzeug(name: WerkzeugName): void {
@@ -132,7 +150,7 @@ export class Editor implements EditorKontext {
    */
   aendereObjekte(ids: readonly string[], fn: (o: LagerObjekt) => LagerObjekt): boolean {
     return this.fuehreAus(() => {
-      const neu = ids.reduce((b, id) => {
+      const neu = [...new Set(ids)].reduce((b, id) => {
         const o = b.objekt(id);
         return o ? b.ersetze(fn(o)) : b;
       }, this.bauwerk);
@@ -140,12 +158,13 @@ export class Editor implements EditorKontext {
     });
   }
 
+  /** Löscht die ganze Auswahl in einem Undo-Schritt. */
   loescheAuswahl(): void {
-    const id = this.zustand().auswahl;
-    if (id === null) return;
+    const ids = this.zustand().ausgewaehlt;
+    if (ids.size === 0) return;
     this.fuehreAus(() => {
       this.waehle(null);
-      this.aendere(this.bauwerk.ohne(id));
+      this.aendere([...ids].reduce((b, id) => b.ohne(id), this.bauwerk));
     });
   }
 
@@ -184,6 +203,7 @@ export class Editor implements EditorKontext {
     const klein = taste.toLowerCase();
     if (strg && klein === 'z') this.rueckgaengig();
     else if (strg && klein === 'y') this.wiederholen();
+    else if (strg && klein === 'a') this.waehleAlle();
     else if (!strg && (taste === 'Delete' || taste === 'Backspace')) this.loescheAuswahl();
     else if (!strg && klein === 'r') this.dreheAuswahl();
     else if (taste === 'Escape') {
