@@ -14,7 +14,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-05-lagerplatz-planer-design.md` (Spec v3), Abschnitte „E0 Fundament“ (D1–D8, D8 als Nachtrag vom 05.10.2026) und „Verifikation“. Die v1-, v2a- und v2b-Specs gelten weiter.
 
-Branch: `feat/objektmodell`, Stand `5cd4fef` (nur Spec-Commits über dem Code von `6b4d36d`). Die Specs zu E1–E3 und die gestrichene E7 ändern an E0 nichts.
+Branch: `feat/objektmodell`, Stand `4dab48a` (nur Spec- und Plan-Commits über dem Code von `8701ff1`: R2-Fix plus Umbenennung Haring). Die Specs zu E1–E3 und die gestrichene E7 ändern an E0 nichts.
 
 **Rebase auf den R2-Fix (erledigt 06.10.2026).** `feat/objektmodell` steht auf `fix/r2-feste-knoten` (`8701ff1`): dem Bugfix (neue Datei `src/rules/FesteKnoten.ts`; `ViereckRule` meldet nur noch Vierecke mit mindestens einer nicht festen Ecke; Version 1.2.1) und der Umbenennung **Hering → Haring** in Oberfläche, Bezeichnern und Doku (`Haring`, `haringe()`, Verankerungsart `'haring'`). Diesen Fix plant E0 nicht; `package.json` steht auf 1.2.1. Neue Texte und Bezeichner schreiben immer „Haring“. Der Fix ändert weder den Konstruktor von `ViereckRule` noch `src/rules/constants.ts`; E0 lässt `FesteKnoten.ts`, `ViereckRule.ts` und die Fix-Tests (`FesteKnoten.test.ts`, `lagerplatz.integration.test.ts`) unverändert, und sie müssen in jedem Task grün bleiben. `lagerplatz.integration.test.ts` liest einen echten v3-Lagerplatz über den Serializer und sichert damit zusätzlich das Lesen alter Dateien.
 
@@ -2904,7 +2904,7 @@ const imRahmen = (ist: readonly number[], soll: readonly number[]): void => {
 const ABOCK_STANGEN = ['abock-bein-0', 'abock-bein-1', 'abock-riegel'];
 const DREIBEIN_STANGEN = ['dreibein-bein-0', 'dreibein-bein-1', 'dreibein-bein-2'];
 
-// Die erwarteten Werte wurden am 05.10.2026 vor E0 (Code-Stand 6b4d36d) mit dem alten Serializer gemessen.
+// Die erwarteten Werte wurden am 05.10.2026 vor E0 (Code-Stand 6b4d36d) mit dem alten Serializer gemessen; die Haring-ids nach der Umbenennung (8701ff1) erneut geprüft.
 describe('Alte Formate 1–3 lesen wie vor E0 (Spec v3, D3)', () => {
   it('v1-Link aus e2e/smoke.spec.ts', () => {
     const f = fingerabdruck(V1);
@@ -3668,7 +3668,7 @@ Run: `npx vitest run`
 Expected: 43 Dateien, 372 Tests, alle grün.
 Run: `npx tsc --noEmit`
 Expected: Exit 0.
-Run: `grep -rnE "KlickZiel|PlaceBaugruppeTool|PlaceBaumTool|DrawStangeTool|DrawSeilTool|DrawPlaneTool|ZWEI_PUNKT_TEIL" src`
+Run: `grep -rnE "KlickZiel|PlaceBaugruppeTool|PlaceBaumTool|DrawStangeTool|DrawSeilTool|DrawPlaneTool|ZWEI_PUNKT_TEIL" src/editor src/ui src/share src/model src/rules src/main.ts` (ohne `src/arten`: dort nennt ein Kommentar in `ObjektArt.ts` bewusst den alten Namen `KlickZiel`)
 Expected: keine Ausgabe.
 Run: `grep -nE "instanceof|'(dreibein|abock|stange|seil|baum|plane)'" src/editor/Werkzeuge.ts`
 Expected: keine Ausgabe (Spec-Verifikation: keine Fallunterscheidung je Art).
@@ -5934,7 +5934,7 @@ grep -rE "from 'three'|document\.|window\." src/model src/rules src/arten       
 grep -rnE "from '\.\./(arten|share|editor|ui)" src/model                            # Expected: keine Ausgabe
 grep -nE "instanceof|'(dreibein|abock|stange|seil|baum|plane)'" src/editor/Werkzeuge.ts src/ui/ParameterPanel.ts src/share/BauwerkSerializer.ts   # Expected: keine Ausgabe
 grep -rnE "KlickZiel|PlaceBaugruppeTool|DrawPlaneTool|stangeId:|baumId:" src/editor src/ui src/main.ts   # Expected: keine Ausgabe
-git diff --stat main -- src/rules/*Rule.ts src/rules/Analyse.ts src/rules/KnotenGraph.ts src/rules/FesteKnoten.ts src/rules/constants.ts   # Expected: keine Ausgabe (Regel-Klassen und der R2-Fix unverändert)
+git diff --stat 8701ff1 -- src/rules/*Rule.ts src/rules/Analyse.ts src/rules/KnotenGraph.ts src/rules/FesteKnoten.ts src/rules/constants.ts   # Expected: keine Ausgabe (Regel-Klassen und der R2-Fix unverändert)
 grep -c "CHECK MANUALLY" src/rules/constants.ts   # Expected: 10 (unverändert)
 ```
 
@@ -6018,6 +6018,6 @@ Wurde `docs/ki-lernlog.md` geändert, die Datei mit in denselben `git add` aufne
 
 ## Abschluss
 
-- Abschluss-Review über den ganzen Branch (`main..feat/objektmodell`), mit Blick auf die Review Focus oben.
-- `finishing-a-development-branch`: Push und PR gegen `main`. **Jakob merged selbst**; der Merge deployt die Web-Version neu.
+- Abschluss-Review über den ganzen Branch (`8701ff1..feat/objektmodell`, also ohne die Commits des R2-Fixes), mit Blick auf die Review Focus oben.
+- `finishing-a-development-branch`: Push und PR gegen `main`. Vorher den R2-Fix (`fix/r2-feste-knoten`) als eigenen PR mergen, sonst enthält der E0-PR dessen Commits. **Jakob merged selbst**; der Merge deployt die Web-Version neu.
 - Danach: E1 „Editor-Grundlagen“ nach `docs/superpowers/specs/2026-10-05-lagerplatz-e1-editor-design.md`.
