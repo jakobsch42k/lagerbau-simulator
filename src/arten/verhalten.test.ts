@@ -45,8 +45,10 @@ describe('Klickverhalten (Spec v2b, D2)', () => {
       ['baum', 'immer'],
       ['platzobjekt', 'wahlweise'],
       ['beschriftung', 'wahlweise'],
+      ['zone', 'wahlweise'],
+      ['linie', 'wahlweise'],
     ]);
-    expect(arten.wahlweise()).toEqual(['seil', 'plane', 'platzobjekt', 'beschriftung']);
+    expect(arten.wahlweise()).toEqual(['seil', 'plane', 'platzobjekt', 'beschriftung', 'zone', 'linie']);
     expect(arten.mitOesen()).toEqual(['plane']);
   });
 });

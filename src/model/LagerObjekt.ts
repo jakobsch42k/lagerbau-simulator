@@ -4,7 +4,7 @@ import type { Vec3 } from './Vec3';
  * Alle Objektarten des Planers (Spec v3, D1). Eine neue Art kommt hier dazu, außerdem in `standardArten()` (src/arten)
  * und in `standardDarstellungen()` (src/editor/darstellung).
  */
-export const ART_NAMEN = ['dreibein', 'abock', 'stange', 'seil', 'baum', 'plane', 'platzobjekt', 'beschriftung'] as const;
+export const ART_NAMEN = ['dreibein', 'abock', 'stange', 'seil', 'baum', 'plane', 'platzobjekt', 'beschriftung', 'zone', 'linie'] as const;
 export type ArtName = (typeof ART_NAMEN)[number];
 
 /** Gemeinsame Schnittstelle aller Objekte auf dem Platz. Unveränderlich: Jede Methode liefert ein neues Objekt. */

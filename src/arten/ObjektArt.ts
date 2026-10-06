@@ -10,10 +10,10 @@ export interface ObjektJson {
 }
 
 /**
- * Woran ein Klick einrastet. Vorrang bei gleichem Abstand: Spitze → Bund → Ende → Öse.
+ * Woran ein Klick einrastet. Vorrang bei gleichem Abstand: Spitze → Bund → Ende → Öse (zuletzt `ecke`, eine Ecke einer Zone oder Linie, Spec E3).
  * `stange` und `baum` liefert nur das getroffene Objekt selbst (`beiTreffer`).
  */
-export type FangArt = 'spitze' | 'bund' | 'ende' | 'oese' | 'stange' | 'baum';
+export type FangArt = 'spitze' | 'bund' | 'ende' | 'oese' | 'stange' | 'baum' | 'ecke';
 
 export interface Fangpunkt {
   readonly punkt: Vec3;
@@ -94,7 +94,20 @@ export interface PlatzierenLinie {
   erzeuge(id: string, a: Vec3, b: Vec3): LagerObjekt;
 }
 
-export type Platzieren = PlatzierenPunkt | PlatzierenLinie;
+/**
+ * Beliebig viele Klicks auf Einrastpunkte (Zone, Linie; Spec E3): jeder Klick setzt einen Punkt, Doppelklick oder Enter schließt ab,
+ * Esc bricht ab. `erzeuge` wirft einen RangeError mit der Meldung des Modells, wenn es zu wenige oder ungültige Punkte sind.
+ */
+export interface PlatzierenMehrpunkt {
+  readonly modus: 'mehrpunkt';
+  /** So viele Punkte braucht das Objekt mindestens (für die Statuszeile; die Prüfung macht das Modell). */
+  readonly mindestpunkte: number;
+  /** Ob die Vorschau den Linienzug zum Vieleck schließt (Zone) oder offen lässt (Linie). */
+  readonly geschlossen: boolean;
+  erzeuge(id: string, punkte: readonly Vec3[]): LagerObjekt;
+}
+
+export type Platzieren = PlatzierenPunkt | PlatzierenLinie | PlatzierenMehrpunkt;
 
 /** `immer`: fängt Klicks in jedem Werkzeug; `wahlweise`: nur, wo das Werkzeug die Art als Klickziel nennt (ersetzt `KlickZiel`). */
 export type KlickVerhalten = 'immer' | 'wahlweise';

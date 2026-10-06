@@ -2,7 +2,7 @@ import './style.css';
 import { VorlagenWahl } from './arten/platz/vorlagen';
 import { standardArten } from './arten/standardArten';
 import { kochstelle } from './beispiele/kochstelle';
-import { Editor } from './editor/Editor';
+import { Editor, type EditorZustand } from './editor/Editor';
 import { Szene } from './editor/Szene';
 import { Zeigersteuerung } from './editor/Zeigersteuerung';
 import type { WerkzeugName } from './editor/Werkzeuge';
@@ -160,12 +160,22 @@ window.addEventListener('keydown', (e) => {
 });
 window.addEventListener('hashchange', ladeAusAdresse);
 
+/** Statuszeile der Mehrpunkt-Werkzeuge (Zone, Linie): wie viele Punkte schon stehen und wie man abschließt. */
+function zeichenHinweis(z: EditorZustand): string {
+  if (z.werkzeug === 'auswahl' || z.werkzeug === 'messen' || z.werkzeug === 'massstab') return '';
+  const art = arten.art(z.werkzeug);
+  if (art.platzieren.modus !== 'mehrpunkt') return '';
+  const anzahl = z.zeichnung?.punkte.length ?? 0;
+  if (anzahl === 0) return `${art.label} zeichnen: Punkte anklicken, mindestens ${art.platzieren.mindestpunkte}`;
+  return `${art.label}: ${anzahl} ${anzahl === 1 ? 'Punkt' : 'Punkte'} gesetzt, weiter klicken; Doppelklick oder Enter schließt ab, Esc bricht ab`;
+}
+
 let meldungsTimer: number | undefined;
 editor.abonniere((z) => {
   const { hinweise, liste } = pruefung(z.bauwerk);
   const markiert = new Set(z.markiert);
   z.ausgewaehlt.forEach((id) => markiert.add(id));
-  szene.zeige(z.vorschau ?? z.bauwerk, markiert, z.stangenStart);
+  szene.zeige(z.vorschau ?? z.bauwerk, markiert, z.stangenStart, z.zeichnung);
   szene.zeigeMessung(z.messung);
   parameter.zeige(z);
   hinweisPanel.zeige(hinweise);
@@ -178,7 +188,7 @@ editor.abonniere((z) => {
   // Nur Zwei-Klick-Werkzeuge haben einen Startpunkt; ihr Label ist „Stange“, „Seil“ oder „Plane“.
   const teil = z.werkzeug === 'auswahl' ? 'Teil' : z.werkzeug === 'messen' ? 'Messen' : z.werkzeug === 'massstab' ? '' : arten.art(z.werkzeug).label;
   const massstab = z.werkzeug === 'massstab' && !z.messung?.bis ? MASSSTAB_HINWEIS : '';
-  meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : massstab);
+  meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : massstab || zeichenHinweis(z));
   if (z.meldung) {
     clearTimeout(meldungsTimer);
     meldungsTimer = window.setTimeout(() => editor.zeigeMeldung(null), MELDUNG_DAUER_MS);

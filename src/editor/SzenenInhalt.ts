@@ -10,6 +10,8 @@ import { kugel } from './darstellung/formen';
 import { START } from './darstellung/materialien';
 import { standardDarstellungen } from './darstellung/standardDarstellungen';
 import type { Treffer } from './SnapService';
+import type { Zeichnung } from './Werkzeuge';
+import { ZeichnungsVorschau } from './darstellung/ZeichnungsVorschau';
 
 interface Eintrag {
   readonly objekt: LagerObjekt;
@@ -26,16 +28,18 @@ export class SzenenInhalt {
   private ableitungen: { readonly bauwerk: Bauwerk; readonly gruppe: THREE.Group } | null = null;
   private start: { readonly punkt: Vec3; readonly mesh: THREE.Mesh } | null = null;
   private zeigeBeschriftungen = true;
+  private readonly zeichnungsVorschau = new ZeichnungsVorschau(this.wurzel);
 
   constructor(
     private readonly darstellungen: Darstellungen = standardDarstellungen(),
     private readonly arten: ObjektRegister = standardArten(),
   ) {}
 
-  zeige(bauwerk: Bauwerk, markiert: ReadonlySet<string>, stangenStart: Vec3 | null): void {
+  zeige(bauwerk: Bauwerk, markiert: ReadonlySet<string>, stangenStart: Vec3 | null, zeichnung: Zeichnung | null = null): void {
     if (this.gleicheObjekteAb(bauwerk)) this.wendeBeschriftungenAn();
     this.gleicheAbleitungenAb(bauwerk);
     this.gleicheStartAb(stangenStart);
+    this.zeichnungsVorschau.zeige(zeichnung);
     this.faerbe(markiert);
   }
 
@@ -137,7 +141,7 @@ export class SzenenInhalt {
     this.wurzel.remove(objekt);
     objekt.traverse((k) => {
       if (k instanceof THREE.Mesh || k instanceof THREE.Line) k.geometry.dispose();
-      if (k.userData.eigenesMaterial === true && (k instanceof THREE.Mesh || k instanceof THREE.Sprite)) {
+      if (k.userData.eigenesMaterial === true && (k instanceof THREE.Mesh || k instanceof THREE.Sprite || k instanceof THREE.Line)) {
         const material = k.material as THREE.Material & { map?: THREE.Texture | null };
         material.map?.dispose();
         material.dispose();

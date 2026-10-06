@@ -105,6 +105,10 @@ describe('Bodenbild (Spec E2, D3)', () => {
     expect(BODEN_HOEHEN.boden).toBeLessThan(BODEN_HOEHEN.bild);
     expect(BODEN_HOEHEN.bild).toBeLessThan(BODEN_HOEHEN.raster);
     expect(BODEN_HOEHEN.raster).toBeLessThan(0.005);
+    expect(BODEN_HOEHEN.zone).toBe(0.005);
+    expect(BODEN_HOEHEN.zone).toBeGreaterThan(BODEN_HOEHEN.raster);
+    expect(BODEN_HOEHEN.weg).toBeGreaterThan(BODEN_HOEHEN.zone);
+    expect(BODEN_HOEHEN.linie).toBeGreaterThan(BODEN_HOEHEN.weg);
     expect(BODEN_HOEHEN.bild).toBeLessThanOrEqual(0.001);
     expect(BODEN_HOEHEN.boden).toBeLessThanOrEqual(-0.05);
     const { b, bildMesh, raster } = frisch();

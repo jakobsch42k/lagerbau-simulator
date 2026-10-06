@@ -111,6 +111,7 @@ export class Editor implements EditorKontext {
       markiert: this.markiertIds,
       werkzeug: this.werkzeug.name,
       stangenStart: this.werkzeug.angefangen,
+      zeichnung: this.werkzeug.zeichnung ?? null,
       messung: this.messungWert,
       meldung: this.meldung,
       kannRueckgaengig: this.verlauf.kannRueckgaengig,
@@ -126,6 +127,14 @@ export class Editor implements EditorKontext {
   doppelklick(treffer: Treffer, optionen: KlickOptionen = {}): void {
     const werkzeug = this.werkzeug;
     if (werkzeug.onDoppelklick) this.fuehreAus(() => werkzeug.onDoppelklick?.(treffer, this, optionen));
+  }
+
+  /** Enter: schließt eine Zeichnung (Zone, Linie) ab. Liefert false, wenn nichts gezeichnet wird; dann ist die Taste nicht behandelt. */
+  bestaetige(): boolean {
+    const werkzeug = this.werkzeug;
+    if (!werkzeug.onBestaetigen || !werkzeug.zeichnung) return false;
+    this.fuehreAus(() => werkzeug.onBestaetigen?.(this));
+    return true;
   }
 
   waehleAlle(): void {

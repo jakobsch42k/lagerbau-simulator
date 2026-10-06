@@ -21,8 +21,8 @@ export interface SnapPunkt {
   readonly art: SnapArt;
 }
 
-/** Vorrang bei gleichem Abstand: Spitze → Bund → Ende → Öse (Spec v1, v2b). Stange und Baum kommen nur vom getroffenen Objekt. */
-const VORRANG: Readonly<Record<FangArt, number>> = { spitze: 0, bund: 1, ende: 2, oese: 3, stange: 4, baum: 5 };
+/** Vorrang bei gleichem Abstand: Spitze → Bund → Ende → Öse (Spec v1, v2b), zuletzt Ecken von Zonen und Linien (Spec E3). Stange und Baum kommen nur vom getroffenen Objekt. */
+const VORRANG: Readonly<Record<FangArt, number>> = { spitze: 0, bund: 1, ende: 2, oese: 3, stange: 4, baum: 5, ecke: 6 };
 
 /** Macht aus einem Mausklick einen eindeutigen 3D-Punkt, nie einen freien Tiefenklick. Die Fangpunkte liefern die Arten. */
 export class SnapService {

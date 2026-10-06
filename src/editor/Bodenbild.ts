@@ -10,9 +10,10 @@ const MAX_RASTER_LINIEN = 400;
  * Senkrechte Schichtung des Bodens (m), von unten nach oben: neutrale Fläche, Luftbild, Raster.
  * Die Fläche liegt 5 cm tiefer, damit sie auch auf 300 m Entfernung nicht mit dem Bild flackert (Tiefenfehler bis ~5 cm);
  * zusätzlich hat das Bild ein `polygonOffset`. Alles, was Nutzer zeichnen, liegt darüber: Planen ab y = 0, und die Zonen
- * (Spec E3) als flache Flächen bei y = 0,005, also über Bild und Raster. Das Raster hat weiter Tiefentest, damit es nie über 3D-Objekten liegt.
+ * (Spec E3) als flache Flächen bei y = 0,005, also über Bild und Raster; Wege (0,007) liegen knapp über den Zonen, damit ein Weg über einer Zone
+ * sichtbar bleibt, und die Grenzlinien (0,009) darüber. Das Raster hat weiter Tiefentest, damit es nie über 3D-Objekten liegt.
  */
-export const BODEN_HOEHEN = { boden: -0.05, bild: 0.001, raster: 0.002 } as const;
+export const BODEN_HOEHEN = { boden: -0.05, bild: 0.001, raster: 0.002, zone: 0.005, weg: 0.007, linie: 0.009 } as const;
 const ANISOTROPIE = 8;
 
 type TexturLader = (daten: string) => THREE.Texture;

@@ -2,10 +2,12 @@ import { BaugruppeDarstellung } from './BaugruppeDarstellung';
 import { BaumDarstellung } from './BaumDarstellung';
 import { BeschriftungDarstellung } from './BeschriftungDarstellung';
 import type { Darstellungen } from './Darstellung';
+import { LinieDarstellung } from './LinieDarstellung';
 import { PlaneDarstellung } from './PlaneDarstellung';
 import { PlatzobjektDarstellung } from './PlatzobjektDarstellung';
 import { SeilDarstellung } from './SeilDarstellung';
 import { StangeDarstellung } from './StangeDarstellung';
+import { ZoneDarstellung } from './ZoneDarstellung';
 
 /** Je Art eine Darstellung (Spec v3, D2). Eine neue Art braucht hier eine Zeile; der Typ meldet sie sonst als fehlend. */
 export function standardDarstellungen(): Darstellungen {
@@ -18,5 +20,7 @@ export function standardDarstellungen(): Darstellungen {
     plane: new PlaneDarstellung(),
     platzobjekt: new PlatzobjektDarstellung(),
     beschriftung: new BeschriftungDarstellung(),
+    zone: new ZoneDarstellung(),
+    linie: new LinieDarstellung(),
   };
 }

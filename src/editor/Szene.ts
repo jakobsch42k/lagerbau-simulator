@@ -12,6 +12,7 @@ import { Bodenbild } from './Bodenbild';
 import { Kameras } from './Kameras';
 import { Massstabsleiste } from './Massstabsleiste';
 import { Messanzeige } from './Messanzeige';
+import type { Zeichnung } from './Werkzeuge';
 import type { Messung } from './Messung';
 import { Nordpfeil } from './Nordpfeil';
 
@@ -67,10 +68,10 @@ export class Szene {
   }
 
   /** Baut nur neu, was sich geändert hat (Spec v3, D5). */
-  zeige(bauwerk: Bauwerk, markiert: ReadonlySet<string>, stangenStart: Vec3 | null): void {
+  zeige(bauwerk: Bauwerk, markiert: ReadonlySet<string>, stangenStart: Vec3 | null, zeichnung: Zeichnung | null = null): void {
     this.bodenbild.zeige(bauwerk.luftbild);
     this.kameras.setzeBodengroesse(this.bodenbild.groesse);
-    this.inhalt.zeige(bauwerk, markiert, stangenStart);
+    this.inhalt.zeige(bauwerk, markiert, stangenStart, zeichnung);
   }
 
   /** Raster ein- oder ausschalten (Ansichtswahl, nicht im Bauwerk gespeichert). */

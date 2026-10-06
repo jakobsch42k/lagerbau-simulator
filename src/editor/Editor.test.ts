@@ -201,10 +201,10 @@ describe('Editor', () => {
 
   it('legt pro Werkzeug fest, welche Teile Klicks fangen (Spec v2b, D2)', () => {
     const e = neuerEditor();
-    expect(e.klickZiele).toEqual(['seil', 'plane', 'platzobjekt', 'beschriftung']);
+    expect(e.klickZiele).toEqual(['seil', 'plane', 'platzobjekt', 'beschriftung', 'zone', 'linie']);
     e.waehleWerkzeug('seil');
     expect(e.klickZiele).toEqual(['plane']);
-    for (const name of ['dreibein', 'abock', 'stange', 'baum', 'plane', 'platzobjekt', 'beschriftung'] as const) {
+    for (const name of ['dreibein', 'abock', 'stange', 'baum', 'plane', 'platzobjekt', 'beschriftung', 'zone', 'linie'] as const) {
       e.waehleWerkzeug(name);
       expect(e.klickZiele, name).toEqual([]);
     }

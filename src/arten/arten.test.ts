@@ -9,7 +9,10 @@ import { Plane } from '../model/Plane';
 import { Platzobjekt } from '../model/Platzobjekt';
 import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
+import { Linie } from '../model/Linie';
+import { STANDARD_LINIE, STANDARD_ZONE } from '../model/params';
 import { Vec3 } from '../model/Vec3';
+import { Zone } from '../model/Zone';
 import { ObjektRegister } from './ObjektRegister';
 import { SeilArt } from './SeilArt';
 import { standardArten } from './standardArten';
@@ -24,6 +27,8 @@ const beispiele: readonly LagerObjekt[] = [
   new Plane('pl', new Vec3(0, 2, 0), new Vec3(4, 2, 0), { ...STANDARD_PLANE, form: 'satteldach' }),
   new Platzobjekt('po', new Vec3(2, 0, 3), { vorlage: 'holzlager', name: 'Holzlager', form: 'rechteck', breite: 3, laenge: 2, hoehe: 1, farbe: '#8b5a2b' }, 0.5),
   new Beschriftung('be', new Vec3(1, 0, 1), STANDARD_BESCHRIFTUNG),
+  new Zone('zo', [new Vec3(0, 0, 0), new Vec3(6, 0, 0), new Vec3(6, 0, 4)], STANDARD_ZONE),
+  new Linie('li', [new Vec3(0, 0, 0), new Vec3(6, 0, 4)], { ...STANDARD_LINIE, typ: 'zaun' }),
 ];
 /** Die Felder je Art wie in v3, nur mit `art` vorneweg und bei Gruppen ohne `typ` (Spec v3, D3). */
 const FELDER: Readonly<Record<ArtName, readonly string[]>> = {
@@ -35,6 +40,8 @@ const FELDER: Readonly<Record<ArtName, readonly string[]>> = {
   plane: ['art', 'id', 'start', 'ende', 'breite', 'laenge', 'form', 'neigung', 'seite'],
   platzobjekt: ['art', 'id', 'position', 'drehung', 'vorlage', 'name', 'form', 'breite', 'laenge', 'hoehe', 'farbe'],
   beschriftung: ['art', 'id', 'position', 'text', 'groesse', 'farbe'],
+  zone: ['art', 'id', 'name', 'farbe', 'deckkraft', 'punkte'],
+  linie: ['art', 'id', 'name', 'typ', 'breite', 'farbe', 'punkte'],
 };
 
 describe('ObjektRegister (Spec v3, D2)', () => {
@@ -64,8 +71,8 @@ describe('ObjektRegister (Spec v3, D2)', () => {
 });
 
 describe('Platzbedarf je Art (Spec E3, D3)', () => {
-  it('zählen alle Arten außer Platz-Objekt und Beschriftung', () => {
-    expect(beispiele.filter((o) => !arten.zaehltZumPlatzbedarf(o)).map((o) => o.art)).toEqual(['platzobjekt', 'beschriftung']);
+  it('zählen alle Arten außer Platz-Objekt, Beschriftung, Zone und Linie', () => {
+    expect(beispiele.filter((o) => !arten.zaehltZumPlatzbedarf(o)).map((o) => o.art)).toEqual(['platzobjekt', 'beschriftung', 'zone', 'linie']);
   });
 });
 

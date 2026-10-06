@@ -7,6 +7,7 @@ export interface TastenBefehle {
   auswahl(): ReadonlySet<string>;
   brichZiehenAb(): void;
   abbrechen(): void;
+  bestaetige(): boolean;
   rueckgaengig(): void;
   wiederholen(): void;
   waehleAlle(): void;
@@ -18,7 +19,7 @@ export interface TastenBefehle {
   verschiebeAuswahl(dv: Vec3): boolean;
 }
 
-/** Übersetzt Tastenkürzel in Editor-Befehle (Spec E1, D3): Pfeile, R, Entf, Esc, Strg+Z/Y/A/D/C/V. */
+/** Übersetzt Tastenkürzel in Editor-Befehle (Spec E1, D3): Pfeile, R, Entf, Esc, Enter (Zeichnung abschließen), Strg+Z/Y/A/D/C/V. */
 export class Tastatur {
   /** Blickrichtung der Ansicht (waagrechter Anteil); „oben“ der Pfeiltasten. Standard Norden (-z), wie in der Planansicht. */
   private blick: Vec3 = new Vec3(0, 0, -1);
@@ -34,6 +35,7 @@ export class Tastatur {
   verarbeite(taste: string, strg: boolean, umschalt: boolean): boolean {
     if (taste === 'Escape') return this.escape();
     if (this.editor.zieht) return false;
+    if (taste === 'Enter') return this.editor.bestaetige();
     if (strg) return this.strgTaste(taste.toLowerCase());
     const klein = taste.toLowerCase();
     if (taste === 'Delete' || taste === 'Backspace') this.editor.loescheAuswahl();

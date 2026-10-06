@@ -15,3 +15,16 @@ export const PLANE = new THREE.MeshLambertMaterial({ color: 0x7d7a4f, side: THRE
 export const PLANE_MARKIERT = new THREE.MeshLambertMaterial({ color: 0xd9480f, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
 // Auswahl einer Beschriftung: eine flache, halbdurchsichtige Fläche unter dem Text (Spec E3).
 export const BESCHRIFTUNG_MARKIERT = new THREE.MeshBasicMaterial({ color: 0xd9480f, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide });
+// Auswahl einer Zone: orange, halbdurchsichtig, wie die Zone selbst flach und ohne Tiefenschreiben (Spec E3).
+export const ZONE_MARKIERT = new THREE.MeshBasicMaterial({
+  color: 0xd9480f,
+  transparent: true,
+  opacity: 0.55,
+  depthWrite: false,
+  side: THREE.DoubleSide,
+  polygonOffset: true,
+  polygonOffsetFactor: -1,
+  polygonOffsetUnits: -1,
+});
+// Auswahl einer Grenze: die unsichtbare Klickfläche wird sichtbar.
+export const KLICKBAND_MARKIERT = new THREE.MeshBasicMaterial({ color: 0xd9480f, transparent: true, opacity: 0.45, depthWrite: false, side: THREE.DoubleSide });
