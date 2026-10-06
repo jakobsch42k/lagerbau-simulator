@@ -1,4 +1,5 @@
 import { FUSS_TOLERANZ, MIN_SEILLAENGE } from './konstanten';
+import type { LagerObjekt } from './LagerObjekt';
 import type { PlanenParams } from './params';
 import { Vec3 } from './Vec3';
 
@@ -12,7 +13,9 @@ const mitteVon = (p: Vec3, q: Vec3): Vec3 => p.add(q).scale(0.5);
  * Rechteckige Plane an einer Aufhängelinie (Spec v2b, D1). Die Länge läuft mittig entlang der Linie,
  * die Breite quer dazu, um die Neigung unter die Waagrechte gekippt. Kein Durchhang, keine Kräfte.
  */
-export class Plane {
+export class Plane implements LagerObjekt {
+  readonly art = 'plane' as const;
+
   /** Eine Fläche bei `eben`, zwei (je Dachseite) beim Satteldach. */
   readonly flaechen: readonly Viereck[];
   /** Die 8 Ösen: 4 Ecken und 4 Kantenmitten der ausgebreiteten Plane. */
@@ -60,6 +63,25 @@ export class Plane {
 
   mitParams(params: PlanenParams): Plane {
     return new Plane(this.id, this.start, this.ende, params);
+  }
+
+  ids(): readonly string[] {
+    return [this.id];
+  }
+
+  /** Prüft die neue Lage wie der Konstruktor: Reicht sie in den Boden, fliegt ein RangeError. */
+  verschobenUm(dv: Vec3): Plane {
+    return new Plane(this.id, this.start.add(dv), this.ende.add(dv), this.params);
+  }
+
+  /** Ohne `um` um die Mitte der Aufhängelinie. */
+  gedreht(winkelRad: number, um: Vec3 = mitteVon(this.start, this.ende)): Plane {
+    return new Plane(this.id, this.start.gedrehtUmY(winkelRad, um), this.ende.gedrehtUmY(winkelRad, um), this.params);
+  }
+
+  /** Die Ösen; so zählte der Platzbedarf sie schon bisher (Spec v2b, D4). */
+  platzPunkte(): readonly Vec3[] {
+    return this.oesen;
   }
 
   naechsteOese(p: Vec3): Vec3 {

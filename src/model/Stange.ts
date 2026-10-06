@@ -1,11 +1,15 @@
+import { Fuss } from './Fuss';
 import { clamp } from './geometrie';
 import { MIN_STANGENLAENGE, STANGEN_UEBERSTAND } from './konstanten';
+import type { LagerObjekt } from './LagerObjekt';
 import type { Vec3 } from './Vec3';
 
 export type StangenRolle = 'bein' | 'riegel' | 'frei';
 
 /** Eine Rundholzstange als Strecke start–ende mit Durchmesser. */
-export class Stange {
+export class Stange implements LagerObjekt {
+  readonly art = 'stange' as const;
+
   constructor(
     readonly id: string,
     readonly start: Vec3,
@@ -58,5 +62,35 @@ export class Stange {
 
   mitDurchmesser(durchmesser: number): Stange {
     return new Stange(this.id, this.start, this.ende, durchmesser, this.rolle, this.gruppeId);
+  }
+
+  ids(): readonly string[] {
+    return [this.id];
+  }
+
+  /** Rolle und Gruppe bleiben, damit auch eine Stange einer Baugruppe sie behält. */
+  verschobenUm(dv: Vec3): Stange {
+    return new Stange(this.id, this.start.add(dv), this.ende.add(dv), this.durchmesser, this.rolle, this.gruppeId);
+  }
+
+  /** Ohne `um` um die Mitte der Stange. */
+  gedreht(winkelRad: number, um: Vec3 = this.mitte()): Stange {
+    return new Stange(
+      this.id,
+      this.start.gedrehtUmY(winkelRad, um),
+      this.ende.gedrehtUmY(winkelRad, um),
+      this.durchmesser,
+      this.rolle,
+      this.gruppeId,
+    );
+  }
+
+  /** Die Enden am Boden (Füße); so zählte der Platzbedarf sie schon bisher. */
+  platzPunkte(): readonly Vec3[] {
+    return Fuss.von(this).map((f) => f.position);
+  }
+
+  private mitte(): Vec3 {
+    return this.start.add(this.ende).scale(0.5);
   }
 }
