@@ -1,17 +1,21 @@
 import * as THREE from 'three';
 import type { Bauwerk } from '../../model/Bauwerk';
+import type { LagerObjekt } from '../../model/LagerObjekt';
 import { Platzbedarf } from '../../model/Platzbedarf';
 import type { Vec3 } from '../../model/Vec3';
 import { kugel } from './formen';
 import { HARING, PLATZ, SEIL } from './materialien';
 
-/** Was aus dem ganzen Bauwerk abgeleitet wird: Bünde, Haringe und der Platzrahmen (Spec v3, D5). */
-export function baueAbleitungen(bauwerk: Bauwerk): THREE.Group {
+/**
+ * Was aus dem ganzen Bauwerk abgeleitet wird: Bünde, Haringe und der Platzrahmen (Spec v3, D5).
+ * `zaehltZumPlatzbedarf` sagt, welche Objekte der Platzrahmen umfasst (`ObjektRegister.zaehltZumPlatzbedarf`); ohne: alle.
+ */
+export function baueAbleitungen(bauwerk: Bauwerk, zaehltZumPlatzbedarf?: (o: LagerObjekt) => boolean): THREE.Group {
   const gruppe = new THREE.Group();
   gruppe.name = 'ableitungen';
   for (const b of bauwerk.buende()) gruppe.add(kugel(b.position, 0.07, SEIL));
   for (const h of bauwerk.haringe()) gruppe.add(haringMesh(h.position));
-  const platz = Platzbedarf.aus(bauwerk);
+  const platz = Platzbedarf.aus(bauwerk, zaehltZumPlatzbedarf);
   if (platz) gruppe.add(platzRahmen(platz));
   return gruppe;
 }

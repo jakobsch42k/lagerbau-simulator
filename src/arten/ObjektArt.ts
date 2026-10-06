@@ -47,11 +47,31 @@ export interface PanelKnopf {
   readonly aenderung: Werte;
 }
 
+/** Ein Textfeld (Name, Beschriftung). Das Modell prüft die Länge mit seiner eigenen Meldung. */
+export interface PanelText {
+  readonly art: 'text';
+  readonly schluessel: string;
+  readonly label: string;
+}
+
+/** Eine Farbwahl (`<input type="color">`); der Wert ist `#rrggbb`. */
+export interface PanelFarbe {
+  readonly art: 'farbe';
+  readonly schluessel: string;
+  readonly label: string;
+}
+
+/**
+ * Eine Eingabe im Formular, in der Reihenfolge des Panels. Zahlenfelder haben kein `art`. Welche Eingaben es gibt, entscheidet
+ * die Art beim Bauen der Beschreibung (z. B. „Länge“ nur beim Rechteck); ändert eine Eingabe das Objekt, baut das Panel neu auf.
+ */
+export type PanelEingabe = PanelFeld | PanelAuswahl | PanelText | PanelFarbe;
+
 export type PanelExtra = PanelAuswahl | PanelKnopf;
 
 /** Beschreibung des Formulars für ein Objekt (Spec v3, D4). Das ParameterPanel baut daraus die Eingaben. */
 export interface PanelSpec {
-  readonly felder: readonly PanelFeld[];
+  readonly felder: readonly PanelEingabe[];
   readonly werte: Werte;
   readonly info: string;
   readonly extras: readonly PanelExtra[];
@@ -86,6 +106,8 @@ export interface ObjektArt<T extends LagerObjekt = LagerObjekt> {
   readonly label: string;
   readonly klick: KlickVerhalten;
   readonly hatOesen: boolean;
+  /** Ob die Objekte dieser Art zum Platzbedarf zählen (Spec E3, D3). Fehlt die Angabe: ja. */
+  readonly zaehltZumPlatzbedarf?: boolean;
   readonly platzieren: Platzieren;
   istVon(o: LagerObjekt): o is T;
   zuJson(o: T): ObjektJson;

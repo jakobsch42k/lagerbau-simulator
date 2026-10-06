@@ -25,6 +25,7 @@ export class SzenenInhalt {
   private readonly eintraege = new Map<string, Eintrag>();
   private ableitungen: { readonly bauwerk: Bauwerk; readonly gruppe: THREE.Group } | null = null;
   private start: { readonly punkt: Vec3; readonly mesh: THREE.Mesh } | null = null;
+  private zeigeBeschriftungen = true;
 
   constructor(
     private readonly darstellungen: Darstellungen = standardDarstellungen(),
@@ -32,17 +33,30 @@ export class SzenenInhalt {
   ) {}
 
   zeige(bauwerk: Bauwerk, markiert: ReadonlySet<string>, stangenStart: Vec3 | null): void {
-    this.gleicheObjekteAb(bauwerk);
+    if (this.gleicheObjekteAb(bauwerk)) this.wendeBeschriftungenAn();
     this.gleicheAbleitungenAb(bauwerk);
     this.gleicheStartAb(stangenStart);
     this.faerbe(markiert);
   }
 
-  /** Meshes, die einen Klick fangen: Arten mit Klickverhalten `immer` stets, die anderen nur, wenn das Werkzeug sie nennt (Spec v2b, D2). */
+  get beschriftungenSichtbar(): boolean {
+    return this.zeigeBeschriftungen;
+  }
+
+  /**
+   * „Beschriftungen zeigen“ (Spec E3): blendet die Namen der Platz-Objekte und die Beschriftungen ein oder aus (Ansichtswahl, nicht im Bauwerk).
+   * Ausgeblendete Beschriftungen fangen keine Klicks.
+   */
+  setzeBeschriftungen(an: boolean): void {
+    this.zeigeBeschriftungen = an;
+    this.wendeBeschriftungenAn();
+  }
+
+  /** Meshes, die einen Klick fangen: Arten mit Klickverhalten `immer` stets, die anderen nur, wenn das Werkzeug sie nennt (Spec v2b, D2). Unsichtbares fängt nichts. */
   ziele(klickZiele: readonly ArtName[]): THREE.Object3D[] {
     const ziele: THREE.Object3D[] = [];
     for (const { gruppe } of this.eintraege.values()) {
-      gruppe.traverse((k) => {
+      gruppe.traverseVisible((k) => {
         const daten = teilDaten(k);
         if (daten?.klickbar && (this.arten.art(daten.art).klick === 'immer' || klickZiele.includes(daten.art))) ziele.push(k);
       });
@@ -56,7 +70,9 @@ export class SzenenInhalt {
     return daten ? { art: 'objekt', objektArt: daten.art, id: daten.teilId, punkt } : null;
   }
 
-  private gleicheObjekteAb(bauwerk: Bauwerk): void {
+  /** True, wenn sich Gruppen geändert haben. */
+  private gleicheObjekteAb(bauwerk: Bauwerk): boolean {
+    let geaendert = false;
     const ids = new Set<string>();
     for (const o of bauwerk.objekte) {
       ids.add(o.id);
@@ -67,18 +83,29 @@ export class SzenenInhalt {
       gruppe.name = o.id;
       this.wurzel.add(gruppe);
       this.eintraege.set(o.id, { objekt: o, gruppe });
+      geaendert = true;
     }
     for (const [id, { gruppe }] of this.eintraege) {
       if (ids.has(id)) continue;
       this.entferne(gruppe);
       this.eintraege.delete(id);
+      geaendert = true;
+    }
+    return geaendert;
+  }
+
+  private wendeBeschriftungenAn(): void {
+    for (const { gruppe } of this.eintraege.values()) {
+      gruppe.traverse((k) => {
+        if (k.userData.beschriftung === true) k.visible = this.zeigeBeschriftungen;
+      });
     }
   }
 
   private gleicheAbleitungenAb(bauwerk: Bauwerk): void {
     if (this.ableitungen?.bauwerk === bauwerk) return;
     if (this.ableitungen) this.entferne(this.ableitungen.gruppe);
-    const gruppe = baueAbleitungen(bauwerk);
+    const gruppe = baueAbleitungen(bauwerk, this.arten.zaehltZumPlatzbedarf);
     this.wurzel.add(gruppe);
     this.ableitungen = { bauwerk, gruppe };
   }
@@ -105,11 +132,16 @@ export class SzenenInhalt {
     }
   }
 
-  /** Nimmt etwas aus der Szene und gibt seine Geometrie frei; die Materialien sind geteilt und bleiben. */
+  /** Nimmt etwas aus der Szene und gibt seine Geometrie frei; die Materialien sind geteilt und bleiben, außer die eigenen (Farbe, Text). */
   private entferne(objekt: THREE.Object3D): void {
     this.wurzel.remove(objekt);
     objekt.traverse((k) => {
       if (k instanceof THREE.Mesh || k instanceof THREE.Line) k.geometry.dispose();
+      if (k.userData.eigenesMaterial === true && (k instanceof THREE.Mesh || k instanceof THREE.Sprite)) {
+        const material = k.material as THREE.Material & { map?: THREE.Texture | null };
+        material.map?.dispose();
+        material.dispose();
+      }
     });
   }
 }

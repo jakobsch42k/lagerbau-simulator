@@ -27,6 +27,11 @@
       <button data-werkzeug="seil">Seil spannen</button>
       <button data-werkzeug="plane">Plane spannen</button>
       <button data-werkzeug="baum">Baum setzen</button>
+      <div class="werkzeug-zeile">
+        <button data-werkzeug="platzobjekt">Platz-Objekt setzen</button>
+        <select id="sel-vorlage" aria-label="Vorlage für Platz-Objekte"></select>
+      </div>
+      <button data-werkzeug="beschriftung">Beschriftung setzen</button>
       <button data-werkzeug="messen">Messen</button>
       <label class="datei">Luftbild…<input id="inp-luftbild" type="file" accept="image/png,image/jpeg" hidden /></label>
       <button id="btn-luftbild" aria-pressed="true" hidden>Luftbild</button>
@@ -37,6 +42,7 @@
       <div class="ansichtsleiste">
         <button id="btn-ansicht" aria-pressed="false" title="Taste P">Plan / 3D</button>
         <button id="btn-alles" title="Taste F">Alles zeigen</button>
+        <button id="btn-beschriftungen" aria-pressed="true">Beschriftungen zeigen</button>
       </div>
     </main>
     <aside class="rechts">

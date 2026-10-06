@@ -78,6 +78,15 @@ export class Szene {
     this.bodenbild.setzeRaster(an);
   }
 
+  /** „Beschriftungen zeigen“: Namen der Platz-Objekte und Beschriftungen (Ansichtswahl, nicht im Bauwerk gespeichert). */
+  setzeBeschriftungen(an: boolean): void {
+    this.inhalt.setzeBeschriftungen(an);
+  }
+
+  get beschriftungenSichtbar(): boolean {
+    return this.inhalt.beschriftungenSichtbar;
+  }
+
   get rasterSichtbar(): boolean {
     return this.bodenbild.rasterSichtbar;
   }

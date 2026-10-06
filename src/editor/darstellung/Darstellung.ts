@@ -21,9 +21,9 @@ export interface Darstellung<T extends LagerObjekt = LagerObjekt> {
 /** Je Art genau eine Darstellung; der Typ erzwingt, dass eine neue Art eine bekommt. */
 export type Darstellungen = Readonly<Record<ArtName, Darstellung>>;
 
-export function alsTeil<M extends THREE.Mesh>(mesh: M, daten: TeilDaten): M {
-  mesh.userData.teil = daten;
-  return mesh;
+export function alsTeil<M extends THREE.Object3D>(objekt: M, daten: TeilDaten): M {
+  objekt.userData.teil = daten;
+  return objekt;
 }
 
 export function teilDaten(o: THREE.Object3D): TeilDaten | undefined {

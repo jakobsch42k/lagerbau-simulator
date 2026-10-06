@@ -35,7 +35,7 @@ function zufall(saat: number): () => number {
 describe('BauwerkSerializer', () => {
   it('speichert Gruppen als Parameter und nur freie Stangen einzeln', () => {
     const json = serializer.zuJson(kochstelle());
-    expect(json.version).toBe(5);
+    expect(json.version).toBe(6);
     expect(json.objekte.map((o) => `${o.art}:${o.id}`)).toEqual(['abock:abock', 'dreibein:dreibein', 'stange:first']);
     expect(json.objekte[1]).toEqual({ art: 'dreibein', id: 'dreibein', position: [2.5, 0, 0], drehung: 0, params: STANDARD_DREIBEIN });
   });
@@ -49,7 +49,7 @@ describe('BauwerkSerializer', () => {
 
   it.each([
     ['kein Objekt', 'hallo'],
-    ['falsche Version', { version: 6, objekte: [] }],
+    ['falsche Version', { version: 7, objekte: [] }],
     ['v3 ohne Planen-Liste', { version: 3, gruppen: [], stangen: [], seile: [], baeume: [] }],
     ['Plane mit unbekannter Form', v3([{ ...planeJson, form: 'schief' }])],
     ['Plane mit Seite 0', v3([{ ...planeJson, seite: 0 }])],
@@ -95,7 +95,7 @@ describe('BauwerkSerializer', () => {
   it('übersteht die Rundreise mit Planen (Version 5)', () => {
     const plane = new Plane('plane', new Vec3(0, 2, 0), new Vec3(4, 2, 0), { ...STANDARD_PLANE, form: 'satteldach' });
     const json = serializer.zuJson(kochstelle().mitPlane(plane));
-    expect(json.version).toBe(5);
+    expect(json.version).toBe(6);
     expect(json.objekte.filter((o) => o.art === 'plane')).toEqual([
       { art: 'plane', id: 'plane', start: [0, 2, 0], ende: [4, 2, 0], breite: 3, laenge: 4, form: 'satteldach', neigung: 30, seite: 1 },
     ]);

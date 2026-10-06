@@ -11,15 +11,21 @@ import { liste, objekt, type Roh, text } from './lesen';
 import { istEntfernt, type LuftbildEntferntJson, type LuftbildJson, luftbildAusJson, luftbildZuJson } from './LuftbildFormat';
 import { type RegelnJson, regelnAusJson, regelnZuJson } from './RegelnFormat';
 
-/** Datenformat 5 (Spec E2, D4): wie 4 (eine Liste aller Objekte in der Reihenfolge des Bauwerks), dazu optional das Luftbild. */
+/**
+ * Datenformat 6 (Spec E3, D3): wie 5 (eine Liste aller Objekte in der Reihenfolge des Bauwerks, dazu optional das Luftbild),
+ * die Liste kennt zusätzlich Platz-Objekte und Beschriftungen. Gelesen werden 1–6.
+ */
 export interface BauwerkJson {
-  readonly version: 5;
+  readonly version: 6;
   readonly objekte: readonly ObjektJson[];
   /** Nur, wenn eine Regel aus ist oder ein Wert vom Standard abweicht (Spec v3, D8). */
   readonly regeln?: RegelnJson;
   /** In der Datei mit Bild, im Link nur `{ entfernt: true }`; fehlt, wenn es kein Luftbild gibt. */
   readonly luftbild?: LuftbildJson | LuftbildEntferntJson;
 }
+
+const ab4 = (version: unknown): boolean => version === 4 || version === 5 || version === 6;
+const ab5 = (version: unknown): boolean => version === 5 || version === 6;
 
 /** Wohin geschrieben wird: Eine Datei enthält das Bild, ein Link nicht (er wäre zu lang). */
 export type Ziel = 'datei' | 'link';
@@ -44,7 +50,7 @@ export class BauwerkSerializer {
     const e = bauwerk.regelEinstellungen;
     const l = bauwerk.luftbild;
     return {
-      version: 5,
+      version: 6,
       objekte,
       ...(e.istStandard ? {} : { regeln: regelnZuJson(e) }),
       ...(l === null ? {} : { luftbild: ziel === 'datei' ? luftbildZuJson(l) : { entfernt: true as const } }),
@@ -68,10 +74,10 @@ export class BauwerkSerializer {
     const o = objekt(daten, 'Bauwerk');
     const roh = this.rohObjekte(o);
     if (roh.length > MAX_TEILE) throw new Error(`mehr als ${MAX_TEILE} Teile`);
-    // Ab Version 4 gibt es Regel-Einstellungen; fehlt das Feld, gelten die Standardwerte.
-    const hatRegeln = o.version === 4 || o.version === 5;
+    // Ab Version 4 gibt es Regel-Einstellungen; fehlt das Feld, gelten die Standardwerte. Das Luftbild kam mit Version 5.
+    const hatRegeln = ab4(o.version);
     const regeln = hatRegeln && o.regeln !== undefined ? regelnAusJson(o.regeln) : RegelEinstellungen.standard();
-    const bild = o.version === 5 && o.luftbild !== undefined ? this.liesLuftbild(o.luftbild) : { luftbild: null, entfernt: false };
+    const bild = ab5(o.version) && o.luftbild !== undefined ? this.liesLuftbild(o.luftbild) : { luftbild: null, entfernt: false };
     const bauwerk = Bauwerk.von(
       roh.map((r) => this.liesObjekt(r)),
       regeln,
@@ -86,7 +92,7 @@ export class BauwerkSerializer {
 
   /** Ab Version 4 steht die Liste im Dokument; 1–3 werden in ihrer alten Reihenfolge übersetzt. */
   private rohObjekte(o: Roh): readonly unknown[] {
-    if (o.version === 4 || o.version === 5) return liste(o.objekte, 'objekte');
+    if (ab4(o.version)) return liste(o.objekte, 'objekte');
     if (o.version === 1 || o.version === 2 || o.version === 3) return alteObjekte(o);
     throw new Error('unbekannte Version');
   }

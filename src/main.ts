@@ -1,4 +1,5 @@
 import './style.css';
+import { VorlagenWahl } from './arten/platz/vorlagen';
 import { standardArten } from './arten/standardArten';
 import { kochstelle } from './beispiele/kochstelle';
 import { Editor } from './editor/Editor';
@@ -20,6 +21,7 @@ import { ParameterPanel } from './ui/ParameterPanel';
 import { RegelnPanel } from './ui/RegelnPanel';
 import { MateriallistePanel } from './ui/MateriallistePanel';
 import { Teilen } from './ui/Teilen';
+import { VorlagenAuswahl } from './ui/VorlagenAuswahl';
 
 const MELDUNG_DAUER_MS = 4000;
 const MASSSTAB_HINWEIS = 'Klicke zwei Punkte, deren Abstand du kennst.';
@@ -32,7 +34,8 @@ function element<T extends HTMLElement>(selektor: string): T {
   return el;
 }
 
-const arten = standardArten();
+const vorlagenWahl = new VorlagenWahl();
+const arten = standardArten(vorlagenWahl);
 const editor = new Editor(Bauwerk.leer(), { arten });
 const szene = new Szene(element('#ansicht'), arten);
 const modus = new AnsichtsModus(document.body);
@@ -57,7 +60,7 @@ let geprueft: { bauwerk: Bauwerk; hinweise: readonly Hinweis[]; liste: Materiall
 function pruefung(bauwerk: Bauwerk): { hinweise: readonly Hinweis[]; liste: Materialliste } {
   if (geprueft?.bauwerk !== bauwerk) {
     const hinweise = RuleEngine.fuer(bauwerk.regelEinstellungen).pruefe(bauwerk);
-    geprueft = { bauwerk, hinweise, liste: Materialliste.aus(bauwerk, SEIL_ZUGABE_PRO_ENDE) };
+    geprueft = { bauwerk, hinweise, liste: Materialliste.aus(bauwerk, SEIL_ZUGABE_PRO_ENDE, arten.zaehltZumPlatzbedarf) };
   }
   return geprueft;
 }
@@ -104,6 +107,12 @@ function schalteAnsicht(): void {
 }
 ansichtKnopf.addEventListener('click', schalteAnsicht);
 element('#btn-alles').addEventListener('click', () => szene.zeigeAlles(editor.bauwerk));
+const beschriftungenKnopf = element<HTMLButtonElement>('#btn-beschriftungen');
+beschriftungenKnopf.addEventListener('click', () => {
+  szene.setzeBeschriftungen(!szene.beschriftungenSichtbar);
+  beschriftungenKnopf.setAttribute('aria-pressed', String(szene.beschriftungenSichtbar));
+});
+new VorlagenAuswahl(element('#sel-vorlage'), vorlagenWahl, () => editor.waehleWerkzeug('platzobjekt'));
 element('#btn-wieder').addEventListener('click', () => editor.wiederholen());
 element('#btn-bearbeiten').addEventListener('click', () => setzeModus(false));
 element('#btn-speichern').addEventListener('click', () => teilen.speichere(editor.bauwerk));

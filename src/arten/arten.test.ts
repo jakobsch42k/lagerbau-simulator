@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { ABock } from '../model/ABock';
 import { Baum } from '../model/Baum';
+import { Beschriftung } from '../model/Beschriftung';
 import { Dreibein } from '../model/Dreibein';
 import { ART_NAMEN, type ArtName, type LagerObjekt } from '../model/LagerObjekt';
-import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
+import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_BESCHRIFTUNG, STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
 import { Plane } from '../model/Plane';
+import { Platzobjekt } from '../model/Platzobjekt';
 import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
@@ -20,6 +22,8 @@ const beispiele: readonly LagerObjekt[] = [
   new Seil('l', new Vec3(0, 2, 0), new Vec3(2, 0, 0)),
   new Baum('b', new Vec3(5, 0, 5), STANDARD_BAUM),
   new Plane('pl', new Vec3(0, 2, 0), new Vec3(4, 2, 0), { ...STANDARD_PLANE, form: 'satteldach' }),
+  new Platzobjekt('po', new Vec3(2, 0, 3), { vorlage: 'holzlager', name: 'Holzlager', form: 'rechteck', breite: 3, laenge: 2, hoehe: 1, farbe: '#8b5a2b' }, 0.5),
+  new Beschriftung('be', new Vec3(1, 0, 1), STANDARD_BESCHRIFTUNG),
 ];
 /** Die Felder je Art wie in v3, nur mit `art` vorneweg und bei Gruppen ohne `typ` (Spec v3, D3). */
 const FELDER: Readonly<Record<ArtName, readonly string[]>> = {
@@ -29,6 +33,8 @@ const FELDER: Readonly<Record<ArtName, readonly string[]>> = {
   seil: ['art', 'id', 'start', 'ende'],
   baum: ['art', 'id', 'position', 'durchmesser', 'hoehe'],
   plane: ['art', 'id', 'start', 'ende', 'breite', 'laenge', 'form', 'neigung', 'seite'],
+  platzobjekt: ['art', 'id', 'position', 'drehung', 'vorlage', 'name', 'form', 'breite', 'laenge', 'hoehe', 'farbe'],
+  beschriftung: ['art', 'id', 'position', 'text', 'groesse', 'farbe'],
 };
 
 describe('ObjektRegister (Spec v3, D2)', () => {
@@ -54,6 +60,12 @@ describe('ObjektRegister (Spec v3, D2)', () => {
     expect(() => arten.art('vierbein' as unknown as ArtName)).toThrow('Art vierbein ist nicht registriert');
     const falsch = { ...new Seil('x', Vec3.NULL, new Vec3(1, 0, 0)), art: 'stange' } as unknown as LagerObjekt;
     expect(() => arten.artVon(falsch)).toThrow('x passt nicht zur Art stange');
+  });
+});
+
+describe('Platzbedarf je Art (Spec E3, D3)', () => {
+  it('zählen alle Arten außer Platz-Objekt und Beschriftung', () => {
+    expect(beispiele.filter((o) => !arten.zaehltZumPlatzbedarf(o)).map((o) => o.art)).toEqual(['platzobjekt', 'beschriftung']);
   });
 });
 

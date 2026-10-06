@@ -36,3 +36,29 @@ export const STANDARD_BAUM: BaumParams = { durchmesser: 0.3, hoehe: 8 };
 
 /** Startmaße für „Plane spannen“ (Spec v2b, D2). Keine Regel-Schwellwerte. */
 export const STANDARD_PLANE: PlanenParams = { breite: 3, laenge: 4, form: 'eben', neigungGrad: 30, seite: 1 };
+
+export type PlatzobjektForm = 'kreis' | 'rechteck';
+
+/** Ein Platz-Objekt (Spec E3, D1): alles ist einstellbar; die Vorlage ist nur der Schlüssel, aus dem die Felder vorbelegt wurden. */
+export interface PlatzobjektParams {
+  readonly vorlage: string;
+  readonly name: string;
+  readonly form: PlatzobjektForm;
+  /** Beim Kreis der Durchmesser. */
+  readonly breite: number;
+  /** Nur beim Rechteck. */
+  readonly laenge: number;
+  readonly hoehe: number;
+  /** `#rrggbb`. */
+  readonly farbe: string;
+}
+
+export interface BeschriftungParams {
+  readonly text: string;
+  /** Schrifthöhe in m. */
+  readonly groesse: number;
+  readonly farbe: string;
+}
+
+/** Startwerte für „Beschriftung setzen“ (Spec E3, D1). Keine Regel-Schwellwerte. */
+export const STANDARD_BESCHRIFTUNG: BeschriftungParams = { text: 'Beschriftung', groesse: 1, farbe: '#1d2733' };

@@ -17,7 +17,7 @@ describe('Werkzeuge aus dem Register (Spec v3, D4)', () => {
 
   it('leitet die Klickziele aus dem Register ab', () => {
     const ohnePlane = new ObjektRegister(standardArten().alle.filter((a) => a.name !== 'plane'));
-    expect(erzeugeWerkzeug('auswahl', ohnePlane).klickZiele).toEqual(['seil']);
+    expect(erzeugeWerkzeug('auswahl', ohnePlane).klickZiele).toEqual(['seil', 'platzobjekt', 'beschriftung']);
     expect(erzeugeWerkzeug('seil', ohnePlane).klickZiele).toEqual([]);
     expect(erzeugeWerkzeug('seil').klickZiele).toEqual(['plane']);
   });

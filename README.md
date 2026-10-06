@@ -44,3 +44,4 @@ Alle Links und Dateien, die mit Version 1.1 gespeichert wurden (Format-Version g
 Alle Links und Dateien, die mit Version 1.2 gespeichert wurden (Format-Version geändert, auch ohne Planen), öffnet nur die .exe ab 1.2.0; ältere zeigen „Ungültige Bauwerk-Daten”.
 Alle Links und Dateien, die mit Version 1.3 gespeichert wurden (Format-Version geändert), öffnet nur die .exe ab 1.3.0; ältere zeigen „Ungültige Bauwerk-Daten”.
 Alle Links und Dateien, die mit Version 1.5 gespeichert wurden (Format-Version 5, Luftbild), öffnet nur die .exe ab 1.5.0; ältere zeigen „Ungültige Bauwerk-Daten“.
+Alle Links und Dateien, die mit Version 1.6 gespeichert wurden (Format-Version 6, Platz-Objekte und Beschriftungen), öffnet nur die .exe ab 1.6.0; ältere zeigen „Ungültige Bauwerk-Daten“.
