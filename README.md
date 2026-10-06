@@ -16,6 +16,11 @@ Online: https://jakobsch42k.github.io/lagerbau-simulator/
 - **Alles zeigen:** Knopf oder Taste F passt die Ansicht an. Geschieht auch beim Laden eines Links oder einer Datei.
 - **Messen:** Werkzeug „Messen“, zwei Klicks (Spitzen, Bünde, Stangenenden und Boden rasten ein). Es erscheinen die Länge und der waagrechte Abstand. Esc oder ein anderes Werkzeug löscht die Messung; gespeichert wird sie nicht.
 
+- **Luftbild als Boden:** Knopf „Luftbild…“ lädt ein PNG oder JPG, z. B. einen Screenshot aus Google Maps oder basemap.at (Orthofoto). Das Bild liegt mittig auf dem Ursprung, **Norden ist oben**; ein gedrehtes Bild vorher im Bildprogramm drehen. Sehr große Bilder (über 4096 Pixel) werden beim Laden verkleinert.
+- **Maßstab setzen:** Direkt nach dem Laden (und über „Maßstab neu setzen“) zwei Punkte auf dem Bild anklicken, deren Abstand du kennst, dann den Abstand in Metern eintragen und „Übernehmen“. Bis dahin ist die längere Bildseite 100 m. Bereits gesetzte Teile bleiben, wo sie sind; passt der Bau nicht zum Bild, mit Strg+A alles wählen und an die richtige Stelle ziehen.
+- **Deckkraft, Raster, Entfernen:** Der Knopf „Luftbild“ öffnet das Panel mit Deckkraft-Regler, Schalter „Raster zeigen“ (mit Bild zunächst aus) und „Luftbild entfernen“. Alles ist rückgängig zu machen. Oben rechts zeigt der Nordpfeil, wo Norden ist.
+- **Speichern und Teilen:** Das Bild steckt in der gespeicherten **Datei**, nicht im Link (er wäre zu lang). Wer den Link öffnet, sieht den Plan ohne Bild und den Hinweis „Das Luftbild ist nur in der gespeicherten Datei enthalten.“
+
 Am Handy gibt es nur die Ansicht, aber auch dort Plan / 3D und „Alles zeigen“.
 
 ## Entwickeln
@@ -38,3 +43,4 @@ Das Programm ist nicht signiert, deshalb zeigt Windows beim ersten Start „Der 
 Alle Links und Dateien, die mit Version 1.1 gespeichert wurden (Format-Version geändert), öffnet nur die .exe ab 1.1.0; ältere zeigen „Ungültige Bauwerk-Daten“.
 Alle Links und Dateien, die mit Version 1.2 gespeichert wurden (Format-Version geändert, auch ohne Planen), öffnet nur die .exe ab 1.2.0; ältere zeigen „Ungültige Bauwerk-Daten”.
 Alle Links und Dateien, die mit Version 1.3 gespeichert wurden (Format-Version geändert), öffnet nur die .exe ab 1.3.0; ältere zeigen „Ungültige Bauwerk-Daten”.
+Alle Links und Dateien, die mit Version 1.5 gespeichert wurden (Format-Version 5, Luftbild), öffnet nur die .exe ab 1.5.0; ältere zeigen „Ungültige Bauwerk-Daten“.

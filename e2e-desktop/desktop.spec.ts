@@ -3,6 +3,8 @@ import { _electron as electron, expect, test, type ElectronApplication, type Pag
 const PAGES = 'https://jakobsch42k.github.io/lagerbau-simulator/';
 const NUR_LOKAL = /^(file|blob|data):/;
 const PROGRAMM = 'release/win-unpacked/Lagerbau-Simulator.exe';
+/** Künstliche Grafik, 200 × 100 px, kein Foto eines echten Ortes. */
+const TESTBILD = 'e2e/fixtures/testbild.png';
 
 let programm: ElectronApplication;
 let fenster: Page;
@@ -64,4 +66,19 @@ test('bleibt in der App, wenn eine Seite wegnavigieren will', async () => {
   // isVisible statt expect().toBeVisible(): Playwright hält die abgebrochene Navigation für unfertig (siehe CLAUDE.md).
   expect(await fenster.locator('footer').isVisible()).toBe(true);
   expect(programm.windows()).toHaveLength(1);
+});
+
+test('lädt ein Luftbild über die Datei-Auswahl und setzt den Maßstab ohne Eingabedialog', async () => {
+  await fenster.locator('#inp-luftbild').setInputFiles(TESTBILD);
+  await expect(fenster.locator('#luftbild')).toContainText('Bild 100 × 50 m');
+  await expect(fenster.locator('#meldung')).toHaveText('Klicke zwei Punkte, deren Abstand du kennst.');
+  await fenster.keyboard.press('p');
+  const box = await fenster.locator('#ansicht canvas').boundingBox();
+  if (!box) throw new Error('Keine Leinwand');
+  await fenster.mouse.click(box.x + box.width * 0.3, box.y + box.height / 2);
+  await fenster.mouse.click(box.x + box.width * 0.6, box.y + box.height / 2);
+  await fenster.getByLabel('Abstand in Metern').fill('10');
+  await fenster.getByRole('button', { name: 'Übernehmen' }).click();
+  await expect(fenster.locator('#luftbild')).not.toContainText('Bild 100 × 50 m');
+  await expect(fenster.locator('#luftbild')).toContainText('1 px =');
 });
