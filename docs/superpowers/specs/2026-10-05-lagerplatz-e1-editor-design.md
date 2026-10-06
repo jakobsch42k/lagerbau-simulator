@@ -37,9 +37,9 @@ Ohne Verschieben, Kopieren und Draufsicht lässt sich kein Lagerplatz planen. He
 Eine Funktion nimmt das Bauwerk, die bewegten ids und die Bewegung und liefert das neue Bauwerk oder einen `RangeError`. Die Bewegung ist eine Verschiebung `dv` oder eine Drehung `winkelRad` um einen Punkt.
 
 - **Bewegte Objekte** werden mit `verschobenUm` bzw. `gedreht` bewegt.
-- **Seile:** Jedes Ende wird über die bestehende Verankerung (Hering → Baum → Bau → Plane → frei) eingeordnet.
+- **Seile:** Jedes Ende wird über die bestehende Verankerung (Haring → Baum → Bau → Plane → frei) eingeordnet.
   - Ein Ende **wandert mit**, wenn es an einem bewegten Objekt hängt: an einer Stange eines bewegten Baus oder einer bewegten Baugruppe bzw. freien Stange, oder an einer Öse einer bewegten Plane.
-  - Ein **Hering-Ende** wandert mit, wenn das andere Ende mitwandert. Die Abspannung zieht also samt Hering mit.
+  - Ein **Haring-Ende** wandert mit, wenn das andere Ende mitwandert. Die Abspannung zieht also samt Haring mit.
   - Ein Ende an einem **Baum** oder an einem **nicht bewegten** Teil bleibt liegen. Das Seil wird zwischen altem und neuem Ende neu gespannt.
   - **Freie Enden** wandern mit, wenn das andere Ende mitwandert.
 - **Planen:**
@@ -72,7 +72,7 @@ Eine Funktion nimmt das Bauwerk, die bewegten ids und die Bewegung und liefert d
 
 ## D4 Kopieren und Duplizieren
 
-- **Strg+D** oder der Knopf „Duplizieren“ kopiert die Auswahl samt mitwandernder Seile, Planen und Heringe (Regeln aus D2) um +1 m in x und z.
+- **Strg+D** oder der Knopf „Duplizieren“ kopiert die Auswahl samt mitwandernder Seile, Planen und Haringe (Regeln aus D2) um +1 m in x und z.
   - Alle Kopien bekommen neue ids.
   - Danach ist die Kopie ausgewählt.
   - Das Ganze ist ein Undo-Schritt.
@@ -110,7 +110,7 @@ Eine Funktion nimmt das Bauwerk, die bewegten ids und die Bewegung und liefert d
 - **Unit (TDD), Modell:**
   - `Bau.von` an der Kochstelle mit Firststange: Doppelklick auf das A-Bock-Bein liefert A-Bock, Dreibein, Firststange und alle Abspannseile.
   - `Mitbewegung` mit Verschieben und Drehen:
-    - Abspannung Bau → Hering wandert ganz mit;
+    - Abspannung Bau → Haring wandert ganz mit;
     - Seil Bau → Baum: das Baum-Ende bleibt;
     - Seil zwischen zwei nicht bewegten Teilen bleibt identisch (`===`);
     - Plane mit beiden Enden am Bau wandert mit;

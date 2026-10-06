@@ -91,7 +91,7 @@ Eine Liste von Startwerten, an einer Stelle und leicht zu ändern. **Alle Werte 
 
 ## D3 Zusammenspiel mit dem Bestehenden
 
-- **Platzbedarf:** Er zählt weiterhin nur Bauten (Füße, Heringe, Ösen). Platz-Objekte, Zonen und Linien gehören nicht dazu.
+- **Platzbedarf:** Er zählt weiterhin nur Bauten (Füße, Haringe, Ösen). Platz-Objekte, Zonen und Linien gehören nicht dazu.
   - Dafür bekommt `ObjektArt` die Eigenschaft `zaehltZumPlatzbedarf` (Standard `true`; für die vier Arten aus D1 `false`).
   - Für Auswahlrahmen, Drehpunkt und „Alles zeigen“ zählen alle Arten.
 - **Regeln:** Es gibt keine neuen Regeln. R1–R8 sehen nur Stangen und Seile, daher erzeugen Platz-Objekte keine Hinweise. Abstandsregeln kommen mit E6.

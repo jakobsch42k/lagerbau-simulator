@@ -16,9 +16,9 @@
 
 Branch: `feat/objektmodell`, Stand `5cd4fef` (nur Spec-Commits über dem Code von `6b4d36d`). Die Specs zu E1–E3 und die gestrichene E7 ändern an E0 nichts.
 
-**Vor Task 1: Rebase auf den R2-Fix.** `main` bekommt vorher den Bugfix aus `fix/r2-feste-knoten` (neue Datei `src/rules/FesteKnoten.ts`; `ViereckRule` meldet nur noch Vierecke mit mindestens einer nicht festen Ecke; Version 1.2.1). Diesen Fix plant E0 nicht. Vor Task 1 `feat/objektmodell` auf das neue `main` rebasen; danach steht `package.json` auf 1.2.1. Der Fix ändert weder den Konstruktor von `ViereckRule` noch `src/rules/constants.ts`; E0 lässt `FesteKnoten.ts`, `ViereckRule.ts` und die Fix-Tests (`FesteKnoten.test.ts`, `lagerplatz.integration.test.ts`) unverändert, und sie müssen in jedem Task grün bleiben. `lagerplatz.integration.test.ts` liest einen echten v3-Lagerplatz über den Serializer und sichert damit zusätzlich das Lesen alter Dateien.
+**Rebase auf den R2-Fix (erledigt 06.10.2026).** `feat/objektmodell` steht auf `fix/r2-feste-knoten` (`8701ff1`): dem Bugfix (neue Datei `src/rules/FesteKnoten.ts`; `ViereckRule` meldet nur noch Vierecke mit mindestens einer nicht festen Ecke; Version 1.2.1) und der Umbenennung **Hering → Haring** in Oberfläche, Bezeichnern und Doku (`Haring`, `haringe()`, Verankerungsart `'haring'`). Diesen Fix plant E0 nicht; `package.json` steht auf 1.2.1. Neue Texte und Bezeichner schreiben immer „Haring“. Der Fix ändert weder den Konstruktor von `ViereckRule` noch `src/rules/constants.ts`; E0 lässt `FesteKnoten.ts`, `ViereckRule.ts` und die Fix-Tests (`FesteKnoten.test.ts`, `lagerplatz.integration.test.ts`) unverändert, und sie müssen in jedem Task grün bleiben. `lagerplatz.integration.test.ts` liest einen echten v3-Lagerplatz über den Serializer und sichert damit zusätzlich das Lesen alter Dateien.
 
-Grundlinie: vor dem Rebase `npx vitest run` → 36 Testdateien, 277 Tests; nach dem Rebase (gemessen auf dem Stand von `fix/r2-feste-knoten`, `b39026e`) → **38 Testdateien, 292 Tests, alle grün**. Alle Testzahlen in diesem Plan gelten nach dem Rebase. Weicht die Grundlinie ab, weil der Fix sich bis zum Merge noch ändert, die Differenz einmal messen und auf alle Zahlen addieren.
+Grundlinie: vor dem Rebase `npx vitest run` → 36 Testdateien, 277 Tests; nach dem Rebase (gemessen auf `b39026e`, nach der Umbenennung auf `8701ff1` erneut gemessen) → **38 Testdateien, 292 Tests, alle grün**. Alle Testzahlen in diesem Plan gelten nach dem Rebase. Weicht die Grundlinie ab, weil der Fix sich bis zum Merge noch ändert, die Differenz einmal messen und auf alle Zahlen addieren.
 
 **Testzahlen nach jedem Task** (Dateien / Tests, nach dem Rebase): Task 1: 39 / 313 · Task 2: 39 / 320 · Task 3: 39 / 322 · Task 4a: 40 / 339 · Task 4b: 41 / 355 · Task 5: 42 / 368 · Task 6: 42 / 370 · Task 7: 43 / 372 · Task 8: 43 / 375 · Task 9a: 44 / 382 · Task 9b: 45 / 390 · Task 10: 45 / 393 · Task 10b: 49 / 427.
 
@@ -54,7 +54,7 @@ Grundlinie: vor dem Rebase `npx vitest run` → 36 Testdateien, 277 Tests; nach 
 
 ## Abweichungen von der Spec (bewusst)
 
-- **Startmarkierung außerhalb der „Ableitungen“:** D5 legt sie in die Gruppe, die nur bei neuem `Bauwerk` neu gebaut wird. Beim ersten Klick eines Zwei-Klick-Werkzeugs ändert sich aber nur `stangenStart`, nicht das Bauwerk; die Kugel würde dann fehlen. Sie wird deshalb getrennt geführt und neu gebaut, wenn sich `stangenStart` (Identität) ändert. Bünde, Heringe und Platzrahmen bleiben wie in D5.
+- **Startmarkierung außerhalb der „Ableitungen“:** D5 legt sie in die Gruppe, die nur bei neuem `Bauwerk` neu gebaut wird. Beim ersten Klick eines Zwei-Klick-Werkzeugs ändert sich aber nur `stangenStart`, nicht das Bauwerk; die Kugel würde dann fehlen. Sie wird deshalb getrennt geführt und neu gebaut, wenn sich `stangenStart` (Identität) ändert. Bünde, Haringe und Platzrahmen bleiben wie in D5.
 - **`beiTreffer(o, teilId, punkt, mitOesen)`** statt `beiTreffer(o, punkt)`: Die Teil-id sagt, welche Stange einer Baugruppe getroffen wurde; `mitOesen`, weil eine Plane nur im Seil-Werkzeug auf ihre Öse einrastet.
 - **`ObjektArt` hat zusätzlich `hatOesen`**, und `platzieren` im Modus `linie` hat `fangtOesen`. Daraus leitet das Register die Klickziele ab (Seil spannen → Arten mit Ösen), statt sie je Werkzeug festzuschreiben.
 - **v4-Gruppen haben kein Feld `typ`:** `art` sagt dasselbe. Beim Lesen von v1–v3 wird `typ` zur `art`.
@@ -71,7 +71,7 @@ Grundlinie: vor dem Rebase `npx vitest run` → 36 Testdateien, 277 Tests; nach 
 
 ## Review Focus
 
-1. **Alte v1/v2/v3-Links und -Dateien**, darunter die Daten in `e2e/smoke.spec.ts`, `e2e/abspannung.spec.ts` und `e2e/planen.spec.ts`. Erwartet: Sie öffnen und sehen aus wie vorher. Objekt-Reihenfolge, Stangen-Reihenfolge, Bünde (ids und Stangen), Heringe und Platzbedarf sind gleich Eine v4-Datei ohne `regeln` ergibt genau die Hinweise von heute → Test mit vor dem Umbau gemessenen Werten in Task 5 (`AltesFormat.test.ts`), Test „gibt für eine v4-Datei ohne regeln genau die Hinweise von heute“ in Task 10b (`RegelnFormat.test.ts`), dazu `lagerplatz.integration.test.ts` aus dem R2-Fix; Bildvergleich in Task 9b und Task 11.
+1. **Alte v1/v2/v3-Links und -Dateien**, darunter die Daten in `e2e/smoke.spec.ts`, `e2e/abspannung.spec.ts` und `e2e/planen.spec.ts`. Erwartet: Sie öffnen und sehen aus wie vorher. Objekt-Reihenfolge, Stangen-Reihenfolge, Bünde (ids und Stangen), Haringe und Platzbedarf sind gleich Eine v4-Datei ohne `regeln` ergibt genau die Hinweise von heute → Test mit vor dem Umbau gemessenen Werten in Task 5 (`AltesFormat.test.ts`), Test „gibt für eine v4-Datei ohne regeln genau die Hinweise von heute“ in Task 10b (`RegelnFormat.test.ts`), dazu `lagerplatz.integration.test.ts` aus dem R2-Fix; Bildvergleich in Task 9b und Task 11.
 2. **Klicken nach dem Umbau der `Treffer`.** Erwartet: Ein Klick auf eine Stange (auch den Riegel) eines Dreibeins oder A-Bocks wählt die Gruppe. Seile und Planen fangen Klicks nur in den Werkzeugen aus v2b (Auswahl → Seile + Planen, Seil spannen → Planen, sonst keine) → Tests in Task 6 (Riegel), Task 7 (Klickziele aus dem Register) und Task 9b (`SzenenInhalt.ziele`).
 3. **Rückgängig/Wiederholen mit der inkrementellen Szene.** Erwartet: Springt man zu einem älteren Bauwerk zurück, dessen Objekte `===` zu zwischengespeicherten sind, zeigt die Szene genau diesen Stand. Es bleiben keine Geister-Meshes, und es fehlt kein Mesh → Test in Task 9b (Fingerabdruck nach b1 → b2 → b3 → b2 → b1 gleich einem frisch gebauten b1).
 4. **Löschen und Hervorheben.** Erwartet: Ein gelöschtes Objekt verliert alle Meshes, und deren Geometrie wird freigegeben, die geteilten Materialien nicht. Markiert ein Hinweis eine einzelne Stange einer Gruppe, leuchtet nur diese → Tests in Task 9b.
@@ -723,7 +723,7 @@ export class Seil implements LagerObjekt {
     return new Seil(this.id, this.start.gedrehtUmY(winkelRad, um), this.ende.gedrehtUmY(winkelRad, um));
   }
 
-  /** Ein Seil braucht selbst keinen Platz; seine Heringe zählt `Platzbedarf` über `Bauwerk.heringe()`. */
+  /** Ein Seil braucht selbst keinen Platz; seine Haringe zählt `Platzbedarf` über `Bauwerk.haringe()`. */
   platzPunkte(): readonly Vec3[] {
     return [];
   }
@@ -843,7 +843,7 @@ git commit -m "feat: add the LagerObjekt interface to all six model classes"
   - `static von(liste: readonly LagerObjekt[]): Bauwerk` (wirft `Error('ID <id> ist schon vergeben')`);
   - `mit(o: LagerObjekt): Bauwerk`, `ersetze(o: LagerObjekt): Bauwerk` (wirft `Error('Objekt <id> gibt es nicht')`; gibt `this` zurück, wenn `o` schon drinsteht), `ohne(id: string): Bauwerk` (gibt `this` zurück, wenn es die id nicht gibt);
   - `objekt(id: string): LagerObjekt | undefined` (nur Objekte, keine Teil-ids), `besitzer(teilId: string): LagerObjekt | undefined`;
-  - unverändert in Bedeutung und Signatur: `leer()`, `istLeer`, `gruppen`, `freieStangen`, `seile`, `baeume`, `planen`, `stangen()`, `gruppe()`, `stange()`, `seil()`, `baum()`, `plane()`, `enthaelt()`, `auswahlIdFuer()`, `mitGruppe`, `ersetzeGruppe`, `mitStange`, `ersetzeStange`, `mitSeil`, `mitBaum`, `ersetzeBaum`, `mitPlane`, `ersetzePlane`, `buende()`, `fuesse()`, `heringe()`, `verankerung()`.
+  - unverändert in Bedeutung und Signatur: `leer()`, `istLeer`, `gruppen`, `freieStangen`, `seile`, `baeume`, `planen`, `stangen()`, `gruppe()`, `stange()`, `seil()`, `baum()`, `plane()`, `enthaelt()`, `auswahlIdFuer()`, `mitGruppe`, `ersetzeGruppe`, `mitStange`, `ersetzeStange`, `mitSeil`, `mitBaum`, `ersetzeBaum`, `mitPlane`, `ersetzePlane`, `buende()`, `fuesse()`, `haringe()`, `verankerung()`.
 
 - [ ] **Step 1: Failing tests schreiben**
 
@@ -932,10 +932,10 @@ import { Plane } from './Plane';
 import { Seil } from './Seil';
 import { Stange } from './Stange';
 import type { Vec3 } from './Vec3';
-import { type Hering, type Verankerung, VerankerungsFinder } from './Verankerung';
+import { type Haring, type Verankerung, VerankerungsFinder } from './Verankerung';
 
 /**
- * Unveränderliches Aggregat: eine geordnete Liste aller Objekte (Spec v3, D1). Bünde, Füße und Heringe werden abgeleitet.
+ * Unveränderliches Aggregat: eine geordnete Liste aller Objekte (Spec v3, D1). Bünde, Füße und Haringe werden abgeleitet.
  * Die typisierten Listen und Methoden sind dünne Hüllen um `objekte`, damit Regeln und Tests unverändert bleiben.
  */
 export class Bauwerk {
@@ -1090,11 +1090,11 @@ export class Bauwerk {
     return this.stangen().flatMap((s) => Fuss.von(s));
   }
 
-  heringe(): readonly Hering[] {
-    return new VerankerungsFinder().heringe(this.seile);
+  haringe(): readonly Haring[] {
+    return new VerankerungsFinder().haringe(this.seile);
   }
 
-  /** Woran ein Punkt hängt (Hering, Plane, Baum, Stange oder frei), z. B. ein Seilende. */
+  /** Woran ein Punkt hängt (Haring, Plane, Baum, Stange oder frei), z. B. ein Seilende. */
   verankerung(punkt: Vec3): Verankerung {
     return new VerankerungsFinder().finde(punkt, this.stangen(), this.baeume, this.planen);
   }
@@ -1148,8 +1148,8 @@ git commit -m "refactor: keep all objects of a Bauwerk in one ordered list"
 - Test: `src/model/Platzbedarf.test.ts`
 
 **Interfaces:**
-- Consumes: `Bauwerk.objekte`, `Bauwerk.von` (Task 2), `LagerObjekt.platzPunkte()` (Task 1), `Bauwerk.heringe()`.
-- Produces: `Platzbedarf.aus(bauwerk)` mit derselben Signatur. Es rechnet über die Platzpunkte aller Objekte plus die Heringe; jede künftige Art bringt ihre Punkte selbst mit.
+- Consumes: `Bauwerk.objekte`, `Bauwerk.von` (Task 2), `LagerObjekt.platzPunkte()` (Task 1), `Bauwerk.haringe()`.
+- Produces: `Platzbedarf.aus(bauwerk)` mit derselben Signatur. Es rechnet über die Platzpunkte aller Objekte plus die Haringe; jede künftige Art bringt ihre Punkte selbst mit.
 
 - [ ] **Step 1: Failing test und Charakterisierungstest schreiben**
 
@@ -1191,8 +1191,8 @@ und innerhalb von `describe('Platzbedarf', …)` nach dem letzten `it(…)` einf
       new Seil('l', new Vec3(0, 2, 0), new Vec3(1, 0, 3)),
       new Baum('baum', new Vec3(30, 0, 30), STANDARD_BAUM),
     ]);
-    // So hat Platzbedarf.aus bis v2b gerechnet: Füße, Heringe, Planen-Ösen.
-    const alt = [...b.fuesse().map((f) => f.position), ...b.heringe().map((h) => h.position), ...b.planen.flatMap((pl) => pl.oesen)];
+    // So hat Platzbedarf.aus bis v2b gerechnet: Füße, Haringe, Planen-Ösen.
+    const alt = [...b.fuesse().map((f) => f.position), ...b.haringe().map((h) => h.position), ...b.planen.flatMap((pl) => pl.oesen)];
     const p = Platzbedarf.aus(b);
     expect([p?.minX, p?.maxX, p?.minZ, p?.maxZ]).toEqual([
       Math.min(...alt.map((q) => q.x)),
@@ -1206,20 +1206,20 @@ und innerhalb von `describe('Platzbedarf', …)` nach dem letzten `it(…)` einf
 - [ ] **Step 2: Tests laufen lassen**
 
 Run: `npx vitest run src/model/Platzbedarf.test.ts`
-Expected: FAIL nur bei „fragt jedes Objekt nach seinen Platzpunkten“ (das Rechteck ist `null`, weil die alte Rechnung nur Füße, Heringe und Planen-Ösen kennt). Der Charakterisierungstest „ergibt … dasselbe Rechteck“ ist schon grün; er sichert, dass die Umstellung nichts ändert.
+Expected: FAIL nur bei „fragt jedes Objekt nach seinen Platzpunkten“ (das Rechteck ist `null`, weil die alte Rechnung nur Füße, Haringe und Planen-Ösen kennt). Der Charakterisierungstest „ergibt … dasselbe Rechteck“ ist schon grün; er sichert, dass die Umstellung nichts ändert.
 
 - [ ] **Step 3: Platzbedarf umstellen**
 
 In `src/model/Platzbedarf.ts` den Kommentar über der Klasse und die ersten Zeilen von `aus` ersetzen. Alt:
 
 ```ts
-/** Achsparalleles Rechteck am Boden über alle Füße, Heringe und Planen-Ösen (Spec v2a/v2b, D4). Bäume zählen nicht. */
+/** Achsparalleles Rechteck am Boden über alle Füße, Haringe und Planen-Ösen (Spec v2a/v2b, D4). Bäume zählen nicht. */
 ```
 
 ```ts
     const punkte = [
       ...bauwerk.fuesse().map((f) => f.position),
-      ...bauwerk.heringe().map((h) => h.position),
+      ...bauwerk.haringe().map((h) => h.position),
       ...bauwerk.planen.flatMap((p) => p.oesen),
     ];
 ```
@@ -1228,13 +1228,13 @@ Neu:
 
 ```ts
 /**
- * Achsparalleles Rechteck am Boden über die Platzpunkte aller Objekte (Füße, Planen-Ösen) und die Heringe (Spec v3, D1).
- * Bäume und Seile haben keine Platzpunkte; die Heringe der Seile werden zusammengefasst wie bisher.
+ * Achsparalleles Rechteck am Boden über die Platzpunkte aller Objekte (Füße, Planen-Ösen) und die Haringe (Spec v3, D1).
+ * Bäume und Seile haben keine Platzpunkte; die Haringe der Seile werden zusammengefasst wie bisher.
  */
 ```
 
 ```ts
-    const punkte = [...bauwerk.objekte.flatMap((o) => o.platzPunkte()), ...bauwerk.heringe().map((h) => h.position)];
+    const punkte = [...bauwerk.objekte.flatMap((o) => o.platzPunkte()), ...bauwerk.haringe().map((h) => h.position)];
 ```
 
 - [ ] **Step 4: Tests laufen lassen**
@@ -2410,7 +2410,7 @@ export interface SeilJson extends ObjektJson {
 }
 
 /**
- * Seil (Spec v2a): zwei Klicks; ein Ende am Boden wird ein Hering. Im Seil-Werkzeug rasten Klicks an Planen-Ösen ein.
+ * Seil (Spec v2a): zwei Klicks; ein Ende am Boden wird ein Haring. Im Seil-Werkzeug rasten Klicks an Planen-Ösen ein.
  * Ein Seil fängt Klicks nur in der Auswahl, sonst blockiert sein Greifmantel, was dahinter liegt.
  */
 export class SeilArt implements ObjektArt<Seil> {
@@ -2883,7 +2883,7 @@ const V3_DACH = {
   planen: [{ id: 'dach', start: ABOCK_SPITZE, ende: DREIBEIN_SPITZE, breite: 3, laenge: 4, form: 'satteldach', neigung: 30, seite: 1 }],
 };
 
-/** Was vom Lesen abhängt und man sieht: Reihenfolgen, Bünde, Heringe, Platzbedarf. */
+/** Was vom Lesen abhängt und man sieht: Reihenfolgen, Bünde, Haringe, Platzbedarf. */
 function fingerabdruck(daten: unknown) {
   const b = serializer.ausJson(daten);
   const p = Platzbedarf.aus(b);
@@ -2891,7 +2891,7 @@ function fingerabdruck(daten: unknown) {
     objekte: b.objekte.map((o) => o.id),
     stangen: b.stangen().map((s) => s.id),
     buende: b.buende().map((x) => `${x.id}:${x.stangenIds.join('+')}`),
-    heringe: b.heringe().map((h) => `${h.id}:${h.seilIds.join('+')}@${h.position.toArray().map((v) => v.toFixed(3)).join(',')}`),
+    haringe: b.haringe().map((h) => `${h.id}:${h.seilIds.join('+')}@${h.position.toArray().map((v) => v.toFixed(3)).join(',')}`),
     platz: p === null ? [] : [p.minX, p.maxX, p.minZ, p.maxZ],
   };
 }
@@ -2916,7 +2916,7 @@ describe('Alte Formate 1–3 lesen wie vor E0 (Spec v3, D3)', () => {
       'bund-2:abock-bein-1+abock-riegel',
       'bund-3:dreibein-bein-0+dreibein-bein-1+dreibein-bein-2',
     ]);
-    expect(f.heringe).toEqual([]);
+    expect(f.haringe).toEqual([]);
     imRahmen(f.platz, [0, 3.2, -0.8, 0.8]);
   });
 
@@ -2925,7 +2925,7 @@ describe('Alte Formate 1–3 lesen wie vor E0 (Spec v3, D3)', () => {
     expect(f.objekte).toEqual(['abock', 'l', 'r']);
     expect(f.stangen).toEqual(ABOCK_STANGEN);
     expect(f.buende).toEqual(['bund-0:abock-bein-0+abock-bein-1', 'bund-1:abock-bein-0+abock-riegel', 'bund-2:abock-bein-1+abock-riegel']);
-    expect(f.heringe).toEqual(['hering-0:l@-1.500,0.000,0.000', 'hering-1:r@1.500,0.000,0.000']);
+    expect(f.haringe).toEqual(['haring-0:l@-1.500,0.000,0.000', 'haring-1:r@1.500,0.000,0.000']);
     imRahmen(f.platz, [-1.5, 1.5, -0.8, 0.8]);
   });
 
@@ -2939,7 +2939,7 @@ describe('Alte Formate 1–3 lesen wie vor E0 (Spec v3, D3)', () => {
       'bund-2:abock-bein-1+abock-riegel',
       'bund-3:dreibein-bein-0+dreibein-bein-1+dreibein-bein-2+first',
     ]);
-    expect(f.heringe).toEqual([]);
+    expect(f.haringe).toEqual([]);
     imRahmen(f.platz, [-0.75, 3.261, -1.299, 1.299]);
   });
 
@@ -2991,7 +2991,7 @@ const mitArt =
 
 /**
  * Übersetzt die fünf Listen der Formate 1–3 in Objekte im Format 4, in der alten Lesereihenfolge
- * Gruppen, Stangen, Bäume, Planen, Seile (Spec v3, D3). So bleiben Reihenfolge, Bünde und Heringe wie vorher.
+ * Gruppen, Stangen, Bäume, Planen, Seile (Spec v3, D3). So bleiben Reihenfolge, Bünde und Haringe wie vorher.
  * Version 1 kannte noch keine Seile und Bäume, Version 2 noch keine Planen.
  */
 export function alteObjekte(o: Roh): Roh[] {
@@ -3895,14 +3895,14 @@ git commit -m "refactor: build the parameter panel from the kind's panel spec"
 - `Szene.ts` bleibt in diesem Task unverändert; Task 9b schaltet um.
 
 **Interfaces:**
-- Consumes: `LagerObjekt`, `ArtName`, `ART_NAMEN`; `Baugruppe.stangen()`, `Stange`, `Seil`, `Baum`, `Plane.flaechen`; `Bauwerk.buende()`, `heringe()`; `Platzbedarf.aus`. Die Meshes, Maße und Materialien sind wörtlich die aus dem bisherigen `Szene.ts`.
+- Consumes: `LagerObjekt`, `ArtName`, `ART_NAMEN`; `Baugruppe.stangen()`, `Stange`, `Seil`, `Baum`, `Plane.flaechen`; `Bauwerk.buende()`, `haringe()`; `Platzbedarf.aus`. Die Meshes, Maße und Materialien sind wörtlich die aus dem bisherigen `Szene.ts`.
 - Produces:
   - `interface TeilDaten { objektId: string; teilId: string; art: ArtName; klickbar: boolean; normal: THREE.Material; markiert: THREE.Material | null }`;
   - `alsTeil<M extends THREE.Mesh>(mesh: M, daten: TeilDaten): M` (schreibt `mesh.userData.teil`), `teilDaten(o: THREE.Object3D): TeilDaten | undefined`;
   - `interface Darstellung<T extends LagerObjekt = LagerObjekt> { baue(o: T): THREE.Group }`, `type Darstellungen = Readonly<Record<ArtName, Darstellung>>`;
   - `standardDarstellungen(): Darstellungen` (je Art eine eigene Instanz, damit Tests `baue` je Instanz zählen können);
-  - `baueAbleitungen(bauwerk: Bauwerk): THREE.Group` (Name `'ableitungen'`: Bünde, Heringe, Platzrahmen);
-  - `zylinder(von, bis, radius, material)`, `kugel(p, radius, material)` in `formen.ts`; die Materialien `HOLZ`, `MARKIERT`, `SEIL`, `START`, `STAMM`, `KRONE`, `HERING`, `UNSICHTBAR`, `PLATZ`, `PLANE`, `PLANE_MARKIERT` in `materialien.ts`.
+  - `baueAbleitungen(bauwerk: Bauwerk): THREE.Group` (Name `'ableitungen'`: Bünde, Haringe, Platzrahmen);
+  - `zylinder(von, bis, radius, material)`, `kugel(p, radius, material)` in `formen.ts`; die Materialien `HOLZ`, `MARKIERT`, `SEIL`, `START`, `STAMM`, `KRONE`, `HARING`, `UNSICHTBAR`, `PLATZ`, `PLANE`, `PLANE_MARKIERT` in `materialien.ts`.
 
 - [ ] **Step 1: Failing tests schreiben**
 
@@ -3972,10 +3972,10 @@ describe('Darstellung je Art (Spec v3, D2)', () => {
     expect((sattel.children[0] as THREE.Mesh).geometry.getAttribute('position').count).toBe(12);
   });
 
-  it('Ableitungen: Bünde, Heringe und Platzrahmen; ein leeres Bauwerk hat keine', () => {
+  it('Ableitungen: Bünde, Haringe und Platzrahmen; ein leeres Bauwerk hat keine', () => {
     const gruppe = baueAbleitungen(kochstelle());
     expect(gruppe.name).toBe('ableitungen');
-    expect(gruppe.children.filter((k) => k instanceof THREE.Mesh)).toHaveLength(4); // 4 Bünde, keine Heringe
+    expect(gruppe.children.filter((k) => k instanceof THREE.Mesh)).toHaveLength(4); // 4 Bünde, keine Haringe
     expect(gruppe.children.filter((k) => k instanceof THREE.LineLoop)).toHaveLength(1);
     expect(baueAbleitungen(Bauwerk.leer()).children).toEqual([]);
   });
@@ -4037,7 +4037,7 @@ export const SEIL = new THREE.MeshLambertMaterial({ color: 0xe8d9a0 });
 export const START = new THREE.MeshLambertMaterial({ color: 0x2f6f3e });
 export const STAMM = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
 export const KRONE = new THREE.MeshLambertMaterial({ color: 0x3f7d3a });
-export const HERING = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+export const HARING = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
 export const UNSICHTBAR = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
 export const PLATZ = new THREE.LineDashedMaterial({ color: 0x1d2733, dashSize: 0.2, gapSize: 0.1 });
 // Beidseitig, damit man die Plane auch von unten sieht; polygonOffset verhindert Flimmern einer Bodenplane auf dem Boden.
@@ -4192,21 +4192,21 @@ import type { Bauwerk } from '../../model/Bauwerk';
 import { Platzbedarf } from '../../model/Platzbedarf';
 import type { Vec3 } from '../../model/Vec3';
 import { kugel } from './formen';
-import { HERING, PLATZ, SEIL } from './materialien';
+import { HARING, PLATZ, SEIL } from './materialien';
 
-/** Was aus dem ganzen Bauwerk abgeleitet wird: Bünde, Heringe und der Platzrahmen (Spec v3, D5). */
+/** Was aus dem ganzen Bauwerk abgeleitet wird: Bünde, Haringe und der Platzrahmen (Spec v3, D5). */
 export function baueAbleitungen(bauwerk: Bauwerk): THREE.Group {
   const gruppe = new THREE.Group();
   gruppe.name = 'ableitungen';
   for (const b of bauwerk.buende()) gruppe.add(kugel(b.position, 0.07, SEIL));
-  for (const h of bauwerk.heringe()) gruppe.add(heringMesh(h.position));
+  for (const h of bauwerk.haringe()) gruppe.add(haringMesh(h.position));
   const platz = Platzbedarf.aus(bauwerk);
   if (platz) gruppe.add(platzRahmen(platz));
   return gruppe;
 }
 
-function heringMesh(p: Vec3): THREE.Mesh {
-  const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.15, 8), HERING);
+function haringMesh(p: Vec3): THREE.Mesh {
+  const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.15, 8), HARING);
   mesh.position.set(p.x, 0.075, p.z);
   mesh.rotation.x = Math.PI; // Spitze nach unten, in den Boden
   return mesh;
@@ -4282,7 +4282,7 @@ git commit -m "feat: add a three.js Darstellung per object kind"
 
 **Regeln (Spec D5 plus Abweichung „Startmarkierung“):**
 - Je Objekt-id eine Gruppe. Hat das Objekt dieselbe Identität (`===`) wie beim letzten Mal, bleibt die Gruppe. Sonst wird sie neu gebaut, und die alte gibt ihre Geometrie frei (nie die geteilten Materialien). Objekte, die nicht mehr im Bauwerk sind, fliegen raus.
-- Die Gruppe `ableitungen` (Bünde, Heringe, Platzrahmen) wird nur neu gebaut, wenn das Bauwerk (Identität) wechselt.
+- Die Gruppe `ableitungen` (Bünde, Haringe, Platzrahmen) wird nur neu gebaut, wenn das Bauwerk (Identität) wechselt.
 - Die Startkugel wird nur neu gebaut, wenn `stangenStart` (Identität) wechselt.
 - Auswahl und Markierung tauschen nur Materialien: Ein Mesh mit `markiert !== null` bekommt `markiert`, wenn seine Teil-id oder seine Objekt-id im Set steht, sonst `normal`.
 
@@ -4404,7 +4404,7 @@ describe('SzenenInhalt (Spec v3, D5)', () => {
   it('baut die Ableitungen nur bei einem neuen Bauwerk neu', () => {
     const inhalt = frisch(b1);
     const vorher = inhalt.wurzel.getObjectByName('ableitungen');
-    expect(vorher?.children).toHaveLength(3); // ein Bund an der Spitze, ein Hering, der Platzrahmen
+    expect(vorher?.children).toHaveLength(3); // ein Bund an der Spitze, ein Haring, der Platzrahmen
     inhalt.zeige(b1, new Set(['d']), new Vec3(1, 0, 1));
     expect(inhalt.wurzel.getObjectByName('ableitungen')).toBe(vorher);
     inhalt.zeige(b1.ohne('l'), KEINE, null);
@@ -5961,7 +5961,7 @@ In `CLAUDE.md` unter „## Stack & Struktur“:
 1. Die Zeile für `src/model/` ersetzen durch:
 
 ```markdown
-- `src/model/` — Domain (immutable), kein three.js: `LagerObjekt` (gemeinsame Schnittstelle, `ART_NAMEN`), Stange, Bund, Fuss, Baugruppen, Seil, Baum, Plane (Ösen aus der Geometrie), `Bauwerk` (eine geordnete Liste `objekte` + typisierte Hüllen), Verankerung/Hering (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
+- `src/model/` — Domain (immutable), kein three.js: `LagerObjekt` (gemeinsame Schnittstelle, `ART_NAMEN`), Stange, Bund, Fuss, Baugruppen, Seil, Baum, Plane (Ösen aus der Geometrie), `Bauwerk` (eine geordnete Liste `objekte` + typisierte Hüllen), Verankerung/Haring (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
 ```
 
 2. An das Ende der Zeile für `src/rules/` anhängen: `; Regel-Einstellungen je Plan in \`RegelEinstellungen\` (an/aus, Werte; Spec v3, D8)`. Danach einfügen:

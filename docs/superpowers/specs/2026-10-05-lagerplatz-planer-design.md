@@ -23,7 +23,7 @@ Im Code stellt E0 zwei Dinge ab: Eine neue Objektart berührt heute rund zehn Da
 | # | Frage | Entscheidung |
 |---|---|---|
 | 1 | Zweck | Lager-Layout planen, Bauten im Kontext sehen, Materialliste fürs ganze Lager. Präsentieren ist kein eigenes Ziel; der Teilen-Link bleibt, wie er ist |
-| 2 | Gelände | **Luftbild als Boden:** Bild laden, Maßstab mit zwei Klicks setzen. Der Boden bleibt flach (y = 0). Verworfen: flache Wiese ohne Bild (der echte Platz müsste nachgebaut werden); Gelände mit Höhen (alle Bauten, Füße, Heringe und Regeln setzen y = 0 voraus) |
+| 2 | Gelände | **Luftbild als Boden:** Bild laden, Maßstab mit zwei Klicks setzen. Der Boden bleibt flach (y = 0). Verworfen: flache Wiese ohne Bild (der echte Platz müsste nachgebaut werden); Gelände mit Höhen (alle Bauten, Füße, Haringe und Regeln setzen y = 0 voraus) |
 | 3 | Umfang | alle Etappen E0–E6, nacheinander |
 | 4 | Zelte | **ganze Zelte nach Typ:** **Jurte** (5er, 6er, 8er; jeweils Komplettdach + 3 Seitenwände, jede Wand einzeln weglassbar), **Hanger** (ein Sattler-Zelt; Vorlage mit einstellbarer Länge) und **Doppelkegler** (beide gekaufte Gruppenzelte). Startwerte aus einer Online-Recherche, Jakob bestätigt oder misst nach. Ursprünglich war zusätzlich ein Bahnen-Baukasten geplant (E7); er wurde am 05.10.2026 gestrichen, weil die Gruppen keine Kohten- oder Jurtenbahnen verwenden |
 | 5 | Platzregeln | **ja, Abstandsregeln.** Welche Regeln mit welchen Abständen gelten, legt Jakob fest; bis dahin `CHECK MANUALLY` |
@@ -38,7 +38,7 @@ Im Code stellt E0 zwei Dinge ab: Eine neue Objektart berührt heute rund zehn Da
 | E1 | Editor-Grundlagen | Verschieben per Ziehen (Objekt oder ganzer Bau; angehängte Seile und Planen wandern mit), Mehrfachauswahl, Kopieren/Einfügen/Duplizieren, Drehen für alle Objekte, Draufsicht + „Alles zeigen“, Messwerkzeug + Maßstabsleiste | — |
 | E2 | Luftbild als Boden | Bild laden (PNG/JPG, verkleinert), Maßstab mit zwei Klicks + Meterangabe, Nordpfeil, Deckkraft; die Bodenfläche richtet sich nach dem Bild. Das Bild steckt in der Datei, **nicht im Teilen-Link** (zu groß) | ein echtes Luftbild eines Lagerplatzes zum Testen |
 | E3 | Platz-Objekte | Punkt-Objekte (Feuerstelle, Fahnenmast, Latrine, Wasserstelle, Holzlager), Text-Beschriftungen, Zonen als Polygon (Name, Farbe), Wege und Zäune als Linienzug | Bestätigung der Objektliste |
-| E4 | Zelte als Ganzes | Zelt-Objekt mit Typ (Jurte 5er/6er/8er, Hanger, Doppelkegler) als Vorlage, Maße je Zelt einstellbar, Drehung; bei der Jurte jede der 3 Seitenwände einzeln an/aus (z. B. offenes Küchenzelt); vereinfachter 3D-Körper; Heringe und Abspannung abgeleitet | Bestätigung der recherchierten Startwerte; Maße des Hangers |
+| E4 | Zelte als Ganzes | Zelt-Objekt mit Typ (Jurte 5er/6er/8er, Hanger, Doppelkegler) als Vorlage, Maße je Zelt einstellbar, Drehung; bei der Jurte jede der 3 Seitenwände einzeln an/aus (z. B. offenes Küchenzelt); vereinfachter 3D-Körper; Haringe und Abspannung abgeleitet | Bestätigung der recherchierten Startwerte; Maße des Hangers |
 | E5 | Gesamt-Materialliste | gruppiert nach Bau (benennbar), Zelttyp und Platz-Objekten, mit Gesamtsumme; Druckansicht. Dazu der Typ `Bau` und die Regeln R1–R8 je Bau | — |
 | E6 | Platzregeln | Abstandsregeln (z. B. Feuer ↔ Zelt, Latrine ↔ Küche/Wasser, Zelt unter Baum) neben R1–R8 | Regelliste + Abstände |
 | ~~E7~~ | ~~Bahnen-Baukasten~~ | **gestrichen (05.10.2026):** Die Gruppen verwenden keine Kohten- oder Jurtenbahnen. Weglassbare Jurtenwände kommen stattdessen in E4 | — |
@@ -79,7 +79,7 @@ Im Code stellt E0 zwei Dinge ab: Eine neue Objektart berührt heute rund zehn Da
     - die Füße für Baugruppen und freie Stangen;
     - die Ösen für Planen;
     - nichts für Seile und Bäume.
-  - `Platzbedarf.aus` nimmt die `platzPunkte()` aller Objekte plus wie bisher `Bauwerk.heringe()`. Die Heringe bleiben aus den Seilen abgeleitet und zusammengefasst. Das Ergebnis ist für jedes Bauwerk dasselbe wie heute; die bestehenden Tests prüfen das.
+  - `Platzbedarf.aus` nimmt die `platzPunkte()` aller Objekte plus wie bisher `Bauwerk.haringe()`. Die Haringe bleiben aus den Seilen abgeleitet und zusammengefasst. Das Ergebnis ist für jedes Bauwerk dasselbe wie heute; die bestehenden Tests prüfen das.
 - **Bestehende Methoden bleiben:** `Baugruppe.verschoben(position)` (absolut) und `Baugruppe.gedreht(delta)` behalten ihre Bedeutung. `gedreht` erhält nur den optionalen zweiten Parameter.
 - **`Bauwerk`** hält statt fünf Listen **eine geordnete Liste `objekte`**:
   - Neue Methoden: `mit(o)`, `ersetze(o)`, `ohne(id)`, `objekt(id)`, `besitzer(teilId)` (das Objekt, zu dem eine id gehört, also bei der Stange einer Baugruppe die Baugruppe), `static von(liste)` (baut in einem Schritt und prüft doppelte ids).
@@ -140,7 +140,7 @@ Die Signatur von `Szene.zeige(…)` bleibt; `main.ts` ändert sich nicht.
   - Bei jedem Aufruf bleibt die Gruppe, wenn das Objekt dieselbe Identität (`===`) hat.
   - Ein geändertes oder neues Objekt wird neu gebaut. Die alte Geometrie wird dabei freigegeben, die geteilten Materialien nicht.
   - Ein entferntes Objekt fliegt raus.
-- **„Ableitungen“-Gruppe:** Bünde, Heringe, Platzrahmen und die Startmarkierung liegen dort. Sie wird nur neu gebaut, wenn sich das `Bauwerk` (Identität) ändert.
+- **„Ableitungen“-Gruppe:** Bünde, Haringe, Platzrahmen und die Startmarkierung liegen dort. Sie wird nur neu gebaut, wenn sich das `Bauwerk` (Identität) ändert.
 - **Auswahl und Markierung** tauschen nur Materialien und bauen keine Geometrie.
 
 ### D6 Editor-Vorbereitung für E1 (nur Schnittstelle, keine UI)
