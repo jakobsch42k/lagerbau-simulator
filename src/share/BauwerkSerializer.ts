@@ -7,10 +7,8 @@ import { Plane } from '../model/Plane';
 import type { ABockParams, DreibeinParams, PlanenForm } from '../model/params';
 import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
-import { Vec3 } from '../model/Vec3';
 import { MAX_TEILE } from './grenzen';
-
-type V3 = readonly [number, number, number];
+import { liste, objekt, text, type V3, vektor, zahl } from './lesen';
 
 export type GruppeJson =
   | { readonly id: string; readonly typ: 'dreibein'; readonly position: V3; readonly drehung: number; readonly params: DreibeinParams }
@@ -55,34 +53,6 @@ export interface BauwerkJson {
   readonly seile: readonly SeilJson[];
   readonly baeume: readonly BaumJson[];
   readonly planen: readonly PlaneJson[];
-}
-
-type Roh = Record<string, unknown>;
-
-function objekt(d: unknown, name: string): Roh {
-  if (typeof d !== 'object' || d === null || Array.isArray(d)) throw new Error(`${name} ist kein Objekt`);
-  return d as Roh;
-}
-
-function liste(d: unknown, name: string): unknown[] {
-  if (!Array.isArray(d)) throw new Error(`${name} ist keine Liste`);
-  return d;
-}
-
-function zahl(d: unknown, name: string): number {
-  if (typeof d !== 'number' || !Number.isFinite(d)) throw new Error(`${name} ist keine Zahl`);
-  return d;
-}
-
-function text(d: unknown, name: string): string {
-  if (typeof d !== 'string' || d.length === 0) throw new Error(`${name} fehlt`);
-  return d;
-}
-
-function vektor(d: unknown, name: string): Vec3 {
-  const l = liste(d, name);
-  if (l.length !== 3) throw new Error(`${name} braucht drei Koordinaten`);
-  return new Vec3(zahl(l[0], name), zahl(l[1], name), zahl(l[2], name));
 }
 
 /** Bauwerk ↔ JSON. Gruppen werden über ihre Parameter gespeichert, damit Links kurz bleiben. */
