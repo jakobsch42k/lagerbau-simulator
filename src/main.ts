@@ -1,4 +1,5 @@
 import './style.css';
+import { standardArten } from './arten/standardArten';
 import { kochstelle } from './beispiele/kochstelle';
 import { Editor } from './editor/Editor';
 import { KLICK_TOLERANZ_PX } from './editor/konstanten';
@@ -19,8 +20,6 @@ import { Teilen } from './ui/Teilen';
 
 const MELDUNG_DAUER_MS = 4000;
 
-/** Was ein Zwei-Klick-Werkzeug gerade spannt, für die Statuszeile. */
-const ZWEI_PUNKT_TEIL: Partial<Record<WerkzeugName, string>> = { stange: 'Stange', seil: 'Seil', plane: 'Plane' };
 
 function element<T extends HTMLElement>(selektor: string): T {
   const el = document.querySelector<T>(selektor);
@@ -28,8 +27,9 @@ function element<T extends HTMLElement>(selektor: string): T {
   return el;
 }
 
-const editor = new Editor(Bauwerk.leer());
-const szene = new Szene(element('#ansicht'));
+const arten = standardArten();
+const editor = new Editor(Bauwerk.leer(), { arten });
+const szene = new Szene(element('#ansicht'), arten);
 const modus = new AnsichtsModus(document.body);
 const teilen = new Teilen();
 const regeln = new RuleEngine(standardRegeln());
@@ -120,7 +120,8 @@ editor.abonniere((z) => {
   for (const knopf of werkzeugKnoepfe) knopf.setAttribute('aria-pressed', String(knopf.dataset.werkzeug === z.werkzeug));
   element<HTMLButtonElement>('#btn-rueck').disabled = !z.kannRueckgaengig;
   element<HTMLButtonElement>('#btn-wieder').disabled = !z.kannWiederholen;
-  const teil = ZWEI_PUNKT_TEIL[z.werkzeug] ?? 'Teil';
+  // Nur Zwei-Klick-Werkzeuge haben einen Startpunkt; ihr Label ist „Stange“, „Seil“ oder „Plane“.
+  const teil = z.werkzeug === 'auswahl' ? 'Teil' : arten.art(z.werkzeug).label;
   meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : '');
   if (z.meldung) {
     clearTimeout(meldungsTimer);

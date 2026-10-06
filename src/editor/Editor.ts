@@ -1,9 +1,12 @@
+import type { ObjektRegister } from '../arten/ObjektRegister';
+import { standardArten } from '../arten/standardArten';
 import type { Bauwerk } from '../model/Bauwerk';
+import type { ArtName } from '../model/LagerObjekt';
 import type { Vec3 } from '../model/Vec3';
 import { DREH_SCHRITT } from './konstanten';
 import { SnapService, type Treffer } from './SnapService';
 import { Verlauf } from './Verlauf';
-import { type EditorKontext, erzeugeWerkzeug, type KlickZiel, type Werkzeug, type WerkzeugName } from './Werkzeuge';
+import { type EditorKontext, erzeugeWerkzeug, type Werkzeug, type WerkzeugName } from './Werkzeuge';
 
 export interface EditorZustand {
   readonly bauwerk: Bauwerk;
@@ -17,6 +20,7 @@ export interface EditorZustand {
 }
 
 export interface EditorOptionen {
+  readonly arten?: ObjektRegister;
   readonly snap?: SnapService;
   readonly neueId?: (praefix: string) => string;
 }
@@ -29,18 +33,21 @@ const zufallsId = (praefix: string): string => `${praefix}-${crypto.randomUUID()
  */
 export class Editor implements EditorKontext {
   readonly snap: SnapService;
+  private readonly arten: ObjektRegister;
   private verlauf: Verlauf<Bauwerk>;
   private auswahlId: string | null = null;
   private markiertIds: ReadonlySet<string> = new Set();
-  private werkzeug: Werkzeug = erzeugeWerkzeug('auswahl');
+  private werkzeug: Werkzeug;
   private meldung: string | null = null;
   private readonly beobachter: ((z: EditorZustand) => void)[] = [];
   private readonly idErzeuger: (praefix: string) => string;
 
   constructor(anfang: Bauwerk, optionen: EditorOptionen = {}) {
     this.verlauf = Verlauf.start(anfang);
-    this.snap = optionen.snap ?? new SnapService();
+    this.arten = optionen.arten ?? standardArten();
+    this.snap = optionen.snap ?? new SnapService(this.arten);
     this.idErzeuger = optionen.neueId ?? zufallsId;
+    this.werkzeug = erzeugeWerkzeug('auswahl', this.arten);
   }
 
   get bauwerk(): Bauwerk {
@@ -48,7 +55,7 @@ export class Editor implements EditorKontext {
   }
 
   /** Welche Seile oder Planen Klicks fangen sollen; hängt vom Werkzeug ab (Spec v2b, D2). */
-  get klickZiele(): readonly KlickZiel[] {
+  get klickZiele(): readonly ArtName[] {
     return this.werkzeug.klickZiele;
   }
 
@@ -90,7 +97,7 @@ export class Editor implements EditorKontext {
 
   waehleWerkzeug(name: WerkzeugName): void {
     this.werkzeug.abbrechen();
-    this.werkzeug = erzeugeWerkzeug(name);
+    this.werkzeug = erzeugeWerkzeug(name, this.arten);
     this.melde();
   }
 
