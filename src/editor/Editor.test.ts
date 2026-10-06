@@ -281,4 +281,44 @@ describe('Editor', () => {
     e.klick({ art: 'objekt', objektArt: 'abock', id: 'a-riegel', punkt: new Vec3(6.3, 0.4, 0) });
     expect(e.zustand().auswahl).toBe('a');
   });
+
+  it('führt die Auswahl als Menge; auswahl ist die eine id oder null (Spec v3, D6)', () => {
+    const seil = new Seil('l', new Vec3(5, 2, 0), new Vec3(7, 0, 0));
+    const e = neuerEditor(Bauwerk.leer().mitGruppe(dreibein).mitSeil(seil));
+    e.klick({ art: 'objekt', objektArt: 'dreibein', id: 'd-bein-2', punkt: Vec3.NULL });
+    expect([...e.zustand().ausgewaehlt]).toEqual(['d']);
+    expect(e.zustand().auswahl).toBe('d');
+    e.waehleMehrere(['d', 'l', 'weg']);
+    expect([...e.zustand().ausgewaehlt]).toEqual(['d', 'l']);
+    expect(e.zustand().auswahl).toBeNull();
+    e.waehleMehrere(['l', 'weg']);
+    expect(e.zustand().auswahl).toBe('l');
+    e.taste('r', false); // R dreht nur Baugruppen (Spec v3, D6)
+    expect(e.zustand().kannRueckgaengig).toBe(false);
+    e.taste('Escape', false);
+    expect(e.zustand().ausgewaehlt.size).toBe(0);
+  });
+
+  it('ändert mehrere Objekte in einem Undo-Schritt (Spec v3, D6)', () => {
+    const seil = new Seil('l', new Vec3(5, 2, 0), new Vec3(7, 0, 0));
+    const anfang = Bauwerk.leer().mitGruppe(dreibein).mitSeil(seil);
+    const e = neuerEditor(anfang);
+    expect(e.aendereObjekte(['d', 'l', 'weg'], (o) => o.verschobenUm(new Vec3(1, 0, 0)))).toBe(true);
+    expect(e.bauwerk.gruppe('d')?.position.equals(new Vec3(1, 0, 0), 1e-9)).toBe(true);
+    expect(e.bauwerk.seil('l')?.start.equals(new Vec3(6, 2, 0), 1e-9)).toBe(true);
+    e.rueckgaengig();
+    expect(e.bauwerk).toBe(anfang);
+    expect(e.zustand().kannRueckgaengig).toBe(false);
+  });
+
+  it('lehnt eine ungültige Mehrfachänderung ganz ab und legt ohne Änderung keinen Undo-Schritt an', () => {
+    const plane = new Plane('pl', new Vec3(0, 2, 0), new Vec3(4, 2, 0), STANDARD_PLANE);
+    const anfang = Bauwerk.leer().mitGruppe(dreibein).mitPlane(plane);
+    const e = neuerEditor(anfang);
+    expect(e.aendereObjekte(['d', 'pl'], (o) => o.verschobenUm(new Vec3(0, -1, 0)))).toBe(false);
+    expect(e.zustand().meldung).toBe('Plane reicht in den Boden: Neigung, Breite oder Länge verringern.');
+    expect(e.bauwerk).toBe(anfang);
+    expect(e.aendereObjekte(['weg'], (o) => o.verschobenUm(new Vec3(1, 0, 0)))).toBe(true);
+    expect(e.zustand().kannRueckgaengig).toBe(false);
+  });
 });
