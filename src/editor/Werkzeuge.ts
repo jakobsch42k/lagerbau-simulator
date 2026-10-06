@@ -183,30 +183,14 @@ export class DrawPlaneTool extends ZweiPunktWerkzeug {
   }
 }
 
-/** Klick auf eine Stange wählt sie (bzw. ihre Gruppe), auf ein Seil, einen Baum oder eine Plane wählt diese, auf den Boden hebt die Auswahl auf. */
+/** Klick auf ein Objekt wählt es aus (bei einer Gruppenstange die ganze Gruppe), ein Klick auf den Boden hebt die Auswahl auf. */
 export class SelectTool implements Werkzeug {
   readonly name = 'auswahl' as const;
   readonly angefangen: Vec3 | null = null;
   readonly klickZiele: readonly KlickZiel[] = ['seil', 'plane'];
 
   onKlick(treffer: Treffer, k: EditorKontext): void {
-    switch (treffer.art) {
-      case 'stange':
-        k.waehle(k.bauwerk.auswahlIdFuer(treffer.stangeId));
-        break;
-      case 'baum':
-        k.waehle(treffer.baumId);
-        break;
-      case 'seil':
-        k.waehle(treffer.seilId);
-        break;
-      case 'plane':
-        k.waehle(treffer.planeId);
-        break;
-      case 'boden':
-        k.waehle(null);
-        break;
-    }
+    k.waehle(treffer.art === 'boden' ? null : k.bauwerk.auswahlIdFuer(treffer.id));
   }
 
   abbrechen(): void {}

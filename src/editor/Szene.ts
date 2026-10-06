@@ -1,14 +1,16 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import type { ObjektRegister } from '../arten/ObjektRegister';
+import { standardArten } from '../arten/standardArten';
 import type { Baum } from '../model/Baum';
 import type { Bauwerk } from '../model/Bauwerk';
+import type { ArtName } from '../model/LagerObjekt';
 import { Platzbedarf } from '../model/Platzbedarf';
 import type { Plane } from '../model/Plane';
 import type { Seil } from '../model/Seil';
 import type { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
 import type { Treffer } from './SnapService';
-import type { KlickZiel } from './Werkzeuge';
 
 const HOLZ = new THREE.MeshLambertMaterial({ color: 0x8b5a2b });
 const MARKIERT = new THREE.MeshLambertMaterial({ color: 0xd9480f });
@@ -25,7 +27,6 @@ const PLANE_MARKIERT = new THREE.MeshLambertMaterial({ color: 0xd9480f, side: TH
 const Y_ACHSE = new THREE.Vector3(0, 1, 0);
 const SEIL_RADIUS = 0.005; // Ø 1 cm, nur optisch
 const SEIL_GREIFRADIUS = 0.05; // unsichtbarer Mantel, damit man ein dünnes Seil anklicken kann
-const ZIEL_SCHLUESSEL: Record<KlickZiel, string> = { seil: 'seilId', plane: 'planeId' };
 
 /** three.js-Darstellung. Kennt das Modell nur lesend und liefert Klick-Treffer zurück. */
 export class Szene {
@@ -37,7 +38,10 @@ export class Szene {
   private readonly boden: THREE.Mesh;
   private readonly raycaster = new THREE.Raycaster();
 
-  constructor(private readonly container: HTMLElement) {
+  constructor(
+    private readonly container: HTMLElement,
+    private readonly arten: ObjektRegister = standardArten(),
+  ) {
     this.renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(this.renderer.domElement);
     this.kamera.position.set(5, 4, 6);
@@ -66,7 +70,7 @@ export class Szene {
     this.bau.clear();
     for (const s of bauwerk.stangen()) {
       const istMarkiert = markiert.has(s.id) || (s.gruppeId !== null && markiert.has(s.gruppeId));
-      this.bau.add(this.stangenMesh(s, istMarkiert));
+      this.bau.add(this.stangenMesh(s, istMarkiert, bauwerk.besitzer(s.id)?.art ?? 'stange'));
     }
     for (const b of bauwerk.buende()) this.bau.add(this.kugel(b.position, 0.07, SEIL));
     for (const s of bauwerk.seile) this.bau.add(...this.seilMeshes(s, markiert.has(s.id)));
@@ -78,20 +82,20 @@ export class Szene {
     if (stangenStart) this.bau.add(this.kugel(stangenStart, 0.1, START));
   }
 
-  treffer(e: PointerEvent, klickZiele: readonly KlickZiel[]): Treffer | null {
+  treffer(e: PointerEvent, klickZiele: readonly ArtName[]): Treffer | null {
     const rect = this.leinwand.getBoundingClientRect();
     const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
     this.raycaster.setFromCamera(ndc, this.kamera);
-    const schluessel = ['stangeId', 'baumId', ...klickZiele.map((z) => ZIEL_SCHLUESSEL[z])];
-    const ziele = this.bau.children.filter((k) => schluessel.some((name) => typeof k.userData[name] === 'string'));
+    // Arten mit Klickverhalten „immer“ fangen jeden Klick, die anderen nur, wenn das Werkzeug sie nennt (Spec v2b, D2).
+    const ziele = this.bau.children.filter((k) => {
+      const art = k.userData.art as ArtName | undefined;
+      return art !== undefined && (this.arten.art(art).klick === 'immer' || klickZiele.includes(art));
+    });
     const getroffen = this.raycaster.intersectObjects(ziele, false)[0];
     if (getroffen) {
-      const punkt = new Vec3(getroffen.point.x, getroffen.point.y, getroffen.point.z);
       const daten = getroffen.object.userData;
-      if (typeof daten.stangeId === 'string') return { art: 'stange', punkt, stangeId: daten.stangeId };
-      if (typeof daten.baumId === 'string') return { art: 'baum', punkt, baumId: daten.baumId };
-      if (typeof daten.planeId === 'string') return { art: 'plane', punkt, planeId: daten.planeId };
-      return { art: 'seil', punkt, seilId: daten.seilId as string };
+      const punkt = new Vec3(getroffen.point.x, getroffen.point.y, getroffen.point.z);
+      return { art: 'objekt', objektArt: daten.art as ArtName, id: daten.teilId as string, punkt };
     }
     const aufBoden = this.raycaster.intersectObject(this.boden, false)[0];
     return aufBoden ? { art: 'boden', punkt: new Vec3(aufBoden.point.x, 0, aufBoden.point.z) } : null;
@@ -106,16 +110,18 @@ export class Szene {
     return mesh;
   }
 
-  private stangenMesh(s: Stange, markiert: boolean): THREE.Mesh {
+  private stangenMesh(s: Stange, markiert: boolean, art: ArtName): THREE.Mesh {
     const mesh = this.zylinder(s.start, s.ende, s.durchmesser / 2, markiert ? MARKIERT : HOLZ);
-    mesh.userData.stangeId = s.id;
+    mesh.userData.art = art;
+    mesh.userData.teilId = s.id;
     return mesh;
   }
 
   private seilMeshes(s: Seil, markiert: boolean): THREE.Mesh[] {
     const sichtbar = this.zylinder(s.start, s.ende, SEIL_RADIUS, markiert ? MARKIERT : SEIL);
     const greifbar = this.zylinder(s.start, s.ende, SEIL_GREIFRADIUS, UNSICHTBAR);
-    greifbar.userData.seilId = s.id;
+    greifbar.userData.art = 'seil';
+    greifbar.userData.teilId = s.id;
     return [sichtbar, greifbar];
   }
 
@@ -130,7 +136,8 @@ export class Szene {
     const { durchmesser, hoehe } = b.params;
     const stamm = new THREE.Mesh(new THREE.CylinderGeometry(durchmesser / 2, durchmesser / 2, hoehe, 12), markiert ? MARKIERT : STAMM);
     stamm.position.set(b.position.x, hoehe / 2, b.position.z);
-    stamm.userData.baumId = b.id;
+    stamm.userData.art = 'baum';
+    stamm.userData.teilId = b.id;
     const krone = new THREE.Mesh(new THREE.SphereGeometry(Math.max(1, hoehe * 0.25), 12, 8), KRONE);
     krone.position.set(b.position.x, hoehe, b.position.z);
     return [stamm, krone];
@@ -142,7 +149,8 @@ export class Szene {
     const geometrie = new THREE.BufferGeometry().setFromPoints(ecken.map((v) => new THREE.Vector3(v.x, v.y, v.z)));
     geometrie.computeVertexNormals();
     const mesh = new THREE.Mesh(geometrie, markiert ? PLANE_MARKIERT : PLANE);
-    mesh.userData.planeId = p.id;
+    mesh.userData.art = 'plane';
+    mesh.userData.teilId = p.id;
     return mesh;
   }
 
