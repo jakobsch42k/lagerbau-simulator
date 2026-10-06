@@ -29,6 +29,18 @@ describe('RegelEinstellungen (Spec v3, D8)', () => {
     expect(e.wert('R7_MIN_HOEHE')).toBe(R7_MIN_HOEHE);
   });
 
+  it('gibt this zurück, wenn der wirksame Wert schon stimmt', () => {
+    expect(standard.mitWert('R4_MAX_BEINWINKEL_GRAD', R4_MAX_BEINWINKEL_GRAD)).toBe(standard);
+    const e = standard.mitWert('R4_MAX_BEINWINKEL_GRAD', 40);
+    expect(e.mitWert('R4_MAX_BEINWINKEL_GRAD', 40)).toBe(e);
+  });
+
+  it('streicht den Schlüssel, wenn der neue Wert dem Standard entspricht', () => {
+    const e = standard.mitWert('R4_MAX_BEINWINKEL_GRAD', 40).mitWert('R4_MAX_BEINWINKEL_GRAD', R4_MAX_BEINWINKEL_GRAD);
+    expect(e.werte).toEqual({});
+    expect(e.istStandard).toBe(true);
+  });
+
   it.each<[string, WertSchluessel, number, string]>([
     ['Höhe 0', 'R3_MIN_HOEHE', 0, 'Wert muss größer als 0 sein'],
     ['negative Höhe', 'R7_MIN_HOEHE', -1, 'Wert muss größer als 0 sein'],

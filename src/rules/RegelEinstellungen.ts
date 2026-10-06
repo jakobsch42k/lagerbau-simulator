@@ -106,9 +106,14 @@ export class RegelEinstellungen {
     return new RegelEinstellungen(new Set(neu), this.werte);
   }
 
-  /** Wirft einen RangeError mit deutscher Meldung, wenn der Wert nicht passt. */
+  /**
+   * Wirft einen RangeError mit deutscher Meldung, wenn der Wert nicht passt. Ist der wirksame Wert schon
+   * der gewünschte, kommt `this` zurück (kein Verlaufsschritt); der Standardwert wird nicht gespeichert.
+   */
   mitWert(schluessel: WertSchluessel, wert: number): RegelEinstellungen {
+    if (this.wert(schluessel) === wert) return this;
     const werte: Partial<Record<WertSchluessel, number>> = { ...this.werte, [schluessel]: wert };
+    if (wert === STANDARD[schluessel]) delete werte[schluessel];
     return RegelEinstellungen.von(this.aus, werte);
   }
 

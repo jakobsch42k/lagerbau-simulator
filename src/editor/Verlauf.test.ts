@@ -31,3 +31,12 @@ describe('Verlauf', () => {
     expect(zurueck.kannRueckgaengig).toBe(false);
   });
 });
+
+describe('Verlauf: kein leerer Schritt', () => {
+  it('ignoriert denselben Stand und behält Wiederholen', () => {
+    const v = Verlauf.start(1).mit(2).rueckgaengig();
+    expect(v.mit(1)).toBe(v);
+    expect(v.mit(1).kannWiederholen).toBe(true);
+    expect(Verlauf.start(1).mit(1).kannRueckgaengig).toBe(false);
+  });
+});
