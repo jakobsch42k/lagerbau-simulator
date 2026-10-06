@@ -316,14 +316,19 @@ export class Editor implements EditorKontext {
   }
 
   rueckgaengig(): void {
-    this.verlauf = this.verlauf.rueckgaengig();
-    this.markiertIds = new Set();
-    this.melde();
+    this.springeImVerlauf(this.verlauf.rueckgaengig());
   }
 
   wiederholen(): void {
-    this.verlauf = this.verlauf.wiederholen();
+    this.springeImVerlauf(this.verlauf.wiederholen());
+  }
+
+  /** Ändert Undo/Redo das Luftbild, passen die Klickpunkte von „Maßstab setzen“ nicht mehr: Das Werkzeug endet samt Messung. */
+  private springeImVerlauf(verlauf: Verlauf<Bauwerk>): void {
+    const luftbildVorher = this.bauwerk.luftbild;
+    this.verlauf = verlauf;
     this.markiertIds = new Set();
+    if (this.werkzeug.name === 'massstab' && this.bauwerk.luftbild !== luftbildVorher) this.waehleWerkzeug('auswahl');
     this.melde();
   }
 

@@ -88,8 +88,11 @@ export class Kameras {
    * `groesse` ist die Kantenlänge des Bodens in m; bei 40 m bleibt alles wie vorher.
    */
   setzeBodengroesse(groesse: number): void {
-    this.perspektive.far = Math.max(MIN_FAR, groesse * FAR_PRO_BODEN);
-    this.perspektive.updateProjectionMatrix();
+    const far = Math.max(MIN_FAR, groesse * FAR_PRO_BODEN);
+    if (far !== this.perspektive.far) {
+      this.perspektive.far = far;
+      this.perspektive.updateProjectionMatrix();
+    }
     this.steuerungPlan.minZoom = Math.min(PLAN_MIN_ZOOM, 1 / (Math.max(groesse, MIN_BODEN) * PLAN_HALBE_HOEHE_PRO_BODEN));
   }
 

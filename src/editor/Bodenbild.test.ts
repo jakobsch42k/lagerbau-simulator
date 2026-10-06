@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it, vi } from 'vitest';
 import { Luftbild } from '../model/Luftbild';
-import { Bodenbild } from './Bodenbild';
+import { Bodenbild, BODEN_HOEHEN } from './Bodenbild';
 
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
 const JPG = 'data:image/jpeg;base64,/9j/4AAQ';
@@ -99,5 +99,37 @@ describe('Bodenbild (Spec E2, D3)', () => {
     b.zeige(bild());
     b.zeigeDeckkraft(0.25);
     expect(material().opacity).toBe(0.25);
+  });
+
+  it('schichtet Boden < Bild < Raster; Zonen (E3, y = 0,005) und Planen liegen darüber', () => {
+    expect(BODEN_HOEHEN.boden).toBeLessThan(BODEN_HOEHEN.bild);
+    expect(BODEN_HOEHEN.bild).toBeLessThan(BODEN_HOEHEN.raster);
+    expect(BODEN_HOEHEN.raster).toBeLessThan(0.005);
+    expect(BODEN_HOEHEN.bild).toBeLessThanOrEqual(0.001);
+    expect(BODEN_HOEHEN.boden).toBeLessThanOrEqual(-0.05);
+    const { b, bildMesh, raster } = frisch();
+    b.zeige(bild());
+    expect(b.boden.position.y).toBe(BODEN_HOEHEN.boden);
+    expect(bildMesh()!.position.y).toBe(BODEN_HOEHEN.bild);
+    expect(raster().position.y).toBe(BODEN_HOEHEN.raster);
+    b.zeige(bild(PNG, 2)); // Raster wird neu gebaut
+    expect(raster().position.y).toBe(BODEN_HOEHEN.raster);
+  });
+
+  it('zeichnet das Raster nicht über 3D-Objekte (Tiefentest an) und das Bild nicht in die Tiefe', () => {
+    const { b, material, raster } = frisch();
+    b.zeige(bild());
+    const m = (raster() as THREE.GridHelper).material as THREE.Material;
+    expect(m.depthTest).toBe(true);
+    expect(material().depthWrite).toBe(false);
+    expect(material().polygonOffset).toBe(true);
+  });
+
+  it('gibt beim Neubau des Rasters auch dessen Material frei', () => {
+    const { b, raster } = frisch();
+    const altMaterial = (raster() as THREE.GridHelper).material as THREE.Material;
+    const frei = vi.spyOn(altMaterial, 'dispose');
+    b.zeige(bild());
+    expect(frei).toHaveBeenCalled();
   });
 });

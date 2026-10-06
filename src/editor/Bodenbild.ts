@@ -6,8 +6,13 @@ const BODEN_FARBE = 0x7fae5a;
 const RASTER_FARBEN = [0x5d8a3f, 0x6b9a4b] as const;
 /** Mehr Linien als diese zeichnet das Raster nicht; auf großen Flächen werden die Felder größer als 1 m. */
 const MAX_RASTER_LINIEN = 400;
-/** Das Bild liegt knapp über dem Boden, damit beide nicht flackern. */
-const BILD_HOEHE = 0.01;
+/**
+ * Senkrechte Schichtung des Bodens (m), von unten nach oben: neutrale Fläche, Luftbild, Raster.
+ * Die Fläche liegt 5 cm tiefer, damit sie auch auf 300 m Entfernung nicht mit dem Bild flackert (Tiefenfehler bis ~5 cm);
+ * zusätzlich hat das Bild ein `polygonOffset`. Alles, was Nutzer zeichnen, liegt darüber: Planen ab y = 0, und die Zonen
+ * (Spec E3) als flache Flächen bei y = 0,005, also über Bild und Raster. Das Raster hat weiter Tiefentest, damit es nie über 3D-Objekten liegt.
+ */
+export const BODEN_HOEHEN = { boden: -0.05, bild: 0.001, raster: 0.002 } as const;
 const ANISOTROPIE = 8;
 
 type TexturLader = (daten: string) => THREE.Texture;
@@ -36,6 +41,7 @@ export class Bodenbild {
   constructor(private readonly laden: TexturLader = ladeTextur) {
     this.boden = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshLambertMaterial({ color: BODEN_FARBE }));
     this.boden.rotation.x = -Math.PI / 2;
+    this.boden.position.y = BODEN_HOEHEN.boden;
     this.raster = this.baueRaster(40);
     this.wurzel.add(this.boden, this.raster);
     this.passeBodenAn(null);
@@ -73,11 +79,13 @@ export class Bodenbild {
   /** Ein anderes Bild (oder das erste) deckt das Raster zu: Es ist danach aus. Dasselbe Bild mit anderem Maßstab lässt die Wahl stehen. */
   private neuesBild(luftbild: Luftbild): void {
     this.abraeumen();
-    const material = new THREE.MeshBasicMaterial({ map: this.laden(luftbild.daten), transparent: true, depthWrite: false });
+    const material = new THREE.MeshBasicMaterial({ map: this.laden(luftbild.daten), transparent: true, depthWrite: false,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+    });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
     mesh.name = 'luftbild';
     mesh.rotation.x = -Math.PI / 2;
-    mesh.position.y = BILD_HOEHE;
+    mesh.position.y = BODEN_HOEHEN.bild;
     mesh.renderOrder = -1;
     this.wurzel.add(mesh);
     this.bild = { mesh, material };
@@ -111,7 +119,7 @@ export class Bodenbild {
     if (kante === this.rasterGroesse) return;
     const sichtbar = this.raster.visible;
     this.wurzel.remove(this.raster);
-    this.raster.geometry.dispose();
+    this.gibRasterFrei(this.raster);
     this.raster = this.baueRaster(kante);
     this.raster.visible = sichtbar;
     this.wurzel.add(this.raster);
@@ -121,6 +129,13 @@ export class Bodenbild {
     this.rasterGroesse = kante;
     const raster = new THREE.GridHelper(kante, Math.min(Math.round(kante), MAX_RASTER_LINIEN), RASTER_FARBEN[0], RASTER_FARBEN[1]);
     raster.name = 'raster';
+    raster.position.y = BODEN_HOEHEN.raster;
     return raster;
+  }
+
+  private gibRasterFrei(raster: THREE.GridHelper): void {
+    raster.geometry.dispose();
+    const materialien = Array.isArray(raster.material) ? raster.material : [raster.material];
+    materialien.forEach((m) => m.dispose());
   }
 }

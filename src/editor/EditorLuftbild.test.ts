@@ -146,4 +146,43 @@ describe('Luftbild im Editor (Spec E2, D1/D2)', () => {
     expect(e.verschiebeAuswahl(new Vec3(3, 0, 0))).toBe(true);
     expect(e.bauwerk.luftbild?.breiteM).toBe(100);
   });
+
+  it('Undo/Redo, das das Luftbild ändert, beendet das Werkzeug „Maßstab setzen“ samt Messung', () => {
+    const e = new Editor(Bauwerk.leer());
+    e.ladeLuftbild(bild());
+    e.klick(boden(-25, 0));
+    e.klick(boden(25, 0));
+    expect(e.zustand().messung?.bis).toBeTruthy();
+    e.rueckgaengig();
+    expect(e.zustand().werkzeug).toBe('auswahl');
+    expect(e.zustand().messung).toBeNull();
+
+    e.wiederholen();
+    expect(e.bauwerk.luftbild).not.toBeNull();
+    expect(e.zustand().werkzeug).toBe('auswahl');
+  });
+
+  it('Undo einer Deckkraft-Änderung bei aktivem Maßstab-Werkzeug wechselt ebenfalls (Luftbild geändert)', () => {
+    const e = new Editor(Bauwerk.leer());
+    e.ladeLuftbild(bild());
+    e.setzeDeckkraft(0.4);
+    e.waehleWerkzeug('massstab');
+    e.klick(boden(0, 0));
+    e.rueckgaengig();
+    expect(e.zustand().werkzeug).toBe('auswahl');
+    expect(e.zustand().messung).toBeNull();
+  });
+
+  it('Undo ohne Luftbild-Änderung lässt das Werkzeug „Maßstab setzen“ stehen', () => {
+    const e = new Editor(kochstelle());
+    e.ladeLuftbild(bild());
+    e.waehleAlle();
+    e.loescheAuswahl();
+    e.waehleWerkzeug('massstab');
+    e.klick(boden(0, 0));
+    e.rueckgaengig(); // nimmt nur das Löschen zurück
+    expect(e.bauwerk.luftbild).not.toBeNull();
+    expect(e.zustand().werkzeug).toBe('massstab');
+    expect(e.zustand().messung).not.toBeNull();
+  });
 });
