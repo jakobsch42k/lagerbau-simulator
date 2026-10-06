@@ -28,4 +28,9 @@ describe('RuleEngine', () => {
   it('setzt „warnung" als Standard-Schwere', () => {
     expect(hinweis('X', 't', ['a']).schwere).toBe('warnung');
   });
+
+  it('überspringt abgeschaltete Regeln (Spec v3, D8)', () => {
+    const mitAus = new RuleEngine([new ZaehlRegel('A'), new ZaehlRegel('B')], new Set(['A']));
+    expect(mitAus.pruefe(kochstelle()).map((x) => x.regel)).toEqual(['B']);
+  });
 });

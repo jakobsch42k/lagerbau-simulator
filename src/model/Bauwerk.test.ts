@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ABock } from './ABock';
 import { Baum } from './Baum';
 import { Bauwerk } from './Bauwerk';
+import { RegelEinstellungen } from '../rules/RegelEinstellungen';
 import { Dreibein } from './Dreibein';
 import { Plane } from './Plane';
 import { Seil } from './Seil';
@@ -177,5 +178,23 @@ describe('Bauwerk als eine geordnete Liste (Spec v3, D1)', () => {
     expect(b.stangen().map((s) => s.id)).toEqual(['d-bein-0', 'd-bein-1', 'd-bein-2', 's']);
     expect(b.gruppen[0]).toBe(dreibein);
     expect(b.freieStangen[0]).toBe(frei);
+  });
+});
+
+describe('Regel-Einstellungen im Bauwerk (Spec v3, D8)', () => {
+  it('hat standardmäßig alle Regeln an und keine Werte gesetzt', () => {
+    expect(Bauwerk.leer().regelEinstellungen.istStandard).toBe(true);
+    expect(Bauwerk.von([dreibein]).regelEinstellungen).toBe(RegelEinstellungen.standard());
+  });
+
+  it('tauscht die Einstellungen, ohne Objekte zu ändern, und behält sie bei allen Objekt-Änderungen', () => {
+    const e = RegelEinstellungen.standard().mitAus('R4', true);
+    const b = Bauwerk.von([dreibein, frei]).mitRegelEinstellungen(e);
+    expect(b.regelEinstellungen).toBe(e);
+    expect(b.objekte[0]).toBe(dreibein);
+    expect(b.mitRegelEinstellungen(e)).toBe(b);
+    const geaendert = b.mit(abock).ersetze(dreibein.gedreht(0.1)).ohne('s');
+    expect(geaendert.regelEinstellungen).toBe(e);
+    expect(Bauwerk.von([dreibein], e).regelEinstellungen).toBe(e);
   });
 });
