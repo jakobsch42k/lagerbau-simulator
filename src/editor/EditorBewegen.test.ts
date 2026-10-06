@@ -155,6 +155,18 @@ describe('Editor: Ziehen', () => {
     expect(schritte(e)).toBe(1);
   });
 
+  it('ergibt keinen Undo-Schritt, wenn man zurück zum Start zieht', () => {
+    const e = kochstelleEditor();
+    e.setzeAuswahl(['abock', 'dreibein', 'first']);
+    e.beginneZiehen(objektTreffer('abock-bein-0'), new Vec3(1, 0, 1));
+    e.ziehe(new Vec3(3, 0, 3));
+    expect(e.zustand().vorschau).not.toBeNull();
+    e.ziehe(new Vec3(1.02, 0, 0.98));
+    expect(e.zustand().vorschau).toBeNull();
+    e.beendeZiehen();
+    expect(schritte(e)).toBe(0);
+  });
+
   it('wählt ein nicht ausgewähltes Objekt vorher allein aus, bewegt sonst die ganze Auswahl', () => {
     const e = kochstelleEditor();
     e.setzeAuswahl(['dreibein']);

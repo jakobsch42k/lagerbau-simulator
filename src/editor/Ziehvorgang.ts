@@ -37,6 +37,8 @@ export class Ziehvorgang {
   }
 
   private mitVersatz(versatz: Vec3): Ziehvorgang {
+    // Zurück am Start: nichts zu zeigen und nichts zu übernehmen (sonst ein leerer Undo-Schritt).
+    if (versatz.equals(Vec3.NULL)) return new Ziehvorgang(this.basis, this.ids, this.startBoden, versatz, null, null);
     try {
       const vorschau = bewege(this.basis, this.ids, { art: 'verschiebung', dv: versatz });
       return new Ziehvorgang(this.basis, this.ids, this.startBoden, versatz, vorschau, null);
