@@ -118,3 +118,64 @@ describe('Bauwerk', () => {
     expect(Bauwerk.leer().mitPlane(plane).verankerung(new Vec3(2, 1, 0))).toEqual({ art: 'plane', planeId: 'pl' });
   });
 });
+
+describe('Bauwerk als eine geordnete Liste (Spec v3, D1)', () => {
+  const seil = new Seil('l', new Vec3(0, 2, 0), new Vec3(2, 0, 0));
+  const baum = new Baum('b', new Vec3(9, 0, 0), STANDARD_BAUM);
+
+  it('baut mit von in einem Schritt und behält die Reihenfolge', () => {
+    const liste = [frei, seil, dreibein, baum];
+    const b = Bauwerk.von(liste);
+    expect(b.objekte.map((o) => o.id)).toEqual(['s', 'l', 'd', 'b']);
+    b.objekte.forEach((o, i) => expect(o).toBe(liste[i]));
+    expect(Bauwerk.von([]).istLeer).toBe(true);
+  });
+
+  it('lehnt in von doppelte ids ab, auch die einer Gruppenstange', () => {
+    expect(() => Bauwerk.von([dreibein, dreibein])).toThrow('ID d ist schon vergeben');
+    expect(() => Bauwerk.von([dreibein, new Stange('d-bein-1', Vec3.NULL, new Vec3(0, 1, 0), 0.08)])).toThrow('ID d-bein-1 ist schon vergeben');
+  });
+
+  it('hängt mit mit an und findet Objekte und Besitzer', () => {
+    const b = Bauwerk.leer().mit(dreibein).mit(seil);
+    expect(b.objekt('d')).toBe(dreibein);
+    expect(b.objekt('d-bein-1')).toBeUndefined();
+    expect(b.besitzer('d-bein-1')).toBe(dreibein);
+    expect(b.besitzer('l')).toBe(seil);
+    expect(b.besitzer('weg')).toBeUndefined();
+    expect(() => b.mit(new Seil('d-bein-0', Vec3.NULL, new Vec3(1, 0, 0)))).toThrow('ID d-bein-0 ist schon vergeben');
+  });
+
+  it('lässt beim Ersetzen und Entfernen alle anderen Objekte unverändert (Identität)', () => {
+    const b = Bauwerk.von([dreibein, abock, frei, seil, baum]);
+    const gedreht = dreibein.gedreht(0.1);
+    const neu = b.ersetze(gedreht);
+    expect(neu.objekte[0]).toBe(gedreht);
+    neu.objekte.slice(1).forEach((o, i) => expect(o).toBe(b.objekte[i + 1]));
+    const ohne = b.ohne('a');
+    expect(ohne.objekte.map((o) => o.id)).toEqual(['d', 's', 'l', 'b']);
+    ohne.objekte.forEach((o) => expect(o).toBe(b.objekt(o.id)));
+    expect(b.objekte).toHaveLength(5);
+  });
+
+  it('gibt bei unveränderten Objekten dasselbe Bauwerk zurück', () => {
+    const b = Bauwerk.von([dreibein, seil]);
+    expect(b.ersetze(dreibein)).toBe(b);
+    expect(b.ohne('weg')).toBe(b);
+  });
+
+  it('lehnt beim Ersetzen unbekannte Objekte und fremde ids ab', () => {
+    const b = Bauwerk.von([dreibein, new Stange('d-riegel', new Vec3(5, 0, 0), new Vec3(5, 1, 0), 0.08)]);
+    expect(() => b.ersetze(seil)).toThrow('Objekt l gibt es nicht');
+    // Ein A-Bock mit der id des Dreibeins brächte eine Stange „d-riegel“ mit; die steht schon frei herum.
+    expect(() => b.ersetze(new ABock('d', Vec3.NULL, 0, STANDARD_ABOCK))).toThrow('ID d-riegel ist schon vergeben');
+  });
+
+  it('leitet die Stangen wie bisher ab: erst alle Gruppen, dann die freien Stangen', () => {
+    const b = Bauwerk.leer().mitStange(frei).mitGruppe(dreibein);
+    expect(b.objekte.map((o) => o.id)).toEqual(['s', 'd']);
+    expect(b.stangen().map((s) => s.id)).toEqual(['d-bein-0', 'd-bein-1', 'd-bein-2', 's']);
+    expect(b.gruppen[0]).toBe(dreibein);
+    expect(b.freieStangen[0]).toBe(frei);
+  });
+});
