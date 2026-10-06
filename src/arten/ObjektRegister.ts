@@ -32,4 +32,14 @@ export class ObjektRegister {
     if (!art.istVon(o)) throw new Error(`${id} passt nicht zur Art ${name}`);
     return art;
   }
+
+  /** Arten, die Klicks nur in Werkzeugen fangen, die sie nennen (Spec v2b, D2). */
+  wahlweise(): readonly ArtName[] {
+    return this.alle.filter((a) => a.klick === 'wahlweise').map((a) => a.name);
+  }
+
+  /** Arten mit Ösen, an denen ein Seil einrastet. */
+  mitOesen(): readonly ArtName[] {
+    return this.alle.filter((a) => a.hatOesen).map((a) => a.name);
+  }
 }
