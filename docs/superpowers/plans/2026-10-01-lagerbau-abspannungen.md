@@ -5,7 +5,7 @@
 **Goal:** Seile (Abspannungen) und Bäume im Planer: einrastend zeichnen, in 3D zeigen, in Regeln, Materialliste und Platzbedarf berücksichtigen.
 
 **Architecture:**
-- Neue unveränderliche Domänen-Klassen `Seil` und `Baum` kommen in `src/model/`. Woran ein Seilende hängt (Hering, Baum, Bau, frei), leitet ein `VerankerungsFinder` aus der Geometrie ab, wie heute der `BundFinder` die Bünde.
+- Neue unveränderliche Domänen-Klassen `Seil` und `Baum` kommen in `src/model/`. Woran ein Seilende hängt (Haring, Baum, Bau, frei), leitet ein `VerankerungsFinder` aus der Geometrie ab, wie heute der `BundFinder` die Bünde.
 - Die Regeln bekommen die Verankerungen über `Analyse`.
 - Editor, Panel und Szene nutzen die bestehenden Muster: Zwei-Klick-Werkzeug, Einrasten, Parameter-Formular und three.js-Zylinder.
 
@@ -25,12 +25,12 @@ Branch: `feat/abspannungen`, abgezweigt von `feat/desktop` @ `366f428`. PR #2 is
 - Abdeckung ≥ 80 % (alle vier Metriken) für `src/model/**` und `src/rules/**`.
 - **Seile erzeugen keine Bünde** (der `BundFinder` sieht nur Stangen) und verbinden für `Analyse.komponenten` keine Bauten.
 - **Verankerung eines Seilendes**, in dieser Reihenfolge:
-  1. **Hering**, wenn y ≤ `FUSS_TOLERANZ`.
+  1. **Haring**, wenn y ≤ `FUSS_TOLERANZ`.
   2. **Baum**, wenn der Abstand zur Stammoberfläche ≤ `BUND_TOLERANZ` ist und der Punkt zwischen Boden und Baumhöhe liegt.
   3. **Bau**, wenn der Abstand zur Stangenachse ≤ `BUND_TOLERANZ` ist; bei mehreren Stangen zählt die nächste.
   4. Sonst **frei**.
 
-  Seilenden am Boden teilen sich einen Hering, wenn sie ≤ `BUND_CLUSTER_RADIUS` auseinander liegen.
+  Seilenden am Boden teilen sich einen Haring, wenn sie ≤ `BUND_CLUSTER_RADIUS` auseinander liegen.
 - **Datenformat:**
   - geschrieben wird immer `version: 2`, also `gruppen`, `stangen`, `seile: [{ id, start, ende }]` und `baeume: [{ id, position, durchmesser, hoehe }]`;
   - gelesen werden `version: 1` und `version: 2`;
@@ -42,11 +42,11 @@ Branch: `feat/abspannungen`, abgezweigt von `feat/desktop` @ `366f428`. PR #2 is
   - R8: „Seil hängt in der Luft: ein Ende ist nirgends befestigt.“
 - **Materialliste:**
   - Seillänge = `Math.ceil(laenge + 2 × SEIL_ZUGABE_PRO_ENDE)` ganze Meter, gruppiert nach Länge;
-  - Anzahl Heringe, geteilte nur einmal gezählt.
+  - Anzahl Haringe, geteilte nur einmal gezählt.
 - **Platzbedarf:**
-  - achsparalleles Rechteck in x/z über alle Füße und Heringe; Bäume zählen nicht;
+  - achsparalleles Rechteck in x/z über alle Füße und Haringe; Bäume zählen nicht;
   - Text „Platzbedarf: L × B m“ mit `toFixed(1)`, L ≥ B;
-  - ohne Füße und Heringe entfällt die Zeile.
+  - ohne Füße und Haringe entfällt die Zeile.
 - Der Web-Build bleibt `base: '/lagerbau-simulator/'`. `npm run e2e:desktop` bleibt grün (5 Tests).
 - Commits im Format `<type>: <beschreibung>`. Immer einzelne Dateien stagen, nie `git add -A`. Kein `Co-Authored-By`-Trailer.
 
@@ -65,7 +65,7 @@ Branch: `feat/abspannungen`, abgezweigt von `feat/desktop` @ `366f428`. PR #2 is
 1. **Bau verschoben oder Baum gelöscht, nachdem Seile daran hängen.** Das Seilende hängt dann in der Luft. Erwartet: R8 meldet das Seil, R1 meldet den A-Bock wieder, nichts stürzt ab → Test in Task 6 (`abspannung.integration.test.ts`).
 2. **Alte v1-Links und -Dateien**, darunter der Link im Web-E2E-Smoke-Test. Erwartet: Sie öffnen weiter, mit leeren Seil- und Baumlisten → Test in Task 4.
 3. **Unsinnige Baumwerte im Panel** (0, negativ, leer). Erwartet: deutsche Meldung, das Feld springt auf den Modellwert zurück → Test in Task 8.
-4. **Mehrere Seile zum selben Hering.** Erwartet: Die Materialliste zählt einen Hering, und der Platzbedarf nutzt dessen Position → Tests in Task 3 und Task 7.
+4. **Mehrere Seile zum selben Haring.** Erwartet: Die Materialliste zählt einen Haring, und der Platzbedarf nutzt dessen Position → Tests in Task 3 und Task 7.
 5. **Ein angefangenes Seil abbrechen** (Esc oder Werkzeugwechsel). Erwartet: kein halbes Seil, die Startmarkierung verschwindet → Test in Task 8.
 
 ## Dateistruktur
@@ -74,14 +74,14 @@ Branch: `feat/abspannungen`, abgezweigt von `feat/desktop` @ `366f428`. PR #2 is
 |---|---|---|
 | `src/share/LinkBasis.ts`, `desktop/main.mjs`, `electron-builder.yml` | Desktop-Reste (Kopier-Hinweis, Fenster-Icon) | 1 |
 | `src/model/Seil.ts`, `src/model/Baum.ts` (neu) | Seil und Baum | 2 |
-| `src/model/Bauwerk.ts` | Listen `seile`, `baeume`; Heringe, Verankerung | 2, 3 |
-| `src/model/Verankerung.ts` (neu) | `Verankerung`, `Hering`, `VerankerungsFinder` | 3 |
+| `src/model/Bauwerk.ts` | Listen `seile`, `baeume`; Haringe, Verankerung | 2, 3 |
+| `src/model/Verankerung.ts` (neu) | `Verankerung`, `Haring`, `VerankerungsFinder` | 3 |
 | `src/share/BauwerkSerializer.ts` | Format v2 | 4 |
 | `src/rules/Analyse.ts`, `ABockQuerRule.ts`, `StandflaecheRule.ts` | Seile in R1/R3 | 5 |
 | `src/rules/AbspannwinkelRule.ts`, `StolperfalleRule.ts`, `LosesSeilRule.ts` (neu) | R6, R7, R8 | 6 |
 | `src/model/Platzbedarf.ts`, `src/model/Materialliste.ts` (neu), `src/ui/MateriallistePanel.ts` (umbenannt) | Materialliste + Platzbedarf | 7 |
 | `src/editor/SnapService.ts`, `src/editor/Werkzeuge.ts`, `src/ui/ParameterPanel.ts`, `index.html` | Werkzeuge „Seil spannen“, „Baum setzen“; Panel | 8 |
-| `src/editor/Szene.ts` | Darstellung Seil, Hering, Baum, Platzbedarf; Treffer | 9 |
+| `src/editor/Szene.ts` | Darstellung Seil, Haring, Baum, Platzbedarf; Treffer | 9 |
 | `e2e/abspannung.spec.ts` (neu), Doku | E2E, Doku, Version | 10 |
 
 ---
@@ -557,7 +557,7 @@ git commit -m "feat: add ropes and trees to the model"
 
 ---
 
-### Task 3: Verankerung und Heringe
+### Task 3: Verankerung und Haringe
 
 **Files:**
 - Create: `src/model/Verankerung.ts`, `src/model/Verankerung.test.ts`
@@ -570,10 +570,10 @@ git commit -m "feat: add ropes and trees to the model"
   - `clustereNachNaehe` und `mittelpunkt` aus `src/model/Bund.ts`;
   - `BUND_TOLERANZ`, `FUSS_TOLERANZ`, `BUND_CLUSTER_RADIUS`.
 - Produces:
-  - `type Verankerung = { art: 'hering' } | { art: 'baum'; baumId } | { art: 'bau'; stangeId } | { art: 'frei' }`;
-  - `class Hering { id; position; seilIds }`;
-  - `class VerankerungsFinder { finde(punkt, stangen, baeume): Verankerung; heringe(seile): Hering[] }`;
-  - `Bauwerk.heringe(): readonly Hering[]`;
+  - `type Verankerung = { art: 'haring' } | { art: 'baum'; baumId } | { art: 'bau'; stangeId } | { art: 'frei' }`;
+  - `class Haring { id; position; seilIds }`;
+  - `class VerankerungsFinder { finde(punkt, stangen, baeume): Verankerung; haringe(seile): Haring[] }`;
+  - `Bauwerk.haringe(): readonly Haring[]`;
   - `Bauwerk.verankerung(punkt: Vec3): Verankerung`.
 
 - [ ] **Step 1: Failing test schreiben**
@@ -594,8 +594,8 @@ const baum = new Baum('b', new Vec3(5, 0, 0), { durchmesser: 0.4, hoehe: 10 });
 const finder = new VerankerungsFinder();
 
 describe('VerankerungsFinder', () => {
-  it('erkennt einen Hering am Boden', () => {
-    expect(finder.finde(new Vec3(1, 0, 1), [stange], [baum])).toEqual({ art: 'hering' });
+  it('erkennt einen Haring am Boden', () => {
+    expect(finder.finde(new Vec3(1, 0, 1), [stange], [baum])).toEqual({ art: 'haring' });
   });
 
   it('erkennt einen Baum an der Stammoberfläche', () => {
@@ -616,29 +616,29 @@ describe('VerankerungsFinder', () => {
   });
 
   it('der Boden geht vor der Stange', () => {
-    expect(finder.finde(new Vec3(0, 0.02, 0), [stange], [])).toEqual({ art: 'hering' });
+    expect(finder.finde(new Vec3(0, 0.02, 0), [stange], [])).toEqual({ art: 'haring' });
   });
 
-  it('Seilenden nah beieinander teilen sich einen Hering', () => {
+  it('Seilenden nah beieinander teilen sich einen Haring', () => {
     const a = new Seil('a', new Vec3(0, 2, 0), new Vec3(2, 0, 0));
     const b = new Seil('b', new Vec3(0, 2, 1), new Vec3(2.1, 0, 0));
     const c = new Seil('c', new Vec3(0, 2, 0), new Vec3(-2, 0, 0));
-    const heringe = finder.heringe([a, b, c]);
-    expect(heringe).toHaveLength(2);
-    const geteilt = heringe.find((h) => h.seilIds.includes('a'));
+    const haringe = finder.haringe([a, b, c]);
+    expect(haringe).toHaveLength(2);
+    const geteilt = haringe.find((h) => h.seilIds.includes('a'));
     expect(geteilt?.seilIds).toEqual(['a', 'b']);
     expect(geteilt?.position.equals(new Vec3(2.05, 0, 0), 1e-9)).toBe(true);
   });
 
-  it('ein Seil zwischen zwei Bauten hat keinen Hering', () => {
-    expect(finder.heringe([new Seil('q', new Vec3(0, 2, 0), new Vec3(4, 2, 0))])).toEqual([]);
+  it('ein Seil zwischen zwei Bauten hat keinen Haring', () => {
+    expect(finder.haringe([new Seil('q', new Vec3(0, 2, 0), new Vec3(4, 2, 0))])).toEqual([]);
   });
 });
 
 describe('Bauwerk mit Seilen', () => {
-  it('liefert Heringe und die Verankerung eines Punkts', () => {
+  it('liefert Haringe und die Verankerung eines Punkts', () => {
     const b = Bauwerk.leer().mitStange(stange).mitBaum(baum).mitSeil(new Seil('s', new Vec3(0, 2, 0), new Vec3(4.8, 2, 0)));
-    expect(b.heringe()).toEqual([]);
+    expect(b.haringe()).toEqual([]);
     expect(b.verankerung(new Vec3(0, 2, 0))).toEqual({ art: 'bau', stangeId: 'st' });
     expect(b.verankerung(new Vec3(4.8, 2, 0))).toEqual({ art: 'baum', baumId: 'b' });
   });
@@ -670,13 +670,13 @@ import type { Vec3 } from './Vec3';
 
 /** Woran ein Seilende hängt. Wird aus der Geometrie abgeleitet, nie gespeichert. */
 export type Verankerung =
-  | { readonly art: 'hering' }
+  | { readonly art: 'haring' }
   | { readonly art: 'baum'; readonly baumId: string }
   | { readonly art: 'bau'; readonly stangeId: string }
   | { readonly art: 'frei' };
 
-/** Ein Hering oder Pflock am Boden. Seilenden, die nah beieinander am Boden enden, teilen sich einen. */
-export class Hering {
+/** Ein Haring oder Pflock am Boden. Seilenden, die nah beieinander am Boden enden, teilen sich einen. */
+export class Haring {
   constructor(
     readonly id: string,
     readonly position: Vec3,
@@ -699,7 +699,7 @@ export class VerankerungsFinder {
 
   /** Reihenfolge: Boden vor Baum vor Stange. Bei mehreren Stangen in Reichweite zählt die nächste. */
   finde(punkt: Vec3, stangen: readonly Stange[], baeume: readonly Baum[]): Verankerung {
-    if (punkt.y <= this.bodenToleranz) return { art: 'hering' };
+    if (punkt.y <= this.bodenToleranz) return { art: 'haring' };
     const baum = baeume.find((b) => b.abstandZumStamm(punkt) <= this.toleranz);
     if (baum) return { art: 'baum', baumId: baum.id };
     let naechste: { readonly id: string; readonly abstand: number } | null = null;
@@ -710,7 +710,7 @@ export class VerankerungsFinder {
     return naechste ? { art: 'bau', stangeId: naechste.id } : { art: 'frei' };
   }
 
-  heringe(seile: readonly Seil[]): Hering[] {
+  haringe(seile: readonly Seil[]): Haring[] {
     const enden: Bodenende[] = seile.flatMap((s) =>
       s
         .endpunkte()
@@ -718,22 +718,22 @@ export class VerankerungsFinder {
         .map((punkt) => ({ punkt, seilId: s.id })),
     );
     return clustereNachNaehe(enden, (e) => e.punkt, this.clusterRadius).map(
-      (gruppe, i) => new Hering(`hering-${i}`, mittelpunkt(gruppe.map((e) => e.punkt)), [...new Set(gruppe.map((e) => e.seilId))]),
+      (gruppe, i) => new Haring(`haring-${i}`, mittelpunkt(gruppe.map((e) => e.punkt)), [...new Set(gruppe.map((e) => e.seilId))]),
     );
   }
 }
 ```
 
 In `src/model/Bauwerk.ts`:
-1. Imports ergänzen: `import type { Vec3 } from './Vec3';` und `import { type Hering, type Verankerung, VerankerungsFinder } from './Verankerung';`.
+1. Imports ergänzen: `import type { Vec3 } from './Vec3';` und `import { type Haring, type Verankerung, VerankerungsFinder } from './Verankerung';`.
 2. Nach `fuesse()` zwei Methoden ergänzen:
 
 ```ts
-  heringe(): readonly Hering[] {
-    return new VerankerungsFinder().heringe(this.seile);
+  haringe(): readonly Haring[] {
+    return new VerankerungsFinder().haringe(this.seile);
   }
 
-  /** Woran ein Punkt hängt (Hering, Baum, Stange oder frei), z. B. ein Seilende. */
+  /** Woran ein Punkt hängt (Haring, Baum, Stange oder frei), z. B. ein Seilende. */
   verankerung(punkt: Vec3): Verankerung {
     return new VerankerungsFinder().finde(punkt, this.stangen(), this.baeume);
   }
@@ -943,10 +943,10 @@ git commit -m "feat: store ropes and trees in data format version 2"
 - Modify: `src/rules/StandflaecheRule.ts`, `src/rules/StandflaecheRule.test.ts`
 
 **Interfaces:**
-- Consumes: `Bauwerk.seile`, `Bauwerk.heringe()`, `Bauwerk.verankerung(p)` (Task 2/3), `ABock.ebenenNormale()`, `ABock.position`, `BUND_TOLERANZ`.
+- Consumes: `Bauwerk.seile`, `Bauwerk.haringe()`, `Bauwerk.verankerung(p)` (Task 2/3), `ABock.ebenenNormale()`, `ABock.position`, `BUND_TOLERANZ`.
 - Produces:
   - `interface SeilAnschluss { seil: Seil; anderesEnde: Vec3; anderes: Verankerung }`;
-  - `Analyse.seile`, `Analyse.heringe`;
+  - `Analyse.seile`, `Analyse.haringe`;
   - `Analyse.verankerungVon(seilId): readonly [Verankerung, Verankerung]`;
   - `Analyse.seileAn(stangenIds: ReadonlySet<string>): SeilAnschluss[]`.
 
@@ -963,13 +963,13 @@ In `src/rules/Analyse.test.ts`:
     const an = new Analyse(Bauwerk.leer().mitGruppe(abock).mitSeil(seil));
     const [oben, unten] = an.verankerungVon('s');
     expect(oben.art).toBe('bau');
-    expect(unten).toEqual({ art: 'hering' });
+    expect(unten).toEqual({ art: 'haring' });
     const anschluesse = an.seileAn(new Set(abock.stangen().map((x) => x.id)));
     expect(anschluesse).toHaveLength(1);
     expect(anschluesse[0]?.anderesEnde.equals(new Vec3(1.5, 0, 0), 1e-9)).toBe(true);
-    expect(anschluesse[0]?.anderes).toEqual({ art: 'hering' });
+    expect(anschluesse[0]?.anderes).toEqual({ art: 'haring' });
     expect(an.seileAn(new Set(['gibtsnicht']))).toEqual([]);
-    expect(an.heringe).toHaveLength(1);
+    expect(an.haringe).toHaveLength(1);
     expect(() => an.verankerungVon('gibtsnicht')).toThrow(/fehlt/);
   });
 
@@ -1020,7 +1020,7 @@ In `src/rules/StandflaecheRule.test.ts`:
 2. Als letzte Tests im `describe` anhängen:
 
 ```ts
-  it('zählt die Heringe angebundener Seile zur Standfläche', () => {
+  it('zählt die Haringe angebundener Seile zur Standfläche', () => {
     const abock = new ABock('a', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK);
     const allein = Bauwerk.leer().mitGruppe(abock);
     expect(pruefe(allein)).toHaveLength(1);
@@ -1030,7 +1030,7 @@ In `src/rules/StandflaecheRule.test.ts`:
     expect(pruefe(abgespannt)).toEqual([]);
   });
 
-  it('zählt Heringe von Seilen, die nicht am Bau hängen, nicht', () => {
+  it('zählt Haringe von Seilen, die nicht am Bau hängen, nicht', () => {
     const abock = new ABock('a', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK);
     const fremd = new Seil('x', new Vec3(5, 2, 0), new Vec3(5, 0, 3));
     expect(pruefe(Bauwerk.leer().mitGruppe(abock).mitSeil(fremd))).toHaveLength(1);
@@ -1043,7 +1043,7 @@ Run: `npx vitest run src/rules/Analyse.test.ts src/rules/ABockQuerRule.test.ts s
 Expected: FAIL.
 - Analyse: `an.verankerungVon is not a function`.
 - R1: `'schweigt, wenn auf beiden Seiten …'` erwartet `[]`, bekommt 1 Hinweis.
-- R3: `'zählt die Heringe …'` erwartet `[]`, bekommt 1 Hinweis.
+- R3: `'zählt die Haringe …'` erwartet `[]`, bekommt 1 Hinweis.
 
 Die übrigen neuen Tests bestehen schon, weil sie einen Hinweis erwarten.
 
@@ -1058,7 +1058,7 @@ import type { Fuss } from '../model/Fuss';
 import type { Seil } from '../model/Seil';
 import type { Stange } from '../model/Stange';
 import type { Vec3 } from '../model/Vec3';
-import type { Hering, Verankerung } from '../model/Verankerung';
+import type { Haring, Verankerung } from '../model/Verankerung';
 
 /** Ein Seil, das an einer Stange hängt, gesehen von dieser Stange aus. */
 export interface SeilAnschluss {
@@ -1075,7 +1075,7 @@ export class Analyse {
   readonly buende: readonly Bund[];
   readonly fuesse: readonly Fuss[];
   readonly seile: readonly Seil[];
-  readonly heringe: readonly Hering[];
+  readonly haringe: readonly Haring[];
   private readonly verankerungen: ReadonlyMap<string, readonly [Verankerung, Verankerung]>;
 
   constructor(readonly bauwerk: Bauwerk) {
@@ -1083,7 +1083,7 @@ export class Analyse {
     this.buende = bauwerk.buende();
     this.fuesse = bauwerk.fuesse();
     this.seile = bauwerk.seile;
-    this.heringe = bauwerk.heringe();
+    this.haringe = bauwerk.haringe();
     this.verankerungen = new Map(
       this.seile.map((s): [string, readonly [Verankerung, Verankerung]] => [
         s.id,
@@ -1183,12 +1183,12 @@ In `src/rules/StandflaecheRule.ts` die Methode `kippgefaehrdet` ersetzen durch:
     if (fuesse.length === 0) return false;
     const hoehe = this.hoehe(a, ids);
     if (hoehe < this.minHoehe) return false;
-    // Spec v2a, D3: Heringe der Seile, die an diesem Bau hängen, gehören zur Standfläche.
-    const heringe = a
+    // Spec v2a, D3: Haringe der Seile, die an diesem Bau hängen, gehören zur Standfläche.
+    const haringe = a
       .seileAn(new Set(ids))
-      .filter((x) => x.anderes.art === 'hering')
+      .filter((x) => x.anderes.art === 'haring')
       .map((x) => x.anderesEnde);
-    const punkte = [...fuesse.map((f) => f.position), ...heringe];
+    const punkte = [...fuesse.map((f) => f.position), ...haringe];
     const breite = minimaleBreite(punkte.map((p) => [p.x, p.z] as const));
     return hoehe > this.maxVerhaeltnis * breite;
   }
@@ -1258,14 +1258,14 @@ const pruefe = (regel: AbspannwinkelRule, ...seile: Seil[]) =>
 const regel = new AbspannwinkelRule(30, 60);
 
 describe('AbspannwinkelRule (R6)', () => {
-  it('meldet ein sehr flaches Seil zum Hering', () => {
+  it('meldet ein sehr flaches Seil zum Haring', () => {
     const h = pruefe(regel, seilMitWinkel(20));
     expect(h).toHaveLength(1);
     expect(h[0]).toMatchObject({ regel: 'R6', schwere: 'warnung', betroffeneTeile: ['s'] });
     expect(h[0]?.text).toBe('Seil sehr flach: braucht viel Platz.');
   });
 
-  it('meldet ein sehr steiles Seil zum Hering', () => {
+  it('meldet ein sehr steiles Seil zum Haring', () => {
     expect(pruefe(regel, seilMitWinkel(75))[0]?.text).toBe('Seil sehr steil: hält seitlich kaum.');
   });
 
@@ -1282,7 +1282,7 @@ describe('AbspannwinkelRule (R6)', () => {
     expect(pruefe(new AbspannwinkelRule(10, s.winkelZumBodenGrad - 0.1), s)).toHaveLength(1);
   });
 
-  it('prüft nur Seile vom Bau zum Hering', () => {
+  it('prüft nur Seile vom Bau zum Haring', () => {
     const baum = new Baum('b', new Vec3(5, 0, 0), { durchmesser: 0.4, hoehe: 10 });
     const vomBaum = new Seil('vb', new Vec3(4.8, 1, 0), new Vec3(1, 0, 0));
     const quer = new Seil('q', new Vec3(0, 3, 0), new Vec3(4.8, 3, 0));
@@ -1328,7 +1328,7 @@ describe('StolperfalleRule (R7)', () => {
     expect(pruefe(new Seil('grenze', new Vec3(0, 2, 0), new Vec3(4, 2, 0)))).toEqual([]);
   });
 
-  it('meldet Seile zum Hering nie', () => {
+  it('meldet Seile zum Haring nie', () => {
     expect(pruefe(new Seil('h', new Vec3(0, 1, 0), new Vec3(2, 0, 0)))).toEqual([]);
   });
 
@@ -1428,7 +1428,7 @@ import type { Analyse } from './Analyse';
 import { R6_MAX_WINKEL_GRAD, R6_MIN_WINKEL_GRAD } from './constants';
 import { type Hinweis, hinweis, type Rule } from './Rule';
 
-/** R6: Ein Seil vom Bau zum Hering soll weder sehr flach noch sehr steil sein. */
+/** R6: Ein Seil vom Bau zum Haring soll weder sehr flach noch sehr steil sein. */
 export class AbspannwinkelRule implements Rule {
   readonly name = 'R6';
 
@@ -1444,7 +1444,7 @@ export class AbspannwinkelRule implements Rule {
         .map((v) => v.art)
         .sort()
         .join('+');
-      if (arten !== 'bau+hering') return [];
+      if (arten !== 'bau+haring') return [];
       const winkel = s.winkelZumBodenGrad;
       if (winkel < this.minGrad) return [hinweis(this.name, 'Seil sehr flach: braucht viel Platz.', [s.id])];
       if (winkel > this.maxGrad) return [hinweis(this.name, 'Seil sehr steil: hält seitlich kaum.', [s.id])];
@@ -1461,7 +1461,7 @@ import type { Analyse } from './Analyse';
 import { R7_MIN_HOEHE } from './constants';
 import { type Hinweis, hinweis, type Rule } from './Rule';
 
-/** R7: Ein Querseil (Bau↔Bau, Bau↔Baum, Baum↔Baum) darf nicht tief hängen. Seile zum Hering sind normal. */
+/** R7: Ein Querseil (Bau↔Bau, Bau↔Baum, Baum↔Baum) darf nicht tief hängen. Seile zum Haring sind normal. */
 export class StolperfalleRule implements Rule {
   readonly name = 'R7';
 
@@ -1483,7 +1483,7 @@ Neue Datei `src/rules/LosesSeilRule.ts`:
 import type { Analyse } from './Analyse';
 import { type Hinweis, hinweis, type Rule } from './Rule';
 
-/** R8: Jedes Seilende muss an einem Hering, Baum oder einer Stange hängen. */
+/** R8: Jedes Seilende muss an einem Haring, Baum oder einer Stange hängen. */
 export class LosesSeilRule implements Rule {
   readonly name = 'R8';
 
@@ -1550,11 +1550,11 @@ git commit -m "feat: add rules for guy-line angle, low cross ropes and loose rop
 - Modify: `src/main.ts`, `index.html`, `src/style.css`
 
 **Interfaces:**
-- Consumes: `Bauwerk.fuesse()`, `Bauwerk.heringe()`, `Bauwerk.seile`, `Stangenliste.aus(bauwerk)`, `SEIL_ZUGABE_PRO_ENDE` (Task 6).
+- Consumes: `Bauwerk.fuesse()`, `Bauwerk.haringe()`, `Bauwerk.seile`, `Stangenliste.aus(bauwerk)`, `SEIL_ZUGABE_PRO_ENDE` (Task 6).
 - Produces:
   - `class Platzbedarf { minX; maxX; minZ; maxZ; laenge; breite; static aus(bauwerk): Platzbedarf | null }`;
   - `interface SeilZeile { laenge; anzahl }`;
-  - `class Materialliste { stangen: Stangenliste; seile: SeilZeile[]; anzahlHeringe; platzbedarf; static aus(bauwerk, zugabeProEnde) }`;
+  - `class Materialliste { stangen: Stangenliste; seile: SeilZeile[]; anzahlHaringe; platzbedarf; static aus(bauwerk, zugabeProEnde) }`;
   - `class MateriallistePanel(tabelle, platz) { zeige(liste) }`;
   - DOM-Id `#platzbedarf`.
 
@@ -1580,7 +1580,7 @@ describe('Platzbedarf', () => {
     expect(p?.breite).toBeCloseTo(1.6, 9);
   });
 
-  it('zählt Heringe mit und Bäume nicht', () => {
+  it('zählt Haringe mit und Bäume nicht', () => {
     const abock = new ABock('a', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK);
     const b = Bauwerk.leer()
       .mitGruppe(abock)
@@ -1592,7 +1592,7 @@ describe('Platzbedarf', () => {
     expect(p?.breite).toBeCloseTo(1.6, 9);
   });
 
-  it('gibt es ohne Füße und Heringe nicht', () => {
+  it('gibt es ohne Füße und Haringe nicht', () => {
     expect(Platzbedarf.aus(Bauwerk.leer())).toBeNull();
     expect(Platzbedarf.aus(Bauwerk.leer().mitBaum(new Baum('b', Vec3.NULL, STANDARD_BAUM)))).toBeNull();
   });
@@ -1630,18 +1630,18 @@ describe('Materialliste', () => {
     ]);
   });
 
-  it('zählt geteilte Heringe nur einmal', () => {
+  it('zählt geteilte Haringe nur einmal', () => {
     const b = Bauwerk.leer()
       .mitSeil(new Seil('a', new Vec3(0, 2, 0), new Vec3(2, 0, 0)))
       .mitSeil(new Seil('b', new Vec3(0, 2, 1), new Vec3(2.1, 0, 0)));
-    expect(Materialliste.aus(b, 0.5).anzahlHeringe).toBe(1);
+    expect(Materialliste.aus(b, 0.5).anzahlHaringe).toBe(1);
   });
 
   it('enthält Stangenliste und Platzbedarf', () => {
     const m = Materialliste.aus(kochstelle(), 0.5);
     expect(m.stangen.zeilen.length).toBeGreaterThan(0);
     expect(m.seile).toEqual([]);
-    expect(m.anzahlHeringe).toBe(0);
+    expect(m.anzahlHaringe).toBe(0);
     expect(m.platzbedarf?.laenge).toBeCloseTo(3.2, 9);
   });
 });
@@ -1668,7 +1668,7 @@ const zeige = (b: Bauwerk): { tabelle: HTMLTableElement; platz: HTMLElement } =>
 };
 
 describe('MateriallistePanel', () => {
-  it('zeigt Stangen, Seile, Heringe und den Platzbedarf', () => {
+  it('zeigt Stangen, Seile, Haringe und den Platzbedarf', () => {
     const abock = new ABock('a', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK);
     const b = Bauwerk.leer()
       .mitGruppe(abock)
@@ -1678,14 +1678,14 @@ describe('MateriallistePanel', () => {
     const zellen = [...tabelle.querySelectorAll('td')].map((td) => td.textContent);
     expect(zellen).toContain('2.4 m');
     expect(zellen).toContain('4 m');
-    expect(zellen).toContain('Heringe');
+    expect(zellen).toContain('Haringe');
     expect(platz.textContent).toBe('Platzbedarf: 3.0 × 1.6 m');
   });
 
-  it('lässt Seile, Heringe und Platzbedarf weg, wenn es keine gibt', () => {
+  it('lässt Seile, Haringe und Platzbedarf weg, wenn es keine gibt', () => {
     const { tabelle, platz } = zeige(Bauwerk.leer());
     expect(tabelle.textContent).not.toContain('Seil');
-    expect(tabelle.textContent).not.toContain('Heringe');
+    expect(tabelle.textContent).not.toContain('Haringe');
     expect(platz.textContent).toBe('');
   });
 });
@@ -1703,7 +1703,7 @@ Neue Datei `src/model/Platzbedarf.ts`:
 ```ts
 import type { Bauwerk } from './Bauwerk';
 
-/** Achsparalleles Rechteck am Boden über alle Füße und Heringe (Spec v2a, D4). Bäume zählen nicht. */
+/** Achsparalleles Rechteck am Boden über alle Füße und Haringe (Spec v2a, D4). Bäume zählen nicht. */
 export class Platzbedarf {
   private constructor(
     readonly minX: number,
@@ -1713,7 +1713,7 @@ export class Platzbedarf {
   ) {}
 
   static aus(bauwerk: Bauwerk): Platzbedarf | null {
-    const punkte = [...bauwerk.fuesse().map((f) => f.position), ...bauwerk.heringe().map((h) => h.position)];
+    const punkte = [...bauwerk.fuesse().map((f) => f.position), ...bauwerk.haringe().map((h) => h.position)];
     if (punkte.length === 0) return null;
     const xs = punkte.map((p) => p.x);
     const zs = punkte.map((p) => p.z);
@@ -1744,12 +1744,12 @@ export interface SeilZeile {
   readonly anzahl: number;
 }
 
-/** Alles, was man zum Aufbauen holen muss: Stangen, Seile, Heringe, dazu der Platzbedarf. */
+/** Alles, was man zum Aufbauen holen muss: Stangen, Seile, Haringe, dazu der Platzbedarf. */
 export class Materialliste {
   private constructor(
     readonly stangen: Stangenliste,
     readonly seile: readonly SeilZeile[],
-    readonly anzahlHeringe: number,
+    readonly anzahlHaringe: number,
     readonly platzbedarf: Platzbedarf | null,
   ) {}
 
@@ -1761,7 +1761,7 @@ export class Materialliste {
       zaehler.set(laenge, (zaehler.get(laenge) ?? 0) + 1);
     }
     const seile = [...zaehler.entries()].map(([laenge, anzahl]) => ({ laenge, anzahl })).sort((a, b) => b.laenge - a.laenge);
-    return new Materialliste(Stangenliste.aus(bauwerk), seile, bauwerk.heringe().length, Platzbedarf.aus(bauwerk));
+    return new Materialliste(Stangenliste.aus(bauwerk), seile, bauwerk.haringe().length, Platzbedarf.aus(bauwerk));
   }
 }
 ```
@@ -1793,13 +1793,13 @@ export class MateriallistePanel {
   ) {}
 
   zeige(liste: Materialliste): void {
-    const { stangen, seile, anzahlHeringe, platzbedarf } = liste;
+    const { stangen, seile, anzahlHaringe, platzbedarf } = liste;
     this.tabelle.replaceChildren(
       zeile('th', ['Länge', 'Ø', 'Anzahl']),
       ...stangen.zeilen.map((z) => zeile('td', [`${z.laenge.toFixed(1)} m`, `${z.durchmesserCm} cm`, String(z.anzahl)])),
       zeile('td', ['Bünde', '', String(stangen.anzahlBuende)]),
       ...(seile.length > 0 ? [zeile('th', ['Seil', '', 'Anzahl']), ...seile.map((s) => zeile('td', [`${s.laenge} m`, '', String(s.anzahl)]))] : []),
-      ...(anzahlHeringe > 0 ? [zeile('td', ['Heringe', '', String(anzahlHeringe)])] : []),
+      ...(anzahlHaringe > 0 ? [zeile('td', ['Haringe', '', String(anzahlHaringe)])] : []),
     );
     this.platz.textContent = platzbedarf ? `Platzbedarf: ${platzbedarf.laenge.toFixed(1)} × ${platzbedarf.breite.toFixed(1)} m` : '';
   }
@@ -1886,7 +1886,7 @@ git commit -m "feat: show ropes, pegs and space required in the material list"
 - Modify: `index.html` (Palette), `src/main.ts` (Statuszeile)
 
 **Interfaces:**
-- Consumes: `Seil`, `Baum`, `STANDARD_BAUM`, `MIN_SEILLAENGE`, `Bauwerk.mitSeil`, `mitBaum`, `ersetzeBaum`, `baum(id)`, `seil(id)`, `heringe()` (Task 2/3).
+- Consumes: `Seil`, `Baum`, `STANDARD_BAUM`, `MIN_SEILLAENGE`, `Bauwerk.mitSeil`, `mitBaum`, `ersetzeBaum`, `baum(id)`, `seil(id)`, `haringe()` (Task 2/3).
 - Produces:
   - `Treffer` zusätzlich `{ art: 'baum'; punkt; baumId }` und `{ art: 'seil'; punkt; seilId }`;
   - `SnapArt` zusätzlich `'baum'`;
@@ -1935,7 +1935,7 @@ In `src/editor/Editor.test.ts`:
     expect(e.bauwerk.baum('baum-1')?.position.equals(new Vec3(3, 0, 1), 1e-9)).toBe(true);
   });
 
-  it('spannt ein Seil von der Spitze zum Boden; das Bodenende wird ein Hering', () => {
+  it('spannt ein Seil von der Spitze zum Boden; das Bodenende wird ein Haring', () => {
     const e = neuerEditor(Bauwerk.leer().mitGruppe(dreibein));
     e.waehleWerkzeug('seil');
     e.klick({ art: 'stange', punkt: dreibein.spitze(), stangeId: dreibein.stangen()[0]!.id });
@@ -1944,7 +1944,7 @@ In `src/editor/Editor.test.ts`:
     const seil = e.bauwerk.seil('seil-1');
     expect(seil?.start.equals(dreibein.spitze(), 1e-9)).toBe(true);
     expect(seil?.ende.equals(new Vec3(3, 0, 0), 1e-9)).toBe(true);
-    expect(e.bauwerk.heringe()).toHaveLength(1);
+    expect(e.bauwerk.haringe()).toHaveLength(1);
     expect(e.zustand().auswahl).toBe('seil-1');
   });
 
@@ -2175,7 +2175,7 @@ export class DrawStangeTool extends ZweiPunktWerkzeug {
   }
 }
 
-/** Zwei Klicks ergeben ein gerades Seil. Ein Ende am Boden wird automatisch ein Hering (Spec v2a, D1). */
+/** Zwei Klicks ergeben ein gerades Seil. Ein Ende am Boden wird automatisch ein Haring (Spec v2a, D1). */
 export class DrawSeilTool extends ZweiPunktWerkzeug {
   readonly name = 'seil' as const;
 
@@ -2416,10 +2416,10 @@ git commit -m "feat: add tools to rig ropes and place trees"
 
 **Interfaces:**
 - Consumes:
-  - `Bauwerk.seile`, `Bauwerk.baeume`, `Bauwerk.heringe()` und `Platzbedarf.aus(bauwerk)` (Task 2, 3, 7);
+  - `Bauwerk.seile`, `Bauwerk.baeume`, `Bauwerk.haringe()` und `Platzbedarf.aus(bauwerk)` (Task 2, 3, 7);
   - die neuen `Treffer`-Arten (Task 8);
   - `userData.stangeId`, `userData.baumId`, `userData.seilId`.
-- Produces: `Szene.zeige(bauwerk, markiert, stangenStart)` zeichnet Seile, Heringe, Bäume und den Rahmen des Platzbedarfs; `Szene.treffer(e)` liefert `'stange' | 'baum' | 'seil' | 'boden'`.
+- Produces: `Szene.zeige(bauwerk, markiert, stangenStart)` zeichnet Seile, Haringe, Bäume und den Rahmen des Platzbedarfs; `Szene.treffer(e)` liefert `'stange' | 'baum' | 'seil' | 'boden'`.
 
 three.js lässt sich nicht unit-testen (WebGL). Dieser Task prüft deshalb über `npm run build`, die E2E-Tests (keine Laufzeitfehler, Task 10) und eine Sichtprüfung.
 
@@ -2444,7 +2444,7 @@ const SEIL = new THREE.MeshLambertMaterial({ color: 0xe8d9a0 });
 const START = new THREE.MeshLambertMaterial({ color: 0x2f6f3e });
 const STAMM = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
 const KRONE = new THREE.MeshLambertMaterial({ color: 0x3f7d3a });
-const HERING = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+const HARING = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
 const UNSICHTBAR = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
 const PLATZ = new THREE.LineDashedMaterial({ color: 0x1d2733, dashSize: 0.2, gapSize: 0.1 });
 const Y_ACHSE = new THREE.Vector3(0, 1, 0);
@@ -2494,7 +2494,7 @@ export class Szene {
     }
     for (const b of bauwerk.buende()) this.bau.add(this.kugel(b.position, 0.07, SEIL));
     for (const s of bauwerk.seile) this.bau.add(...this.seilMeshes(s, markiert.has(s.id)));
-    for (const h of bauwerk.heringe()) this.bau.add(this.heringMesh(h.position));
+    for (const h of bauwerk.haringe()) this.bau.add(this.haringMesh(h.position));
     for (const b of bauwerk.baeume) this.bau.add(...this.baumMeshes(b, markiert.has(b.id)));
     const platz = Platzbedarf.aus(bauwerk);
     if (platz) this.bau.add(this.platzRahmen(platz));
@@ -2540,8 +2540,8 @@ export class Szene {
     return [sichtbar, greifbar];
   }
 
-  private heringMesh(p: Vec3): THREE.Mesh {
-    const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.15, 8), HERING);
+  private haringMesh(p: Vec3): THREE.Mesh {
+    const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.15, 8), HARING);
     mesh.position.set(p.x, 0.075, p.z);
     mesh.rotation.x = Math.PI; // Spitze nach unten, in den Boden
     return mesh;
@@ -2598,8 +2598,8 @@ Expected: 5 passed.
 
 `npm run dev` starten, http://localhost:5173/lagerbau-simulator/ öffnen und prüfen:
 1. **„Baum setzen“** und auf den Boden klicken → ein brauner Stamm mit grüner Krone erscheint, das Panel zeigt „Baum“.
-2. **„Beispiel laden“**, dann **„Seil spannen“**: zuerst die A-Bock-Spitze anklicken, dann daneben auf den Boden → ein helles Seil, unten ein dunkler Hering. Die Materialliste zeigt Seil und Hering, darunter „Platzbedarf: …“.
-3. Dazu erscheint am Boden ein gestricheltes Rechteck um Füße und Hering.
+2. **„Beispiel laden“**, dann **„Seil spannen“**: zuerst die A-Bock-Spitze anklicken, dann daneben auf den Boden → ein helles Seil, unten ein dunkler Haring. Die Materialliste zeigt Seil und Haring, darunter „Platzbedarf: …“.
+3. Dazu erscheint am Boden ein gestricheltes Rechteck um Füße und Haring.
 4. **„Auswählen“** und das Seil anklicken → das Seil wird orange, das Panel zeigt Länge und Winkel. Mit Entf löschen.
 5. Einen Hinweis anklicken (z. B. R1) → die betroffenen Teile werden orange.
 
@@ -2655,7 +2655,7 @@ test('beidseitig abgespannter A-Bock braucht keine Querverbindung', async ({ pag
   await page.goto(`./?t=beidseitig${link([seil('l', -1.5), seil('r', 1.5)])}`);
   await expect(page.locator('#hinweise')).toHaveText('Keine Hinweise.');
   await expect(page.locator('#stangenliste td').filter({ hasText: /^4 m$/ })).toHaveCount(1);
-  await expect(page.locator('#stangenliste tr').filter({ hasText: 'Heringe' })).toContainText('2');
+  await expect(page.locator('#stangenliste tr').filter({ hasText: 'Haringe' })).toContainText('2');
   await expect(page.locator('#platzbedarf')).toHaveText('Platzbedarf: 3.0 × 1.6 m');
   expect(fehler).toEqual([]);
 });
@@ -2689,7 +2689,7 @@ In `README.md`:
 In `CLAUDE.md` unter „## Stack & Struktur“ die Zeilen für `src/model/` und `src/rules/` ersetzen durch:
 
 ```markdown
-- `src/model/` — Domain (immutable), kein three.js: Stange, Bund, Fuss, Baugruppen, Seil, Baum, Verankerung/Hering (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
+- `src/model/` — Domain (immutable), kein three.js: Stange, Bund, Fuss, Baugruppen, Seil, Baum, Verankerung/Haring (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
 - `src/rules/` — `Rule`-Klassen R1–R8 + `RuleEngine`, kein three.js (R6–R8: Seile; Spec v2a)
 ```
 
@@ -2722,7 +2722,7 @@ git commit -m "docs: document guy lines and bump version to 1.1.0"
 
 1. Einen A-Bock nur mit Seilen auf beiden Seiten sichern: R1 verschwindet. Mit einem Seil weniger kommt er zurück.
 2. Ein tiefes Firstseil zwischen zwei Dreibeinen spannen → R7.
-3. Die Materialliste nennt Seillängen und die Anzahl Heringe.
+3. Die Materialliste nennt Seillängen und die Anzahl Haringe.
 4. Das Rechteck für den Platzbedarf passt zum gemessenen Platz.
 5. Die `release/Lagerbau-Simulator-1.1.0.exe` lädt einen gespeicherten v2-Bau über „Laden“.
 6. **Gemeinheitsbau** (Spec D6), mit dem Versuch, die Regeln auszutricksen. Jeder Treffer kommt in `docs/ki-lernlog.md`:

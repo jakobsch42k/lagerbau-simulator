@@ -30,13 +30,13 @@ describe('Analyse', () => {
     const an = new Analyse(Bauwerk.leer().mitGruppe(abock).mitSeil(seil));
     const [oben, unten] = an.verankerungVon('s');
     expect(oben.art).toBe('bau');
-    expect(unten).toEqual({ art: 'hering' });
+    expect(unten).toEqual({ art: 'haring' });
     const anschluesse = an.seileAn(new Set(abock.stangen().map((x) => x.id)));
     expect(anschluesse).toHaveLength(1);
     expect(anschluesse[0]?.anderesEnde.equals(new Vec3(1.5, 0, 0), 1e-9)).toBe(true);
-    expect(anschluesse[0]?.anderes).toEqual({ art: 'hering' });
+    expect(anschluesse[0]?.anderes).toEqual({ art: 'haring' });
     expect(an.seileAn(new Set(['gibtsnicht']))).toEqual([]);
-    expect(an.heringe).toHaveLength(1);
+    expect(an.haringe).toHaveLength(1);
     expect(() => an.verankerungVon('gibtsnicht')).toThrow(/fehlt/);
   });
 

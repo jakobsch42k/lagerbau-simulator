@@ -37,14 +37,14 @@ Branch: `feat/planen`, abgezweigt von `main` @ `29323e9` (nach dem Merge von PR 
   - „Aufhängelinie zu kurz.“
   - „Aufhängelinie zu steil.“
   - „Plane reicht in den Boden: Neigung, Breite oder Länge verringern.“
-- **Verankerung eines Seilendes**, in dieser Reihenfolge: **Hering** (y ≤ `FUSS_TOLERANZ`) → **Plane** (Abstand zur nächsten Öse ≤ `BUND_TOLERANZ`) → **Baum** → **Bau** → **frei**. Bei mehreren Teilen in Reichweite zählt das nächste.
-- **Regeln:** R1 zählt nur Seile, deren anderes Ende an Hering, Baum oder Bau hängt. R7 gilt für Seile, deren Enden beide an Bau, Baum oder Plane hängen. R6 und R8 bleiben unverändert.
+- **Verankerung eines Seilendes**, in dieser Reihenfolge: **Haring** (y ≤ `FUSS_TOLERANZ`) → **Plane** (Abstand zur nächsten Öse ≤ `BUND_TOLERANZ`) → **Baum** → **Bau** → **frei**. Bei mehreren Teilen in Reichweite zählt das nächste.
+- **Regeln:** R1 zählt nur Seile, deren anderes Ende an Haring, Baum oder Bau hängt. R7 gilt für Seile, deren Enden beide an Bau, Baum oder Plane hängen. R6 und R8 bleiben unverändert.
 - **Datenformat:**
   - geschrieben wird immer `version: 3` mit `planen: [{ id, start, ende, breite, laenge, form, neigung, seite }]` (`neigung` in Grad);
   - gelesen werden `version: 1`, `2` und `3`;
   - `MAX_TEILE` zählt Gruppen + Stangen + Seile + Bäume + Planen.
 - **Materialliste:** Block „Plane | Anzahl“, Größe als kleinere × größere Seite, beide auf 0,1 m gerundet, Anzeige `3.0 × 4.0 m`, sortiert nach größerer Seite absteigend, dann kleinerer Seite absteigend.
-- **Platzbedarf:** achsparalleles Rechteck über alle Füße, Heringe und Planen-Ösen; Bäume zählen nicht.
+- **Platzbedarf:** achsparalleles Rechteck über alle Füße, Haringe und Planen-Ösen; Bäume zählen nicht.
 - **Werkzeug „Plane spannen“** (`'plane'`): Startwerte `STANDARD_PLANE` = 3 × 4 m, `eben`, Seite +1. Beide Enden am Boden → 0°, sonst 30° oder die größte ganze Gradzahl darunter ohne Öse im Boden.
 - **Klickziele pro Werkzeug:** Auswahl → `['seil', 'plane']`, Seil spannen → `['plane']`, alle anderen → `[]`.
 - Der Web-Build bleibt `base: '/lagerbau-simulator/'`. `npm run e2e:desktop` bleibt grün (5 Tests).
@@ -66,7 +66,7 @@ Branch: `feat/planen`, abgezweigt von `main` @ `29323e9` (nach dem Merge von PR 
 2. **Alte v1- und v2-Links und -Dateien**, darunter die Links in `e2e/smoke.spec.ts` und `e2e/abspannung.spec.ts`. Erwartet: Sie öffnen weiter, mit leerer Planen-Liste → Test in Task 4.
 3. **Plane auf einer schrägen Linie, deren Überstand selbst bei 0° in den Boden reicht** (z. B. vom Boden zur Spitze). Erwartet: Meldung, keine Plane, das Werkzeug hängt nicht → Test in Task 6.
 4. **Unsinnige Panelwerte** (Breite zu groß, Neigung 120, leeres Feld). Erwartet: deutsche Meldung, das Feld springt auf den Modellwert zurück → Test in Task 7.
-5. **Seil zu einer Öse einer Bodenplane.** Erwartet: Das Ende ist ein Hering (wie beim Abstecken), nicht `plane` → Test in Task 2.
+5. **Seil zu einer Öse einer Bodenplane.** Erwartet: Das Ende ist ein Haring (wie beim Abstecken), nicht `plane` → Test in Task 2.
 
 ## Dateistruktur
 
@@ -433,9 +433,9 @@ const plane = new Plane('pl', new Vec3(2, 1, -2), new Vec3(2, 1, 2), { ...STANDA
     expect(finder.finde(new Vec3(4.8, 2, 0), [stange], [baum], [amStamm])).toEqual({ art: 'plane', planeId: 'st' });
   });
 
-  it('macht ein Seilende an der Öse einer Bodenplane zum Hering', () => {
+  it('macht ein Seilende an der Öse einer Bodenplane zum Haring', () => {
     const bodenplane = new Plane('bp', new Vec3(0, 0, 5), new Vec3(4, 0, 5), { ...STANDARD_PLANE, neigungGrad: 0 });
-    expect(finder.finde(new Vec3(2, 0, 5), [stange], [baum], [bodenplane])).toEqual({ art: 'hering' });
+    expect(finder.finde(new Vec3(2, 0, 5), [stange], [baum], [bodenplane])).toEqual({ art: 'haring' });
   });
 
   it('nimmt bei zwei Planen in Reichweite die mit der näheren Öse', () => {
@@ -465,7 +465,7 @@ In `src/model/Verankerung.ts`:
 ```ts
 /** Woran ein Seilende hängt. Wird aus der Geometrie abgeleitet, nie gespeichert. */
 export type Verankerung =
-  | { readonly art: 'hering' }
+  | { readonly art: 'haring' }
   | { readonly art: 'plane'; readonly planeId: string }
   | { readonly art: 'baum'; readonly baumId: string }
   | { readonly art: 'bau'; readonly stangeId: string }
@@ -477,10 +477,10 @@ export type Verankerung =
 ```ts
   /**
    * Reihenfolge: Boden vor Plane vor Baum vor Stange (Spec v2b, D1). Bei mehreren Teilen in Reichweite zählt das nächste.
-   * Ein Ende an der Öse einer Bodenplane ist ein Hering, wie beim Abstecken.
+   * Ein Ende an der Öse einer Bodenplane ist ein Haring, wie beim Abstecken.
    */
   finde(punkt: Vec3, stangen: readonly Stange[], baeume: readonly Baum[], planen: readonly Plane[] = []): Verankerung {
-    if (punkt.y <= this.bodenToleranz) return { art: 'hering' };
+    if (punkt.y <= this.bodenToleranz) return { art: 'haring' };
     const plane = this.naechstes(planen, (p) => p.abstandZurOese(punkt));
     if (plane) return { art: 'plane', planeId: plane.id };
     const baum = this.naechstes(baeume, (b) => b.abstandZumStamm(punkt));
@@ -513,7 +513,7 @@ import type { Plane } from './Plane';
 import type { Seil } from './Seil';
 import type { Stange } from './Stange';
 import type { Vec3 } from './Vec3';
-import { type Hering, type Verankerung, VerankerungsFinder } from './Verankerung';
+import { type Haring, type Verankerung, VerankerungsFinder } from './Verankerung';
 
 /** Unveränderliches Aggregat aus Baugruppen, freien Stangen, Seilen, Bäumen und Planen. Bünde und Füße werden abgeleitet. */
 export class Bauwerk {
@@ -666,11 +666,11 @@ export class Bauwerk {
     return this.stangen().flatMap((s) => Fuss.von(s));
   }
 
-  heringe(): readonly Hering[] {
-    return new VerankerungsFinder().heringe(this.seile);
+  haringe(): readonly Haring[] {
+    return new VerankerungsFinder().haringe(this.seile);
   }
 
-  /** Woran ein Punkt hängt (Hering, Plane, Baum, Stange oder frei), z. B. ein Seilende. */
+  /** Woran ein Punkt hängt (Haring, Plane, Baum, Stange oder frei), z. B. ein Seilende. */
   verankerung(punkt: Vec3): Verankerung {
     return new VerankerungsFinder().finde(punkt, this.stangen(), this.baeume, this.planen);
   }
@@ -707,7 +707,7 @@ git commit -m "feat: add tarps to Bauwerk and anchor rope ends at eyelets"
 
 **Interfaces:**
 - Consumes: `Plane`, `STANDARD_PLANE` (Task 1), `Bauwerk.mitPlane`, `ersetzePlane`, Verankerungsart `plane` (Task 2), `RuleEngine`, `standardRegeln`.
-- Produces: R1 zählt nur Seile mit anderem Ende an Hering, Baum oder Bau; R7 zählt `plane` wie Bau und Baum.
+- Produces: R1 zählt nur Seile mit anderem Ende an Haring, Baum oder Bau; R7 zählt `plane` wie Bau und Baum.
 
 - [ ] **Step 1: Failing tests schreiben**
 
@@ -806,7 +806,7 @@ In `src/rules/ABockQuerRule.ts`:
 
 ```ts
 /** Nur diese Enden halten einen A-Bock seitlich. Eine Plane hält ihn nicht, ein freies Ende auch nicht (Spec v2b, D3). */
-const HAELT_SEITLICH: ReadonlySet<Verankerung['art']> = new Set(['hering', 'baum', 'bau']);
+const HAELT_SEITLICH: ReadonlySet<Verankerung['art']> = new Set(['haring', 'baum', 'bau']);
 ```
 
 3. In `istBeidseitigAbgespannt` den Kommentar und die Zeile `.filter((x) => x.anderes.art !== 'frei')` ersetzen:
@@ -816,7 +816,7 @@ const HAELT_SEITLICH: ReadonlySet<Verankerung['art']> = new Set(['hering', 'baum
 ```
 wird zu
 ```ts
-  /** Spec v2a/v2b, D3: je mindestens ein Seil zu Hering, Baum oder Bau auf beiden Seiten der A-Ebene. Enden in der Ebene zählen nicht. */
+  /** Spec v2a/v2b, D3: je mindestens ein Seil zu Haring, Baum oder Bau auf beiden Seiten der A-Ebene. Enden in der Ebene zählen nicht. */
 ```
 und
 ```ts
@@ -832,11 +832,11 @@ wird zu
 In `src/rules/StolperfalleRule.ts` den Klassenkommentar und die Zeile mit `istQuerseil` ersetzen:
 
 ```ts
-/** R7: Ein Querseil (Bau↔Bau, Bau↔Baum, Baum↔Baum) darf nicht tief hängen. Seile zum Hering sind normal. */
+/** R7: Ein Querseil (Bau↔Bau, Bau↔Baum, Baum↔Baum) darf nicht tief hängen. Seile zum Haring sind normal. */
 ```
 wird zu
 ```ts
-/** R7: Ein Querseil (beide Enden an Bau, Baum oder Plane) darf nicht tief hängen. Seile zum Hering sind normal, freie Enden meldet R8. */
+/** R7: Ein Querseil (beide Enden an Bau, Baum oder Plane) darf nicht tief hängen. Seile zum Haring sind normal, freie Enden meldet R8. */
 ```
 und
 ```ts
@@ -1088,7 +1088,7 @@ In `src/model/Platzbedarf.test.ts`:
 
 In `src/ui/MateriallistePanel.test.ts`:
 1. Imports ergänzen: `import { Plane } from '../model/Plane';` und `STANDARD_PLANE` in die Zeile `import { STANDARD_ABOCK } from '../model/params';`.
-2. Im Test „lässt Seile, Heringe und Platzbedarf weg …“ nach `expect(tabelle.textContent).not.toContain('Heringe');` einfügen:
+2. Im Test „lässt Seile, Haringe und Platzbedarf weg …“ nach `expect(tabelle.textContent).not.toContain('Haringe');` einfügen:
    `expect(tabelle.textContent).not.toContain('Plane');`
 3. Als letzten Test im `describe` anhängen:
 
@@ -1132,12 +1132,12 @@ export interface PlanenZeile {
 
 const aufZehntel = (x: number): number => Math.round(x * 10) / 10;
 
-/** Alles, was man zum Aufbauen holen muss: Stangen, Seile, Heringe, Planen, dazu der Platzbedarf. */
+/** Alles, was man zum Aufbauen holen muss: Stangen, Seile, Haringe, Planen, dazu der Platzbedarf. */
 export class Materialliste {
   private constructor(
     readonly stangen: Stangenliste,
     readonly seile: readonly SeilZeile[],
-    readonly anzahlHeringe: number,
+    readonly anzahlHaringe: number,
     readonly planen: readonly PlanenZeile[],
     readonly platzbedarf: Platzbedarf | null,
   ) {}
@@ -1153,7 +1153,7 @@ export class Materialliste {
     return new Materialliste(
       Stangenliste.aus(bauwerk),
       seile,
-      bauwerk.heringe().length,
+      bauwerk.haringe().length,
       Materialliste.planen(bauwerk),
       Platzbedarf.aus(bauwerk),
     );
@@ -1180,21 +1180,21 @@ export class Materialliste {
 In `src/model/Platzbedarf.ts` den Kommentar über der Klasse und die erste Zeile von `aus` ersetzen:
 
 ```ts
-/** Achsparalleles Rechteck am Boden über alle Füße und Heringe (Spec v2a, D4). Bäume zählen nicht. */
+/** Achsparalleles Rechteck am Boden über alle Füße und Haringe (Spec v2a, D4). Bäume zählen nicht. */
 ```
 wird zu
 ```ts
-/** Achsparalleles Rechteck am Boden über alle Füße, Heringe und Planen-Ösen (Spec v2a/v2b, D4). Bäume zählen nicht. */
+/** Achsparalleles Rechteck am Boden über alle Füße, Haringe und Planen-Ösen (Spec v2a/v2b, D4). Bäume zählen nicht. */
 ```
 und
 ```ts
-    const punkte = [...bauwerk.fuesse().map((f) => f.position), ...bauwerk.heringe().map((h) => h.position)];
+    const punkte = [...bauwerk.fuesse().map((f) => f.position), ...bauwerk.haringe().map((h) => h.position)];
 ```
 wird zu
 ```ts
     const punkte = [
       ...bauwerk.fuesse().map((f) => f.position),
-      ...bauwerk.heringe().map((h) => h.position),
+      ...bauwerk.haringe().map((h) => h.position),
       ...bauwerk.planen.flatMap((p) => p.oesen),
     ];
 ```
@@ -1203,10 +1203,10 @@ wird zu
 
 In `src/ui/MateriallistePanel.ts`:
 1. In `zeige` die erste Zeile ersetzen:
-   `const { stangen, seile, anzahlHeringe, platzbedarf } = liste;`
+   `const { stangen, seile, anzahlHaringe, platzbedarf } = liste;`
    wird zu
-   `const { stangen, seile, anzahlHeringe, planen, platzbedarf } = liste;`
-2. Nach der Zeile `...(anzahlHeringe > 0 ? [zeile('td', ['Heringe', '', String(anzahlHeringe)])] : []),` einfügen:
+   `const { stangen, seile, anzahlHaringe, planen, platzbedarf } = liste;`
+2. Nach der Zeile `...(anzahlHaringe > 0 ? [zeile('td', ['Haringe', '', String(anzahlHaringe)])] : []),` einfügen:
 
 ```ts
       ...(planen.length > 0
@@ -1975,7 +1975,7 @@ In `README.md`:
 In `CLAUDE.md` unter „## Stack & Struktur“ die Zeilen für `src/model/` und `src/rules/` ersetzen durch:
 
 ```markdown
-- `src/model/` — Domain (immutable), kein three.js: Stange, Bund, Fuss, Baugruppen, Seil, Baum, Plane (Ösen aus der Geometrie), Verankerung/Hering (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
+- `src/model/` — Domain (immutable), kein three.js: Stange, Bund, Fuss, Baugruppen, Seil, Baum, Plane (Ösen aus der Geometrie), Verankerung/Haring (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
 - `src/rules/` — `Rule`-Klassen R1–R8 + `RuleEngine`, kein three.js (R6–R8: Seile; Spec v2a). Planen haben bewusst keine Regeln (Spec v2b)
 ```
 
@@ -2009,7 +2009,7 @@ git commit -m "docs: document tarps and bump version to 1.2.0"
 
 1. Ein Satteldach über die Firststange der Kochstelle spannen; die Neigung ändern, die Form auf „eben“ stellen und die Seite wechseln.
 2. Zwischen zwei Bäumen eine Bodenplane, eine Wand und ein Regendach spannen.
-3. Ein Seil von einer Öse zu einem Hering spannen; danach die Plane ändern → R8 meldet das Seil.
+3. Ein Seil von einer Öse zu einem Haring spannen; danach die Plane ändern → R8 meldet das Seil.
 4. Die Materialliste nennt die Planengrößen, der Platzbedarf umfasst den Überstand.
 5. Die `release/Lagerbau-Simulator-1.2.0.exe` lädt einen gespeicherten v3-Bau über „Laden“.
 6. **Gemeinheitsbau** (Spec D6). Jeder Treffer kommt in `docs/ki-lernlog.md`:

@@ -28,18 +28,18 @@ describe('Materialliste', () => {
     ]);
   });
 
-  it('zählt geteilte Heringe nur einmal', () => {
+  it('zählt geteilte Haringe nur einmal', () => {
     const b = Bauwerk.leer()
       .mitSeil(new Seil('a', new Vec3(0, 2, 0), new Vec3(2, 0, 0)))
       .mitSeil(new Seil('b', new Vec3(0, 2, 1), new Vec3(2.1, 0, 0)));
-    expect(Materialliste.aus(b, 0.5).anzahlHeringe).toBe(1);
+    expect(Materialliste.aus(b, 0.5).anzahlHaringe).toBe(1);
   });
 
   it('enthält Stangenliste und Platzbedarf', () => {
     const m = Materialliste.aus(kochstelle(), 0.5);
     expect(m.stangen.zeilen.length).toBeGreaterThan(0);
     expect(m.seile).toEqual([]);
-    expect(m.anzahlHeringe).toBe(0);
+    expect(m.anzahlHaringe).toBe(0);
     expect(m.platzbedarf?.laenge).toBeCloseTo(3.2, 9);
   });
 

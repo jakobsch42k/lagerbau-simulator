@@ -35,12 +35,12 @@ describe('FesteKnoten', () => {
     expect(graph.knoten.filter((k) => k.seiten.has('boden')).every((k) => fest.istFest(k))).toBe(true);
   });
 
-  it('A-Bock mit Seil von der Spitze quer zur A-Ebene zum Hering: Spitze fest', () => {
+  it('A-Bock mit Seil von der Spitze quer zur A-Ebene zum Haring: Spitze fest', () => {
     const { fest, bei } = aufbau(einzelnerABock.mitSeil(new Seil('s', spitze, new Vec3(-1.5, 0, 0))));
     expect(fest.istFest(bei(spitze))).toBe(true);
   });
 
-  it('Seil in der A-Ebene zum Hering: Spitze bleibt lose (Beine und Seil liegen in einer Ebene)', () => {
+  it('Seil in der A-Ebene zum Haring: Spitze bleibt lose (Beine und Seil liegen in einer Ebene)', () => {
     const { fest, bei } = aufbau(einzelnerABock.mitSeil(new Seil('s', spitze, new Vec3(0, 0, 2))));
     expect(fest.istFest(bei(spitze))).toBe(false);
   });
@@ -90,9 +90,9 @@ describe('FesteKnoten', () => {
   it('Seilende weiter als BUND_CLUSTER_RADIUS vom nächsten Knoten zählt nicht', () => {
     const nah = new Vec3(0, spitze.y + BUND_CLUSTER_RADIUS * 0.5, 0);
     const fern = new Vec3(0, spitze.y + BUND_CLUSTER_RADIUS * 2, 0);
-    const zumHering = (start: Vec3) => einzelnerABock.mitSeil(new Seil('s', start, new Vec3(-1.5, 0, 0)));
-    const mitNah = aufbau(zumHering(nah));
-    const mitFern = aufbau(zumHering(fern));
+    const zumHaring = (start: Vec3) => einzelnerABock.mitSeil(new Seil('s', start, new Vec3(-1.5, 0, 0)));
+    const mitNah = aufbau(zumHaring(nah));
+    const mitFern = aufbau(zumHaring(fern));
     expect(mitNah.fest.istFest(mitNah.bei(spitze))).toBe(true);
     expect(mitFern.fest.istFest(mitFern.bei(spitze))).toBe(false);
   });

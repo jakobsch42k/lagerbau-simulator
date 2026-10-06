@@ -15,8 +15,8 @@ const finder = new VerankerungsFinder();
 const plane = new Plane('pl', new Vec3(2, 1, -2), new Vec3(2, 1, 2), { ...STANDARD_PLANE, neigungGrad: 0, breite: 1 });
 
 describe('VerankerungsFinder', () => {
-  it('erkennt einen Hering am Boden', () => {
-    expect(finder.finde(new Vec3(1, 0, 1), [stange], [baum])).toEqual({ art: 'hering' });
+  it('erkennt einen Haring am Boden', () => {
+    expect(finder.finde(new Vec3(1, 0, 1), [stange], [baum])).toEqual({ art: 'haring' });
   });
 
   it('erkennt einen Baum an der Stammoberfläche', () => {
@@ -37,7 +37,7 @@ describe('VerankerungsFinder', () => {
   });
 
   it('der Boden geht vor der Stange', () => {
-    expect(finder.finde(new Vec3(0, 0.02, 0), [stange], [])).toEqual({ art: 'hering' });
+    expect(finder.finde(new Vec3(0, 0.02, 0), [stange], [])).toEqual({ art: 'haring' });
   });
 
   it('erkennt eine Plane an einer Öse', () => {
@@ -58,9 +58,9 @@ describe('VerankerungsFinder', () => {
     expect(finder.finde(new Vec3(3, 1, 0), [stange], [baum], [plane])).toEqual({ art: 'plane', planeId: 'pl' });
   });
 
-  it('macht ein Seilende an der Öse einer Bodenplane zum Hering', () => {
+  it('macht ein Seilende an der Öse einer Bodenplane zum Haring', () => {
     const bodenplane = new Plane('bp', new Vec3(0, 0, 5), new Vec3(4, 0, 5), { ...STANDARD_PLANE, neigungGrad: 0 });
-    expect(finder.finde(new Vec3(2, 0, 5), [stange], [baum], [bodenplane])).toEqual({ art: 'hering' });
+    expect(finder.finde(new Vec3(2, 0, 5), [stange], [baum], [bodenplane])).toEqual({ art: 'haring' });
   });
 
   it('nimmt bei zwei Planen in Reichweite die mit der näheren Öse', () => {
@@ -73,26 +73,26 @@ describe('VerankerungsFinder', () => {
     expect(finder.finde(new Vec3(4.83, 2, 0), [], [baum, nah], [])).toEqual({ art: 'baum', baumId: 'nah' });
   });
 
-  it('Seilenden nah beieinander teilen sich einen Hering', () => {
+  it('Seilenden nah beieinander teilen sich einen Haring', () => {
     const a = new Seil('a', new Vec3(0, 2, 0), new Vec3(2, 0, 0));
     const b = new Seil('b', new Vec3(0, 2, 1), new Vec3(2.1, 0, 0));
     const c = new Seil('c', new Vec3(0, 2, 0), new Vec3(-2, 0, 0));
-    const heringe = finder.heringe([a, b, c]);
-    expect(heringe).toHaveLength(2);
-    const geteilt = heringe.find((h) => h.seilIds.includes('a'));
+    const haringe = finder.haringe([a, b, c]);
+    expect(haringe).toHaveLength(2);
+    const geteilt = haringe.find((h) => h.seilIds.includes('a'));
     expect(geteilt?.seilIds).toEqual(['a', 'b']);
     expect(geteilt?.position.equals(new Vec3(2.05, 0, 0), 1e-9)).toBe(true);
   });
 
-  it('ein Seil zwischen zwei Bauten hat keinen Hering', () => {
-    expect(finder.heringe([new Seil('q', new Vec3(0, 2, 0), new Vec3(4, 2, 0))])).toEqual([]);
+  it('ein Seil zwischen zwei Bauten hat keinen Haring', () => {
+    expect(finder.haringe([new Seil('q', new Vec3(0, 2, 0), new Vec3(4, 2, 0))])).toEqual([]);
   });
 });
 
 describe('Bauwerk mit Seilen', () => {
-  it('liefert Heringe und die Verankerung eines Punkts', () => {
+  it('liefert Haringe und die Verankerung eines Punkts', () => {
     const b = Bauwerk.leer().mitStange(stange).mitBaum(baum).mitSeil(new Seil('s', new Vec3(0, 2, 0), new Vec3(4.8, 2, 0)));
-    expect(b.heringe()).toEqual([]);
+    expect(b.haringe()).toEqual([]);
     expect(b.verankerung(new Vec3(0, 2, 0))).toEqual({ art: 'bau', stangeId: 'st' });
     expect(b.verankerung(new Vec3(4.8, 2, 0))).toEqual({ art: 'baum', baumId: 'b' });
   });

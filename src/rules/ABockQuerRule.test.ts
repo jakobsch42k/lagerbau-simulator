@@ -54,7 +54,7 @@ describe('ABockQuerRule (R1)', () => {
     expect(pruefe(mitSeilen(seil('l', -1.5), frei))).toHaveLength(1);
   });
 
-  it('zählt ein Seil gleich, wenn sein Ende am A-Bock und der Anfang am Hering liegt', () => {
+  it('zählt ein Seil gleich, wenn sein Ende am A-Bock und der Anfang am Haring liegt', () => {
     const umgekehrt = new Seil('r', new Vec3(1.5, 0, 0), abock.spitze());
     expect(pruefe(mitSeilen(seil('l', -1.5), umgekehrt))).toEqual([]);
     expect(pruefe(mitSeilen(umgekehrt))).toHaveLength(1);

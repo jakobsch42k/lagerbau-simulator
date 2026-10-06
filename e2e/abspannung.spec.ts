@@ -19,7 +19,7 @@ test('beidseitig abgespannter A-Bock braucht keine Querverbindung', async ({ pag
   await page.goto(`./?t=beidseitig${link([seil('l', -1.5), seil('r', 1.5)])}`);
   await expect(page.locator('#hinweise')).toHaveText('Keine Hinweise.');
   await expect(page.locator('#stangenliste td').filter({ hasText: /^4 m$/ })).toHaveCount(1);
-  await expect(page.locator('#stangenliste tr').filter({ hasText: 'Heringe' })).toContainText('2');
+  await expect(page.locator('#stangenliste tr').filter({ hasText: 'Haringe' })).toContainText('2');
   await expect(page.locator('#platzbedarf')).toHaveText('Platzbedarf: 3.0 × 1.6 m');
   expect(fehler).toEqual([]);
 });

@@ -16,7 +16,7 @@ const SEIL = new THREE.MeshLambertMaterial({ color: 0xe8d9a0 });
 const START = new THREE.MeshLambertMaterial({ color: 0x2f6f3e });
 const STAMM = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
 const KRONE = new THREE.MeshLambertMaterial({ color: 0x3f7d3a });
-const HERING = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+const HARING = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
 const UNSICHTBAR = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
 const PLATZ = new THREE.LineDashedMaterial({ color: 0x1d2733, dashSize: 0.2, gapSize: 0.1 });
 // Beidseitig, damit man die Plane auch von unten sieht; polygonOffset verhindert Flimmern einer Bodenplane auf dem Boden.
@@ -70,7 +70,7 @@ export class Szene {
     }
     for (const b of bauwerk.buende()) this.bau.add(this.kugel(b.position, 0.07, SEIL));
     for (const s of bauwerk.seile) this.bau.add(...this.seilMeshes(s, markiert.has(s.id)));
-    for (const h of bauwerk.heringe()) this.bau.add(this.heringMesh(h.position));
+    for (const h of bauwerk.haringe()) this.bau.add(this.haringMesh(h.position));
     for (const b of bauwerk.baeume) this.bau.add(...this.baumMeshes(b, markiert.has(b.id)));
     for (const p of bauwerk.planen) this.bau.add(this.planenMesh(p, markiert.has(p.id)));
     const platz = Platzbedarf.aus(bauwerk);
@@ -119,8 +119,8 @@ export class Szene {
     return [sichtbar, greifbar];
   }
 
-  private heringMesh(p: Vec3): THREE.Mesh {
-    const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.15, 8), HERING);
+  private haringMesh(p: Vec3): THREE.Mesh {
+    const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.15, 8), HARING);
     mesh.position.set(p.x, 0.075, p.z);
     mesh.rotation.x = Math.PI; // Spitze nach unten, in den Boden
     return mesh;

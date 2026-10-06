@@ -16,7 +16,7 @@ describe('Platzbedarf', () => {
     expect(p?.breite).toBeCloseTo(1.6, 9);
   });
 
-  it('zählt Heringe mit und Bäume nicht', () => {
+  it('zählt Haringe mit und Bäume nicht', () => {
     const abock = new ABock('a', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK);
     const b = Bauwerk.leer()
       .mitGruppe(abock)
@@ -28,11 +28,11 @@ describe('Platzbedarf', () => {
     expect(p?.breite).toBeCloseTo(1.6, 9);
   });
 
-  it('nutzt für zwei Seile an einem gemeinsamen Hering dessen Mittelpunkt', () => {
+  it('nutzt für zwei Seile an einem gemeinsamen Haring dessen Mittelpunkt', () => {
     const b = Bauwerk.leer()
       .mitSeil(new Seil('a', new Vec3(0, 2, 0), new Vec3(2, 0, 0)))
       .mitSeil(new Seil('b', new Vec3(0, 2, 1), new Vec3(2.1, 0, 0.1)));
-    expect(b.heringe()).toHaveLength(1);
+    expect(b.haringe()).toHaveLength(1);
     const p = Platzbedarf.aus(b);
     expect(p?.minX).toBeCloseTo(2.05, 9);
     expect(p?.maxX).toBeCloseTo(2.05, 9);
@@ -40,7 +40,7 @@ describe('Platzbedarf', () => {
     expect(p?.maxZ).toBeCloseTo(0.05, 9);
   });
 
-  it('gibt es ohne Füße und Heringe nicht', () => {
+  it('gibt es ohne Füße und Haringe nicht', () => {
     expect(Platzbedarf.aus(Bauwerk.leer())).toBeNull();
     expect(Platzbedarf.aus(Bauwerk.leer().mitBaum(new Baum('b', Vec3.NULL, STANDARD_BAUM)))).toBeNull();
   });

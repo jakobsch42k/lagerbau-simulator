@@ -1,7 +1,7 @@
 import type { Analyse } from './Analyse';
 import { type Hinweis, hinweis, type Rule } from './Rule';
 
-/** R8: Jedes Seilende muss an einem Hering, Baum oder einer Stange hängen. */
+/** R8: Jedes Seilende muss an einem Haring, Baum oder einer Stange hängen. */
 export class LosesSeilRule implements Rule {
   readonly name = 'R8';
 

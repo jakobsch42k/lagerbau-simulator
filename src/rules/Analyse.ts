@@ -4,7 +4,7 @@ import type { Fuss } from '../model/Fuss';
 import type { Seil } from '../model/Seil';
 import type { Stange } from '../model/Stange';
 import type { Vec3 } from '../model/Vec3';
-import type { Hering, Verankerung } from '../model/Verankerung';
+import type { Haring, Verankerung } from '../model/Verankerung';
 
 /** Ein Seil, das an einer Stange hängt, gesehen von dieser Stange aus. */
 export interface SeilAnschluss {
@@ -21,7 +21,7 @@ export class Analyse {
   readonly buende: readonly Bund[];
   readonly fuesse: readonly Fuss[];
   readonly seile: readonly Seil[];
-  readonly heringe: readonly Hering[];
+  readonly haringe: readonly Haring[];
   private readonly verankerungen: ReadonlyMap<string, readonly [Verankerung, Verankerung]>;
 
   constructor(readonly bauwerk: Bauwerk) {
@@ -29,7 +29,7 @@ export class Analyse {
     this.buende = bauwerk.buende();
     this.fuesse = bauwerk.fuesse();
     this.seile = bauwerk.seile;
-    this.heringe = bauwerk.heringe();
+    this.haringe = bauwerk.haringe();
     this.verankerungen = new Map(
       this.seile.map((s): [string, readonly [Verankerung, Verankerung]] => [
         s.id,

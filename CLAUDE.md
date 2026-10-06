@@ -7,7 +7,7 @@
 - **Übung im Bauen mit KI:** Claude implementiert, Jakob steuert, reviewt, testet und liefert die Faustregeln + Schwellwerte. Jede Etappe = eigene Sitzung.
 - **Keine Statik-Rechnung.** Bewusst gestrichen (30.09.2026). Das Tool sagt nie „hält“, es gibt nur Hinweise auf typische Fehler. Fußzeilen-Hinweis bleibt immer sichtbar.
 - **Schwellwerte der Regeln kommen von Jakob**, nicht von Claude. Unbestätigte Werte in `src/rules/constants.ts` tragen `// CHECK MANUALLY: <Quelle>`.
-- UI-Sprache Deutsch. Einheiten im Modell: Meter.
+- UI-Sprache Deutsch, **österreichische Fachwörter**: „Haring“ (nicht „Hering“). Einheiten im Modell: Meter.
 - Bauen am Laptop mit Maus; am Handy nur Ansichtsmodus (geteilter Link).
 - Windows-Programm (Spec D5): portable `.exe` per Electron, offline. `npm run dist` → `release/`. Die Web-Version auf Pages bleibt für die Handy-Ansicht.
 
@@ -15,7 +15,7 @@
 
 TypeScript + Vite + three.js, Vitest (+ happy-dom für DOM-Tests), Playwright (Browser + Electron). Statisch, kein Backend. Deploy: GitHub Pages via Actions. Windows-Programm: Electron + electron-builder. Repo `jakobsch42k/lagerbau-simulator` (öffentlich, MIT).
 
-- `src/model/` — Domain (immutable), kein three.js: Stange, Bund, Fuss, Baugruppen, Seil, Baum, Plane (Ösen aus der Geometrie), Verankerung/Hering (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
+- `src/model/` — Domain (immutable), kein three.js: Stange, Bund, Fuss, Baugruppen, Seil, Baum, Plane (Ösen aus der Geometrie), Verankerung/Haring (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
 - `src/rules/` — `Rule`-Klassen R1–R8 + `RuleEngine`, kein three.js (R6–R8: Seile; Spec v2a). Planen haben bewusst keine Regeln (Spec v2b). R2 prüft Vierecke nur bei losen Ecken: `FesteKnoten` gibt Festigkeit von den Füßen über Dreiecke und Abspannseile weiter
 - `src/editor/` — three.js-Szene, Einrasten, Werkzeuge, Undo
 - `src/share/` — Serializer, URL-Codec (`lz-string`)

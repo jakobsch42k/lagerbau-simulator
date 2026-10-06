@@ -131,7 +131,7 @@ export class DrawStangeTool extends ZweiPunktWerkzeug {
   }
 }
 
-/** Zwei Klicks ergeben ein gerades Seil. Ein Ende am Boden wird automatisch ein Hering (Spec v2a, D1). */
+/** Zwei Klicks ergeben ein gerades Seil. Ein Ende am Boden wird automatisch ein Haring (Spec v2a, D1). */
 export class DrawSeilTool extends ZweiPunktWerkzeug {
   readonly name = 'seil' as const;
   override readonly klickZiele: readonly KlickZiel[] = ['plane'];

@@ -6,7 +6,7 @@ import type { Plane } from './Plane';
 import type { Seil } from './Seil';
 import type { Stange } from './Stange';
 import type { Vec3 } from './Vec3';
-import { type Hering, type Verankerung, VerankerungsFinder } from './Verankerung';
+import { type Haring, type Verankerung, VerankerungsFinder } from './Verankerung';
 
 /** Unveränderliches Aggregat aus Baugruppen, freien Stangen, Seilen, Bäumen und Planen. Bünde und Füße werden abgeleitet. */
 export class Bauwerk {
@@ -159,11 +159,11 @@ export class Bauwerk {
     return this.stangen().flatMap((s) => Fuss.von(s));
   }
 
-  heringe(): readonly Hering[] {
-    return new VerankerungsFinder().heringe(this.seile);
+  haringe(): readonly Haring[] {
+    return new VerankerungsFinder().haringe(this.seile);
   }
 
-  /** Woran ein Punkt hängt (Hering, Plane, Baum, Stange oder frei), z. B. ein Seilende. */
+  /** Woran ein Punkt hängt (Haring, Plane, Baum, Stange oder frei), z. B. ein Seilende. */
   verankerung(punkt: Vec3): Verankerung {
     return new VerankerungsFinder().finde(punkt, this.stangen(), this.baeume, this.planen);
   }

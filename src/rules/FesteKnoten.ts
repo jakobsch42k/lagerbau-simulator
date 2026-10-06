@@ -13,7 +13,7 @@ const MIN_STUETZPUNKTE = 3;
 const MIN_FESTE_AUF_STANGE = 2;
 
 /**
- * Welche Knoten eines Baus liegen über Dreiecke fest? Start: Füße am Boden. Dazu zählen Abspannseile zu Hering oder Baum
+ * Welche Knoten eines Baus liegen über Dreiecke fest? Start: Füße am Boden. Dazu zählen Abspannseile zu Haring oder Baum
  * und Seile zwischen zwei Knoten des Baus. Ein Knoten wird fest, wenn er auf einer Stange mit ≥ 2 festen Knoten liegt
  * oder wenn seine festen Nachbarn und Ankerpunkte ≥ 3 nicht kollineare Punkte ergeben. Keine Statik, nur Geometrie.
  */
@@ -36,7 +36,7 @@ export class FesteKnoten {
   }
 
   private sammleSeile(analyse: Analyse, anker: Map<Knoten, Vec3[]>, seilNachbarn: Map<Knoten, Knoten[]>): void {
-    const festesZiel = (art: string) => art === 'hering' || art === 'baum';
+    const festesZiel = (art: string) => art === 'haring' || art === 'baum';
     for (const seil of analyse.seile) {
       const [vs, ve] = analyse.verankerungVon(seil.id);
       if (vs.art === 'bau' && festesZiel(ve.art)) this.merkeAnker(anker, seil.start, seil.ende);

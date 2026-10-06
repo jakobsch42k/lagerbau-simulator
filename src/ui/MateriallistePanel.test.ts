@@ -17,7 +17,7 @@ const zeige = (b: Bauwerk): { tabelle: HTMLTableElement; platz: HTMLElement } =>
 };
 
 describe('MateriallistePanel', () => {
-  it('zeigt Stangen, Seile, Heringe und den Platzbedarf', () => {
+  it('zeigt Stangen, Seile, Haringe und den Platzbedarf', () => {
     const abock = new ABock('a', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK);
     const b = Bauwerk.leer()
       .mitGruppe(abock)
@@ -27,14 +27,14 @@ describe('MateriallistePanel', () => {
     const zellen = [...tabelle.querySelectorAll('td')].map((td) => td.textContent);
     expect(zellen).toContain('2.4 m');
     expect(zellen).toContain('4 m');
-    expect(zellen).toContain('Heringe');
+    expect(zellen).toContain('Haringe');
     expect(platz.textContent).toBe('Platzbedarf: 3.0 × 1.6 m');
   });
 
-  it('lässt Seile, Heringe und Platzbedarf weg, wenn es keine gibt', () => {
+  it('lässt Seile, Haringe und Platzbedarf weg, wenn es keine gibt', () => {
     const { tabelle, platz } = zeige(Bauwerk.leer());
     expect(tabelle.textContent).not.toContain('Seil');
-    expect(tabelle.textContent).not.toContain('Heringe');
+    expect(tabelle.textContent).not.toContain('Haringe');
     expect(tabelle.textContent).not.toContain('Plane');
     expect(platz.textContent).toBe('');
   });

@@ -15,14 +15,14 @@ const pruefe = (regel: AbspannwinkelRule, ...seile: Seil[]) =>
 const regel = new AbspannwinkelRule(30, 60);
 
 describe('AbspannwinkelRule (R6)', () => {
-  it('meldet ein sehr flaches Seil zum Hering', () => {
+  it('meldet ein sehr flaches Seil zum Haring', () => {
     const h = pruefe(regel, seilMitWinkel(20));
     expect(h).toHaveLength(1);
     expect(h[0]).toMatchObject({ regel: 'R6', schwere: 'warnung', betroffeneTeile: ['s'] });
     expect(h[0]?.text).toBe('Seil sehr flach: braucht viel Platz.');
   });
 
-  it('meldet ein sehr steiles Seil zum Hering', () => {
+  it('meldet ein sehr steiles Seil zum Haring', () => {
     expect(pruefe(regel, seilMitWinkel(75))[0]?.text).toBe('Seil sehr steil: hält seitlich kaum.');
   });
 
@@ -39,7 +39,7 @@ describe('AbspannwinkelRule (R6)', () => {
     expect(pruefe(new AbspannwinkelRule(10, s.winkelZumBodenGrad - 0.1), s)).toHaveLength(1);
   });
 
-  it('prüft nur Seile vom Bau zum Hering', () => {
+  it('prüft nur Seile vom Bau zum Haring', () => {
     const baum = new Baum('b', new Vec3(5, 0, 0), { durchmesser: 0.4, hoehe: 10 });
     const vomBaum = new Seil('vb', new Vec3(4.8, 1, 0), new Vec3(1, 0, 0));
     const quer = new Seil('q', new Vec3(0, 3, 0), new Vec3(4.8, 3, 0));
