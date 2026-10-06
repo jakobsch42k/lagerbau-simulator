@@ -25,7 +25,7 @@ Im Code stellt E0 zwei Dinge ab: Eine neue Objektart berührt heute rund zehn Da
 | 1 | Zweck | Lager-Layout planen, Bauten im Kontext sehen, Materialliste fürs ganze Lager. Präsentieren ist kein eigenes Ziel; der Teilen-Link bleibt, wie er ist |
 | 2 | Gelände | **Luftbild als Boden:** Bild laden, Maßstab mit zwei Klicks setzen. Der Boden bleibt flach (y = 0). Verworfen: flache Wiese ohne Bild (der echte Platz müsste nachgebaut werden); Gelände mit Höhen (alle Bauten, Füße, Heringe und Regeln setzen y = 0 voraus) |
 | 3 | Umfang | alle Etappen E0–E6, nacheinander |
-| 4 | Zelte | **ganze Zelte nach Typ:** **Jurte** (5er, 6er, 8er; jeweils Komplettdach + 3 Seitenwände, jede Wand einzeln weglassbar), **Hanger** und **Doppelkegler** (beide gekaufte Gruppenzelte). Startwerte aus einer Online-Recherche, Jakob bestätigt oder misst nach. Ursprünglich war zusätzlich ein Bahnen-Baukasten geplant (E7); er wurde am 05.10.2026 gestrichen, weil die Gruppen keine Kohten- oder Jurtenbahnen verwenden |
+| 4 | Zelte | **ganze Zelte nach Typ:** **Jurte** (5er, 6er, 8er; jeweils Komplettdach + 3 Seitenwände, jede Wand einzeln weglassbar), **Hanger** (ein Sattler-Zelt; Vorlage mit einstellbarer Länge) und **Doppelkegler** (beide gekaufte Gruppenzelte). Startwerte aus einer Online-Recherche, Jakob bestätigt oder misst nach. Ursprünglich war zusätzlich ein Bahnen-Baukasten geplant (E7); er wurde am 05.10.2026 gestrichen, weil die Gruppen keine Kohten- oder Jurtenbahnen verwenden |
 | 5 | Platzregeln | **ja, Abstandsregeln.** Welche Regeln mit welchen Abständen gelten, legt Jakob fest; bis dahin `CHECK MANUALLY` |
 | 6 | Architektur | **Eine Welt:** Alles liegt in einem Koordinatensystem. Ein „Bau“ ist eine automatisch erkannte Gruppe verbundener Stangen. Vorher kommt der Umbau auf ein gemeinsames Objekt-Modell (E0). Verworfen: zwei Ebenen (Platz mit Bau-Blöcken plus eigener Bau-Editor), weil Seile vom Bau zu einem Baum am Platz dann über zwei Ebenen laufen würden; ohne Umbau weitermachen (rund 10 Dateien je Art bei etwa 12 neuen Arten) |
 | 7 | Einstellbarkeit (nachgetragen 05.10.2026) | **So einstellbar wie möglich:** Maße, Formen, Namen, Farben und Materialwerte sind Felder im Panel. Feste Objekttypen werden zu **Vorlagen**, die die Felder vorbelegen, plus jeweils „Eigenes“. Zelttypen (E4) sind Vorlagen mit recherchierten, von Jakob bestätigten Startwerten und je Zelt änderbar. Die Abstände der Platzregeln (E6) lassen sich im Programm einstellen und auf den Standard zurücksetzen |
@@ -164,9 +164,40 @@ Die Signatur von `Szene.zeige(…)` bleibt; `main.ts` ändert sich nicht.
 - **Unverändert grün:** alle übrigen Unit-Tests, `npm run e2e` (die drei Specs nutzen v1/v2-Links), `npm run e2e:desktop`, `npm run build`.
 - **Abdeckung:** ≥ 80 % für `src/model/**` und `src/rules/**`; `src/arten/**` kommt dazu.
 
+### D8 Regel-Einstellungen (Nachtrag 05.10.2026)
+
+Jakob will jede Regel abschalten und ihre Werte im Programm einstellen können, gespeichert **in der Plandatei**. Das ist die einzige sichtbare Neuerung in E0. Sie gehört hierher, weil sie das Datenformat v4 braucht.
+
+- **Modell:** `RegelEinstellungen` (neu, `src/rules/RegelEinstellungen.ts`, unveränderlich).
+  - `aus: ReadonlySet<RegelName>` (`'R1'` … `'R8'`).
+  - `werte`: je Schwellwert aus `src/rules/constants.ts` ein optionaler Zahlenwert. Fehlt einer, gilt der Standard aus `constants.ts`.
+  - Methoden: `mitAus(name, aus)`, `mitWert(schluessel, wert)`, `standard()`, `wert(schluessel)`.
+- **Prüfung** (`RangeError`, deutsch):
+  - Ein Wert muss endlich und > 0 sein; Winkel dürfen höchstens 90° betragen.
+  - Untergrenze < Obergrenze, also R4 min < max und R6 min < max.
+  - Meldungen: „Wert muss größer als 0 sein“, „Winkel muss zwischen 0 und 90° liegen“, „Untergrenze muss kleiner als die Obergrenze sein“.
+- **Bauwerk:** `regelEinstellungen` (Standard: alles an, keine Werte gesetzt) und `mitRegelEinstellungen(e)`. Damit läuft eine Änderung über den Verlauf und ist ein Undo-Schritt.
+- **Regeln:**
+  - `standardRegeln(einstellungen)` baut die Regeln mit den eingestellten Werten; die Regel-Klassen haben ihre Werte schon heute als Konstruktor-Parameter.
+  - Die `RuleEngine` überspringt abgeschaltete Regeln.
+  - Ohne Einstellungen ist das Ergebnis identisch zu heute (Test).
+- **Datenformat v4:** optional `regeln: { aus: ['R4'], werte: { R4_MAX_BEINWINKEL_GRAD: 40 } }`. Fehlt das Feld, gelten die Standardwerte; v1–v3 haben es nie. Es reist mit Datei und Link.
+- **Oberfläche:**
+  - Knopf „Regeln…“ im Hinweis-Panel. Er öffnet eine Liste R1–R8, jede mit Haken (an/aus), Kurzbeschreibung und ihren Wertfeldern samt Einheit, dazu „Auf Standard zurücksetzen“.
+  - Ungültige Werte zeigen die Meldung, und das Feld springt zurück (Muster aus v1).
+  - Unter den Hinweisen steht, solange etwas abgeschaltet ist: „Ausgeschaltet: R4“.
+  - In der Handy-Ansicht ist die Liste nur lesbar.
+- **Tests:**
+  - Modell-Prüfung und Fehlertexte;
+  - `RuleEngine` mit abgeschalteter Regel;
+  - eingestellter Wert ändert das Ergebnis (R4 max 40° → keine Warnung bei 38°);
+  - v4-Rundlauf mit und ohne `regeln`;
+  - Undo;
+  - e2e: R4 abschalten → Hinweis weg, speichern und laden → bleibt aus.
+
 ### Nicht in E0
 
-- sichtbare neue Funktionen;
+- sichtbare neue Funktionen außer den Regel-Einstellungen (D8);
 - Regeln oder Materialliste je Bau (kommen mit E5);
 - ein Materialbeitrag je Art (E5);
 - Ziehen, Kopieren, Draufsicht (E1);
