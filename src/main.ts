@@ -33,7 +33,7 @@ const szene = new Szene(element('#ansicht'), arten);
 const modus = new AnsichtsModus(document.body);
 const teilen = new Teilen();
 const regeln = new RuleEngine(standardRegeln());
-const parameter = new ParameterPanel(element('#parameter'), editor);
+const parameter = new ParameterPanel(element('#parameter'), editor, arten);
 const hinweisPanel = new HinweisPanel(element('#hinweise'), (h) => editor.markiere(h.betroffeneTeile));
 const materialPanel = new MateriallistePanel(element('#stangenliste'), element('#platzbedarf'));
 const meldung = element<HTMLParagraphElement>('#meldung');
