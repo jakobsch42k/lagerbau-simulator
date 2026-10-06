@@ -137,3 +137,37 @@ describe('bewege: Drehen', () => {
     expect(bewege(b, BAU, drehen).seil('s')).toBe(b.seil('s'));
   });
 });
+
+describe('bewege: Doppelklick-Auswahl samt Seil zum Baum und Plane am Baum', () => {
+  const baumEnde = new Vec3(-3.85, 3, 0);
+  const platz = (): Bauwerk =>
+    mitBaum()
+      .mitSeil(new Seil('s-baum', abock.spitze(), baumEnde))
+      .mitPlane(new Plane('p-baum', dreibein.spitze(), baumEnde, STANDARD_PLANE));
+  const ALLE = [...BAU, 's-baum', 'p-baum'];
+
+  it('das Baum-Ende des gewählten Seils bleibt, das Seil wird neu gespannt', () => {
+    const neu = bewege(platz(), ALLE, schieben(new Vec3(0, 0, 1)));
+    expect(gleich(neu.seil('s-baum')?.ende, baumEnde)).toBe(true);
+    expect(gleich(neu.seil('s-baum')?.start, abock.spitze().add(new Vec3(0, 0, 1)))).toBe(true);
+  });
+
+  it('die gewählte Plane mit einem Ende am Baum wird neu gespannt, das Baum-Ende bleibt', () => {
+    const neu = bewege(platz(), ALLE, schieben(new Vec3(0, 0, 1)));
+    expect(gleich(neu.plane('p-baum')?.ende, baumEnde)).toBe(true);
+    expect(gleich(neu.plane('p-baum')?.start, dreibein.spitze().add(new Vec3(0, 0, 1)))).toBe(true);
+  });
+
+  it('beim Drehen gilt dieselbe Regel', () => {
+    const neu = bewege(platz(), ALLE, { art: 'drehung', winkelRad: 0.2, um: Vec3.NULL });
+    expect(gleich(neu.seil('s-baum')?.ende, baumEnde)).toBe(true);
+    expect(gleich(neu.plane('p-baum')?.ende, baumEnde)).toBe(true);
+  });
+
+  it('ein allein gewähltes Seil ohne Bezug zu einer bewegten Stange wandert ganz', () => {
+    const b = kochstelle().mitSeil(new Seil('s', new Vec3(20, 0, 20), new Vec3(22, 0, 20)));
+    const s = bewege(b, ['s'], schieben()).seil('s');
+    expect(gleich(s?.start, new Vec3(30, 0, 25))).toBe(true);
+    expect(gleich(s?.ende, new Vec3(32, 0, 25))).toBe(true);
+  });
+});

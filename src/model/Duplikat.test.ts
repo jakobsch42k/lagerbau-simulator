@@ -38,6 +38,15 @@ describe('mitgenommen', () => {
   });
 });
 
+describe('mitgenommen: Doppelklick-Auswahl', () => {
+  it('kopiert Seil zum Baum und Plane am Baum nicht, auch wenn sie mit gewählt sind', () => {
+    const b = mitBaum()
+      .mitSeil(new Seil('s', abock.spitze(), baumEnde))
+      .mitPlane(new Plane('p', abock.spitze(), baumEnde, STANDARD_PLANE));
+    expect(ids(mitgenommen(b, ['abock', 'dreibein', 'first', 's', 'p']))).toEqual(['abock', 'dreibein', 'first']);
+  });
+});
+
 describe('mitte', () => {
   it('ist der Mittelpunkt der Platzpunkte', () => {
     const m = mitte([abock]);

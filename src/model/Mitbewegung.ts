@@ -39,7 +39,9 @@ export function mitgenommen(bauwerk: Bauwerk, ids: readonly string[]): readonly 
 }
 
 class Mitbewegung {
+  /** Was ganz wandert: gewählte Objekte, außer Seile und Planen an bewegten Stangen. */
   private readonly bewegte: ReadonlyMap<string, LagerObjekt>;
+  private readonly gewaehlte: ReadonlySet<string>;
   private readonly stangen: readonly Stange[];
   private readonly planen = new Map<string, Plane>();
 
@@ -49,12 +51,24 @@ class Mitbewegung {
     private readonly bewegung: Bewegung,
   ) {
     const objekte = ids.flatMap((id) => bauwerk.besitzer(id) ?? []);
-    this.bewegte = new Map(objekte.map((o) => [o.id, o]));
     this.stangen = objekte.flatMap((o) => (o instanceof Baugruppe ? o.stangen() : o instanceof Stange ? [o] : []));
+    // Ein gewähltes Seil oder eine gewählte Plane an einer bewegten Stange folgt der Regel je Ende (Baum-Ende bleibt);
+    // nur ein für sich gewähltes wandert ganz.
+    this.bewegte = new Map(objekte.filter((o) => !this.haengtAnBewegterStange(o)).map((o) => [o.id, o]));
+    this.gewaehlte = new Set(objekte.map((o) => o.id));
+  }
+
+  private haengtAnBewegterStange(o: LagerObjekt): boolean {
+    if (o instanceof Plane) return Bau.haengtAn(o, this.stangen);
+    if (!(o instanceof Seil)) return false;
+    return o.endpunkte().some((p) => {
+      const v = this.bauwerk.verankerung(p);
+      return v.art === 'bau' && this.stangen.some((s) => s.id === v.stangeId);
+    });
   }
 
   ergebnis(): Bauwerk {
-    if (this.bewegte.size === 0) return this.bauwerk;
+    if (this.gewaehlte.size === 0) return this.bauwerk;
     const neu = new Map<string, LagerObjekt>();
     for (const o of this.bewegte.values()) neu.set(o.id, this.bewegeObjekt(o));
     for (const plane of this.bauwerk.planen) {
