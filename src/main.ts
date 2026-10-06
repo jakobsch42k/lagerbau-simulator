@@ -1,4 +1,5 @@
 import './style.css';
+import { standardArten } from './arten/standardArten';
 import { kochstelle } from './beispiele/kochstelle';
 import { Editor } from './editor/Editor';
 import { KLICK_TOLERANZ_PX } from './editor/konstanten';
@@ -9,18 +10,16 @@ import { Materialliste } from './model/Materialliste';
 import type { Hinweis } from './rules/Rule';
 import { RuleEngine } from './rules/RuleEngine';
 import { SEIL_ZUGABE_PRO_ENDE } from './rules/constants';
-import { standardRegeln } from './rules/standardRegeln';
 import { LinkBasis } from './share/LinkBasis';
 import { AnsichtsModus } from './ui/AnsichtsModus';
 import { HinweisPanel } from './ui/HinweisPanel';
 import { ParameterPanel } from './ui/ParameterPanel';
+import { RegelnPanel } from './ui/RegelnPanel';
 import { MateriallistePanel } from './ui/MateriallistePanel';
 import { Teilen } from './ui/Teilen';
 
 const MELDUNG_DAUER_MS = 4000;
 
-/** Was ein Zwei-Klick-Werkzeug gerade spannt, für die Statuszeile. */
-const ZWEI_PUNKT_TEIL: Partial<Record<WerkzeugName, string>> = { stange: 'Stange', seil: 'Seil', plane: 'Plane' };
 
 function element<T extends HTMLElement>(selektor: string): T {
   const el = document.querySelector<T>(selektor);
@@ -28,12 +27,19 @@ function element<T extends HTMLElement>(selektor: string): T {
   return el;
 }
 
-const editor = new Editor(Bauwerk.leer());
-const szene = new Szene(element('#ansicht'));
+const arten = standardArten();
+const editor = new Editor(Bauwerk.leer(), { arten });
+const szene = new Szene(element('#ansicht'), arten);
 const modus = new AnsichtsModus(document.body);
 const teilen = new Teilen();
-const regeln = new RuleEngine(standardRegeln());
-const parameter = new ParameterPanel(element('#parameter'), editor);
+const regelnPanel = new RegelnPanel(element('#btn-regeln'), element('#regeln'), element('#ausgeschaltet'), editor, () => modus.aktiv);
+
+/** Wechselt Editor und Ansicht; die Regel-Liste ist in der Ansicht nur lesbar und wird deshalb neu gezeigt. */
+function setzeModus(ansicht: boolean): void {
+  modus.setze(ansicht);
+  regelnPanel.zeige(editor.bauwerk.regelEinstellungen);
+}
+const parameter = new ParameterPanel(element('#parameter'), editor, arten);
 const hinweisPanel = new HinweisPanel(element('#hinweise'), (h) => editor.markiere(h.betroffeneTeile));
 const materialPanel = new MateriallistePanel(element('#stangenliste'), element('#platzbedarf'));
 const meldung = element<HTMLParagraphElement>('#meldung');
@@ -43,7 +49,8 @@ const werkzeugKnoepfe = [...document.querySelectorAll<HTMLButtonElement>('[data-
 let geprueft: { bauwerk: Bauwerk; hinweise: readonly Hinweis[]; liste: Materialliste } | null = null;
 function pruefung(bauwerk: Bauwerk): { hinweise: readonly Hinweis[]; liste: Materialliste } {
   if (geprueft?.bauwerk !== bauwerk) {
-    geprueft = { bauwerk, hinweise: regeln.pruefe(bauwerk), liste: Materialliste.aus(bauwerk, SEIL_ZUGABE_PRO_ENDE) };
+    const hinweise = RuleEngine.fuer(bauwerk.regelEinstellungen).pruefe(bauwerk);
+    geprueft = { bauwerk, hinweise, liste: Materialliste.aus(bauwerk, SEIL_ZUGABE_PRO_ENDE) };
   }
   return geprueft;
 }
@@ -52,9 +59,9 @@ function ladeAusAdresse(): void {
   try {
     const bauwerk = teilen.ausAdresse();
     if (bauwerk) editor.setzeBauwerk(bauwerk);
-    modus.setze(bauwerk !== null);
+    setzeModus(bauwerk !== null);
   } catch (e) {
-    modus.setze(false);
+    setzeModus(false);
     editor.zeigeMeldung((e as Error).message);
   }
 }
@@ -78,7 +85,7 @@ for (const knopf of werkzeugKnoepfe) {
 element('#btn-beispiel').addEventListener('click', () => editor.setzeBauwerk(kochstelle()));
 element('#btn-rueck').addEventListener('click', () => editor.rueckgaengig());
 element('#btn-wieder').addEventListener('click', () => editor.wiederholen());
-element('#btn-bearbeiten').addEventListener('click', () => modus.setze(false));
+element('#btn-bearbeiten').addEventListener('click', () => setzeModus(false));
 element('#btn-speichern').addEventListener('click', () => teilen.speichere(editor.bauwerk));
 element('#btn-teilen').addEventListener('click', async () => {
   const bauwerk = editor.bauwerk;
@@ -116,11 +123,13 @@ editor.abonniere((z) => {
   szene.zeige(z.bauwerk, markiert, z.stangenStart);
   parameter.zeige(z);
   hinweisPanel.zeige(hinweise);
+  regelnPanel.zeige(z.bauwerk.regelEinstellungen);
   materialPanel.zeige(liste);
   for (const knopf of werkzeugKnoepfe) knopf.setAttribute('aria-pressed', String(knopf.dataset.werkzeug === z.werkzeug));
   element<HTMLButtonElement>('#btn-rueck').disabled = !z.kannRueckgaengig;
   element<HTMLButtonElement>('#btn-wieder').disabled = !z.kannWiederholen;
-  const teil = ZWEI_PUNKT_TEIL[z.werkzeug] ?? 'Teil';
+  // Nur Zwei-Klick-Werkzeuge haben einen Startpunkt; ihr Label ist „Stange“, „Seil“ oder „Plane“.
+  const teil = z.werkzeug === 'auswahl' ? 'Teil' : arten.art(z.werkzeug).label;
   meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : '');
   if (z.meldung) {
     clearTimeout(meldungsTimer);

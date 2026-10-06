@@ -62,8 +62,9 @@ export class Dreibein extends Baugruppe {
     return new Dreibein(this.id, this.position, this.drehung, params);
   }
 
-  gedreht(delta: number): Dreibein {
-    return new Dreibein(this.id, this.position, this.drehung + delta, this.params);
+  gedreht(delta: number, um?: Vec3): Dreibein {
+    const position = um === undefined ? this.position : this.position.gedrehtUmY(delta, um);
+    return new Dreibein(this.id, position, this.drehung + delta, this.params);
   }
 
   verschoben(position: Vec3): Dreibein {

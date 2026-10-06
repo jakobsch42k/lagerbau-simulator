@@ -1,19 +1,12 @@
-import { ABock } from '../model/ABock';
-import { Baum } from '../model/Baum';
+import type { ObjektArt } from '../arten/ObjektArt';
+import type { ObjektRegister } from '../arten/ObjektRegister';
+import { standardArten } from '../arten/standardArten';
 import type { Bauwerk } from '../model/Bauwerk';
-import { Dreibein } from '../model/Dreibein';
-import { FUSS_TOLERANZ, MIN_SEILLAENGE, MIN_STANGENLAENGE, STANDARD_DURCHMESSER, STANGEN_UEBERSTAND } from '../model/konstanten';
-import { Plane } from '../model/Plane';
-import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
-import { Seil } from '../model/Seil';
-import { Stange } from '../model/Stange';
+import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
 import type { Vec3 } from '../model/Vec3';
 import type { SnapPunkt, SnapService, Treffer } from './SnapService';
 
-export type WerkzeugName = 'dreibein' | 'abock' | 'stange' | 'seil' | 'plane' | 'baum' | 'auswahl';
-
-/** Teile, die einen Klick fangen können, obwohl sie nicht immer sollen. Stangen und Bäume fangen immer. */
-export type KlickZiel = 'seil' | 'plane';
+export type WerkzeugName = ArtName | 'auswahl';
 
 /** Was ein Werkzeug vom Editor sehen und ändern darf. Diese Methoden benachrichtigen nicht. */
 export interface EditorKontext {
@@ -28,204 +21,82 @@ export interface Werkzeug {
   readonly name: WerkzeugName;
   readonly angefangen: Vec3 | null;
   /**
-   * Welche Seile oder Planen Klicks fangen (Spec v2b, D2). Sonst trifft der Strahl, was dahinter liegt:
-   * Ein großes Regendach blockiert so nicht das Setzen eines Dreibeins darunter.
+   * Welche Arten mit Klickverhalten `wahlweise` (Seile, Planen) Klicks fangen (Spec v2b, D2). Sonst trifft der Strahl,
+   * was dahinter liegt: Ein großes Regendach blockiert so nicht das Setzen eines Dreibeins darunter.
    */
-  readonly klickZiele: readonly KlickZiel[];
+  readonly klickZiele: readonly ArtName[];
   onKlick(treffer: Treffer, kontext: EditorKontext): void;
   abbrechen(): void;
 }
 
-/** Setzt eine Baugruppe mit Standardmaßen auf den angeklickten Bodenpunkt. */
-export class PlaceBaugruppeTool implements Werkzeug {
-  readonly angefangen: Vec3 | null = null;
-  readonly klickZiele: readonly KlickZiel[] = [];
-
-  constructor(readonly name: 'dreibein' | 'abock') {}
-
-  onKlick(treffer: Treffer, k: EditorKontext): void {
-    if (treffer.art !== 'boden') return;
-    const position = k.snap.aufRaster(treffer.punkt);
-    const id = k.neueId(this.name);
-    const gruppe =
-      this.name === 'dreibein' ? new Dreibein(id, position, 0, STANDARD_DREIBEIN) : new ABock(id, position, 0, STANDARD_ABOCK);
-    k.aendere(k.bauwerk.mitGruppe(gruppe));
-    k.waehle(id);
-  }
-
-  abbrechen(): void {}
-}
-
-/** Setzt einen Baum mit Startmaßen auf den angeklickten Bodenpunkt. */
-export class PlaceBaumTool implements Werkzeug {
-  readonly name = 'baum' as const;
-  readonly angefangen: Vec3 | null = null;
-  readonly klickZiele: readonly KlickZiel[] = [];
-
-  onKlick(treffer: Treffer, k: EditorKontext): void {
-    if (treffer.art !== 'boden') return;
-    const baum = new Baum(k.neueId('baum'), k.snap.aufRaster(treffer.punkt), STANDARD_BAUM);
-    k.aendere(k.bauwerk.mitBaum(baum));
-    k.waehle(baum.id);
-  }
-
-  abbrechen(): void {}
-}
-
-/** Zwei Klicks auf Einrastpunkte; liegen sie zu nah beieinander, passiert nichts. Unterklassen erzeugen daraus ein Teil. */
-abstract class ZweiPunktWerkzeug implements Werkzeug {
-  abstract readonly name: WerkzeugName;
-  readonly klickZiele: readonly KlickZiel[] = [];
-  /** Nur das Seil-Werkzeug rastet an Planen-Ösen ein. */
-  protected readonly fangtOesen: boolean = false;
+/**
+ * Setzt ein Objekt einer Art (Spec v3, D4): im Modus `punkt` mit einem Bodenklick aufs Raster, im Modus `linie`
+ * mit zwei Klicks auf Einrastpunkte. Liegen die zwei Punkte zu nah beieinander, passiert nichts.
+ */
+export class PlatziereTool implements Werkzeug {
   private start: SnapPunkt | null = null;
 
-  constructor(private readonly mindestabstand: number) {}
+  constructor(
+    private readonly art: ObjektArt,
+    readonly klickZiele: readonly ArtName[] = [],
+  ) {}
+
+  get name(): ArtName {
+    return this.art.name;
+  }
 
   get angefangen(): Vec3 | null {
     return this.start?.punkt ?? null;
   }
 
   onKlick(treffer: Treffer, k: EditorKontext): void {
-    const punkt = k.snap.snap(treffer, k.bauwerk, this.fangtOesen);
+    const platzieren = this.art.platzieren;
+    if (platzieren.modus === 'punkt') {
+      if (treffer.art === 'boden') this.fuegeHinzu(k, platzieren.erzeuge(k.neueId(this.art.name), k.snap.aufRaster(treffer.punkt)));
+      return;
+    }
+    const punkt = k.snap.snap(treffer, k.bauwerk, platzieren.fangtOesen);
     if (this.start === null) {
       this.start = punkt;
       return;
     }
     const start = this.start;
     this.start = null;
-    if (start.punkt.distanceTo(punkt.punkt) < this.mindestabstand) return;
-    this.erzeuge(start, punkt, k);
+    if (start.punkt.distanceTo(punkt.punkt) < platzieren.mindestabstand) return;
+    this.fuegeHinzu(k, platzieren.erzeuge(k.neueId(this.art.name), start.punkt, punkt.punkt));
   }
 
   abbrechen(): void {
     this.start = null;
   }
 
-  protected abstract erzeuge(start: SnapPunkt, ende: SnapPunkt, k: EditorKontext): void;
-}
-
-/** Zwei Klicks auf Einrastpunkte ergeben eine freie Stange; am Boden ohne Überstand. */
-export class DrawStangeTool extends ZweiPunktWerkzeug {
-  readonly name = 'stange' as const;
-
-  constructor() {
-    super(MIN_STANGENLAENGE);
-  }
-
-  protected erzeuge(start: SnapPunkt, ende: SnapPunkt, k: EditorKontext): void {
-    const stange = Stange.zwischen(
-      k.neueId('stange'),
-      start.punkt,
-      ende.punkt,
-      STANDARD_DURCHMESSER,
-      this.ueberstand(start),
-      this.ueberstand(ende),
-    );
-    k.aendere(k.bauwerk.mitStange(stange));
-    k.waehle(stange.id);
-  }
-
-  private ueberstand(p: SnapPunkt): number {
-    return p.punkt.y <= FUSS_TOLERANZ ? 0 : STANGEN_UEBERSTAND;
+  private fuegeHinzu(k: EditorKontext, objekt: LagerObjekt): void {
+    k.aendere(k.bauwerk.mit(objekt));
+    k.waehle(objekt.id);
   }
 }
 
-/** Zwei Klicks ergeben ein gerades Seil. Ein Ende am Boden wird automatisch ein Haring (Spec v2a, D1). */
-export class DrawSeilTool extends ZweiPunktWerkzeug {
-  readonly name = 'seil' as const;
-  override readonly klickZiele: readonly KlickZiel[] = ['plane'];
-  protected override readonly fangtOesen = true;
-
-  constructor() {
-    super(MIN_SEILLAENGE);
-  }
-
-  protected erzeuge(start: SnapPunkt, ende: SnapPunkt, k: EditorKontext): void {
-    const seil = new Seil(k.neueId('seil'), start.punkt, ende.punkt);
-    k.aendere(k.bauwerk.mitSeil(seil));
-    k.waehle(seil.id);
-  }
-}
-
-/** Beim Anlegen gibt es noch keine Plane, deren Maße man ändern könnte; die Meldung des Modells („Neigung, Breite oder Länge verringern“) passt nur zum Bearbeiten im Panel. */
-const PLANE_BODEN_MODELLFEHLER = 'Plane reicht in den Boden';
-const PLANE_BODEN_BEIM_ERSTELLEN = 'Plane reicht in den Boden: Aufhängelinie höher oder waagrechter spannen.';
-
-/** Zwei Klicks ergeben die Aufhängelinie einer Plane mit Startmaßen (Spec v2b, D2). */
-export class DrawPlaneTool extends ZweiPunktWerkzeug {
-  readonly name = 'plane' as const;
-
-  constructor() {
-    super(MIN_SEILLAENGE);
-  }
-
-  /**
-   * Beide Enden am Boden: Bodenplane mit 0°. Sonst 30°, oder die größte ganze Gradzahl darunter, bei der keine Öse im Boden liegt.
-   * Passt nicht einmal 0°, fliegt der RangeError der Plane bis zum Editor; der zeigt ihn als Meldung.
-   */
-  static startPlane(id: string, start: Vec3, ende: Vec3): Plane {
-    const amBoden = start.y <= FUSS_TOLERANZ && ende.y <= FUSS_TOLERANZ;
-    for (let grad = amBoden ? 0 : STANDARD_PLANE.neigungGrad; ; grad -= 1) {
-      try {
-        return new Plane(id, start, ende, { ...STANDARD_PLANE, neigungGrad: grad });
-      } catch (e) {
-        if (!(e instanceof RangeError)) throw e;
-        if (grad === 0) throw e.message.startsWith(PLANE_BODEN_MODELLFEHLER) ? new RangeError(PLANE_BODEN_BEIM_ERSTELLEN) : e;
-      }
-    }
-  }
-
-  protected erzeuge(start: SnapPunkt, ende: SnapPunkt, k: EditorKontext): void {
-    const plane = DrawPlaneTool.startPlane(k.neueId('plane'), start.punkt, ende.punkt);
-    k.aendere(k.bauwerk.mitPlane(plane));
-    k.waehle(plane.id);
-  }
-}
-
-/** Klick auf eine Stange wählt sie (bzw. ihre Gruppe), auf ein Seil, einen Baum oder eine Plane wählt diese, auf den Boden hebt die Auswahl auf. */
+/** Klick auf ein Objekt wählt es aus (bei einer Gruppenstange die ganze Gruppe), ein Klick auf den Boden hebt die Auswahl auf. */
 export class SelectTool implements Werkzeug {
   readonly name = 'auswahl' as const;
   readonly angefangen: Vec3 | null = null;
-  readonly klickZiele: readonly KlickZiel[] = ['seil', 'plane'];
+
+  constructor(readonly klickZiele: readonly ArtName[]) {}
 
   onKlick(treffer: Treffer, k: EditorKontext): void {
-    switch (treffer.art) {
-      case 'stange':
-        k.waehle(k.bauwerk.auswahlIdFuer(treffer.stangeId));
-        break;
-      case 'baum':
-        k.waehle(treffer.baumId);
-        break;
-      case 'seil':
-        k.waehle(treffer.seilId);
-        break;
-      case 'plane':
-        k.waehle(treffer.planeId);
-        break;
-      case 'boden':
-        k.waehle(null);
-        break;
-    }
+    k.waehle(treffer.art === 'boden' ? null : k.bauwerk.auswahlIdFuer(treffer.id));
   }
 
   abbrechen(): void {}
 }
 
-export function erzeugeWerkzeug(name: WerkzeugName): Werkzeug {
-  switch (name) {
-    case 'dreibein':
-    case 'abock':
-      return new PlaceBaugruppeTool(name);
-    case 'stange':
-      return new DrawStangeTool();
-    case 'seil':
-      return new DrawSeilTool();
-    case 'plane':
-      return new DrawPlaneTool();
-    case 'baum':
-      return new PlaceBaumTool();
-    case 'auswahl':
-      return new SelectTool();
-  }
+/**
+ * Die Klickziele kommen aus dem Register: Die Auswahl nennt alle Arten mit Klickverhalten `wahlweise`,
+ * ein Werkzeug, das Ösen fängt, die Arten mit Ösen, alle anderen keine.
+ */
+export function erzeugeWerkzeug(name: WerkzeugName, arten: ObjektRegister = standardArten()): Werkzeug {
+  if (name === 'auswahl') return new SelectTool(arten.wahlweise());
+  const art = arten.art(name);
+  const fangtOesen = art.platzieren.modus === 'linie' && art.platzieren.fangtOesen;
+  return new PlatziereTool(art, fangtOesen ? arten.mitOesen() : []);
 }

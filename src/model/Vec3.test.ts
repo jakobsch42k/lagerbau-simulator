@@ -35,4 +35,9 @@ describe('Vec3', () => {
     expect(Vec3.fromArray([]).toArray()).toEqual([0, 0, 0]);
     expect(Vec3.OBEN.toArray()).toEqual([0, 1, 0]);
   });
+
+  it('dreht um die senkrechte Achse durch einen Punkt, ohne die Höhe zu ändern', () => {
+    expect(new Vec3(1, 2, 0).gedrehtUmY(Math.PI / 2).equals(new Vec3(0, 2, 1), 1e-12)).toBe(true);
+    expect(new Vec3(3, 1, 0).gedrehtUmY(Math.PI, new Vec3(2, 5, 0)).equals(new Vec3(1, 1, 0), 1e-12)).toBe(true);
+  });
 });

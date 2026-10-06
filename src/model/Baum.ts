@@ -1,8 +1,10 @@
+import type { LagerObjekt } from './LagerObjekt';
 import type { BaumParams } from './params';
 import { Vec3 } from './Vec3';
 
 /** Ein Baum auf dem Lagerplatz: senkrechter Stamm ab dem Boden. Teil des Platzes, nicht des Baus. */
-export class Baum {
+export class Baum implements LagerObjekt {
+  readonly art = 'baum' as const;
   readonly position: Vec3;
 
   constructor(
@@ -25,5 +27,24 @@ export class Baum {
     if (p.y < 0 || p.y > this.params.hoehe) return Infinity;
     const waagrecht = Math.hypot(p.x - this.position.x, p.z - this.position.z);
     return Math.abs(waagrecht - this.params.durchmesser / 2);
+  }
+
+  ids(): readonly string[] {
+    return [this.id];
+  }
+
+  /** Der Baum bleibt am Boden: Der Konstruktor setzt y wieder auf 0. */
+  verschobenUm(dv: Vec3): Baum {
+    return new Baum(this.id, this.position.add(dv), this.params);
+  }
+
+  /** Ohne `um` um die eigene Position, also ohne sichtbare Änderung. */
+  gedreht(winkelRad: number, um: Vec3 = this.position): Baum {
+    return new Baum(this.id, this.position.gedrehtUmY(winkelRad, um), this.params);
+  }
+
+  /** Bäume stehen auf dem Platz und zählen nicht zum Platzbedarf (Spec v2a). */
+  platzPunkte(): readonly Vec3[] {
+    return [];
   }
 }

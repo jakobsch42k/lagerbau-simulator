@@ -140,3 +140,9 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Jakob („es heißt nicht Hering sondern Haring“).
 **Richtig ist:** Die Nutzer sind österreichische Leiterteams; dort heißt es „Haring“ (Mehrzahl „Haringe“). Überall umbenannt, auch in Bezeichnern (`Haring`, `haringe()`, Verankerungsart `'haring'`); das Dateiformat war nicht betroffen, weil Haringe aus der Geometrie abgeleitet und nie gespeichert werden.
 **Lehre:** Fachwörter in der Sprache der Nutzer wählen, nicht im Standarddeutsch des Modells; bei Pfadfinder-Begriffen (Bünde, Haringe, Zeltnamen) im Zweifel nachfragen.
+
+### 2026-10-06 — Teurer Ablauf: Review nach jedem Task bei schon getestetem Plan
+**Was die KI gemacht hat:** E0 lief mit Subagents: je Task ein Implementer und ein eigener Reviewer (beide Sonnet), dazu ein Vorab-Scan des Plans. Bis Task 10 waren das rund 2,8 Mio. Tokens. Alle 12 Task-Reviews kamen ohne wichtigen Befund zurück, weil der Plan-Code schon beim Schreiben des Plans ausprobiert worden war. Außerdem übersprangen Implementer dreimal den roten Testlauf (Test zuerst).
+**Gefunden durch:** Jakob („Du brennst gerade viel zu schnell durch mein Limit“); die fehlenden roten Testläufe durch die Reviews.
+**Richtig ist:** Bei einem vorab getesteten Plan kein Vorab-Scan und kein Review je Task; ein günstiges Modell für Tasks, die fertigen Code abschreiben; ein Review am Ende über den ganzen Branch. Vor einem langen Lauf die Kosten grob nennen.
+**Lehre:** Den Prüfaufwand am Risiko ausrichten, nicht am Rezept des Ablaufs.

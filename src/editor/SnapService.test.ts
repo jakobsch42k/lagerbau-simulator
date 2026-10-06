@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { Bauwerk } from '../model/Bauwerk';
 import { Dreibein } from '../model/Dreibein';
+import { ABock } from '../model/ABock';
 import { Baum } from '../model/Baum';
 import { Plane } from '../model/Plane';
-import { STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
+import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
 import { Vec3 } from '../model/Vec3';
 import { SnapService, type Treffer } from './SnapService';
 
@@ -19,7 +20,7 @@ describe('SnapService', () => {
   });
 
   it('rastet nahe der Spitze auf die Spitze ein', () => {
-    const p = snap.snap({ art: 'stange', punkt: dreibein.spitze().add(new Vec3(0.1, 0, 0)), stangeId: 'd-bein-0' }, bauwerk);
+    const p = snap.snap({ art: 'objekt', objektArt: 'dreibein', id: 'd-bein-0', punkt: dreibein.spitze().add(new Vec3(0.1, 0, 0)) }, bauwerk);
     expect(p.art).toBe('spitze');
     expect(p.punkt.equals(dreibein.spitze())).toBe(true);
   });
@@ -33,32 +34,32 @@ describe('SnapService', () => {
   it('projiziert einen Treffer mitten auf einer Stange auf ihre Achse', () => {
     const bein = dreibein.stangen()[0];
     const mitte = bein!.start.add(bein!.ende).scale(0.5);
-    const p = snap.snap({ art: 'stange', punkt: mitte.add(new Vec3(0, 0, 0.04)), stangeId: 'd-bein-0' }, bauwerk);
+    const p = snap.snap({ art: 'objekt', objektArt: 'dreibein', id: 'd-bein-0', punkt: mitte.add(new Vec3(0, 0, 0.04)) }, bauwerk);
     expect(p.art).toBe('stange');
     expect(bein!.naechsterPunkt(p.punkt).distanceTo(p.punkt)).toBeLessThan(1e-9);
   });
 
   it('fällt bei einer unbekannten Stange auf das Raster zurück', () => {
-    const p = snap.snap({ art: 'stange', punkt: new Vec3(5.04, 1, 5), stangeId: 'weg' }, bauwerk);
+    const p = snap.snap({ art: 'objekt', objektArt: 'stange', id: 'weg', punkt: new Vec3(5.04, 1, 5) }, bauwerk);
     expect(p.art).toBe('boden');
     expect(p.punkt.equals(new Vec3(5, 0, 5), 1e-9)).toBe(true);
   });
 
   it('rastet am Baumstamm genau am getroffenen Punkt ein', () => {
     const mitBaum = bauwerk.mitBaum(new Baum('b', new Vec3(5, 0, 0), STANDARD_BAUM));
-    const p = snap.snap({ art: 'baum', punkt: new Vec3(4.85, 1.7, 0), baumId: 'b' }, mitBaum);
+    const p = snap.snap({ art: 'objekt', objektArt: 'baum', id: 'b', punkt: new Vec3(4.85, 1.7, 0) }, mitBaum);
     expect(p.art).toBe('baum');
     expect(p.punkt.equals(new Vec3(4.85, 1.7, 0), 1e-9)).toBe(true);
   });
 
   it('nimmt bei einem unbekannten Baum den Boden darunter', () => {
-    const p = snap.snap({ art: 'baum', punkt: new Vec3(4.87, 1.7, 0), baumId: 'weg' }, bauwerk);
+    const p = snap.snap({ art: 'objekt', objektArt: 'baum', id: 'weg', punkt: new Vec3(4.87, 1.7, 0) }, bauwerk);
     expect(p.art).toBe('boden');
     expect(p.punkt.equals(new Vec3(4.9, 0, 0), 1e-9)).toBe(true);
   });
 
   it('nimmt bei einem Seiltreffer fern von Einrastpunkten den Boden darunter', () => {
-    const p = snap.snap({ art: 'seil', punkt: new Vec3(3, 1, 3), seilId: 's' }, bauwerk);
+    const p = snap.snap({ art: 'objekt', objektArt: 'seil', id: 's', punkt: new Vec3(3, 1, 3) }, bauwerk);
     expect(p.art).toBe('boden');
     expect(p.punkt.equals(new Vec3(3, 0, 3), 1e-9)).toBe(true);
   });
@@ -67,7 +68,7 @@ describe('SnapService', () => {
     // Flach bei z = 5, Richtung −z; Ösen u. a. bei (0 | 2 | 3,5) und (2 | 2 | 5).
     const plane = new Plane('pl', new Vec3(0, 2, 5), new Vec3(4, 2, 5), { ...STANDARD_PLANE, neigungGrad: 0 });
     const mitPlane = bauwerk.mitPlane(plane);
-    const treffer: Treffer = { art: 'plane', punkt: new Vec3(1.4, 2, 3.6), planeId: 'pl' };
+    const treffer: Treffer = { art: 'objekt', objektArt: 'plane', id: 'pl', punkt: new Vec3(1.4, 2, 3.6) };
     const p = snap.snap(treffer, mitPlane, true);
     expect(p.art).toBe('oese');
     expect(p.punkt.equals(new Vec3(0, 2, 3.5), 1e-9)).toBe(true);
@@ -89,9 +90,16 @@ describe('SnapService', () => {
     const spitze = dreibein.spitze();
     const plane = new Plane('pl', spitze, spitze.add(new Vec3(3, 0, 0)), { ...STANDARD_PLANE, neigungGrad: 0 });
     const mitPlane = bauwerk.mitPlane(plane);
-    const treffer: Treffer = { art: 'plane', punkt: spitze.add(new Vec3(0.07, 0, 0)), planeId: 'pl' };
+    const treffer: Treffer = { art: 'objekt', objektArt: 'plane', id: 'pl', punkt: spitze.add(new Vec3(0.07, 0, 0)) };
     const p = snap.snap(treffer, mitPlane, true);
     expect(p.art).toBe('spitze');
     expect(p.punkt.equals(spitze)).toBe(true);
+  });
+
+  it('projiziert einen Treffer auf den Riegel eines A-Bocks auf dessen Achse (Spec v3, D4)', () => {
+    const abock = new ABock('a', new Vec3(6, 0, 0), 0, STANDARD_ABOCK);
+    const p = snap.snap({ art: 'objekt', objektArt: 'abock', id: 'a-riegel', punkt: new Vec3(6.3, 0.45, 0.04) }, bauwerk.mitGruppe(abock));
+    expect(p.art).toBe('stange');
+    expect(p.punkt.equals(new Vec3(6.3, 0.4, 0), 1e-9)).toBe(true);
   });
 });

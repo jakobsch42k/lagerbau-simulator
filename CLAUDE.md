@@ -15,10 +15,11 @@
 
 TypeScript + Vite + three.js, Vitest (+ happy-dom für DOM-Tests), Playwright (Browser + Electron). Statisch, kein Backend. Deploy: GitHub Pages via Actions. Windows-Programm: Electron + electron-builder. Repo `jakobsch42k/lagerbau-simulator` (öffentlich, MIT).
 
-- `src/model/` — Domain (immutable), kein three.js: Stange, Bund, Fuss, Baugruppen, Seil, Baum, Plane (Ösen aus der Geometrie), Verankerung/Haring (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
-- `src/rules/` — `Rule`-Klassen R1–R8 + `RuleEngine`, kein three.js (R6–R8: Seile; Spec v2a). Planen haben bewusst keine Regeln (Spec v2b). R2 prüft Vierecke nur bei losen Ecken: `FesteKnoten` gibt Festigkeit von den Füßen über Dreiecke und Abspannseile weiter
-- `src/editor/` — three.js-Szene, Einrasten, Werkzeuge, Undo
-- `src/share/` — Serializer, URL-Codec (`lz-string`)
+- `src/model/` — Domain (immutable), kein three.js: `LagerObjekt` (gemeinsame Schnittstelle, `ART_NAMEN`), Stange, Bund, Fuss, Baugruppen, Seil, Baum, Plane (Ösen aus der Geometrie), `Bauwerk` (eine geordnete Liste `objekte` + typisierte Hüllen), Verankerung/Haring (aus der Geometrie abgeleitet), Materialliste, Platzbedarf
+- `src/rules/` — `Rule`-Klassen R1–R8 + `RuleEngine`, kein three.js (R6–R8: Seile; Spec v2a). Planen haben bewusst keine Regeln (Spec v2b). R2 prüft Vierecke nur bei losen Ecken: `FesteKnoten` gibt Festigkeit von den Füßen über Dreiecke und Abspannseile weiter; Regel-Einstellungen je Plan in `RegelEinstellungen` (an/aus, Werte; Spec v3, D8)
+- `src/arten/` — Registry je Objektart (`ObjektArt`, `ObjektRegister`, `standardArten()`): Codec, Panel, Platzieren, Fangpunkte, Klickverhalten; kein three.js
+- `src/editor/` — three.js-Szene (`SzenenInhalt` baut nur Geändertes neu), Darstellung je Art in `src/editor/darstellung/`, Einrasten, Werkzeuge (`PlatziereTool`, `SelectTool`), Undo
+- `src/share/` — Serializer (Datenformat v4 mit `objekte`; v1–v3 über `AltesFormat`), URL-Codec (`lz-string`)
 - `src/ui/` — Panels, Ansichtsmodus
 - `desktop/main.mjs` — Electron-Hauptprozess (ein gehärtetes Fenster, lädt `dist-desktop/`)
 - `e2e-desktop/` — E2E gegen die gebaute `.exe` (`npm run e2e:desktop`)
@@ -26,7 +27,8 @@ TypeScript + Vite + three.js, Vitest (+ happy-dom für DOM-Tests), Playwright (B
 
 ## Arbeitsweise
 
-- TDD: Test zuerst. Abdeckung `model/` + `rules/` ≥ 80 %.
+- TDD: Test zuerst. Abdeckung `model/` + `rules/` + `arten/` ≥ 80 %.
+- Neue Objektart: Modellklasse + Name in `ART_NAMEN`, `src/arten/<Art>Art.ts` + Zeile in `standardArten()`, Darstellung + Zeile in `standardDarstellungen()`, Knopf in `index.html` (Spec v3, D2).
 - OOP, immutable Updates, kleine Dateien.
 - Jeder Fehler der KI, den Jakob oder ein Test findet → Eintrag in `docs/ki-lernlog.md`.
 - Technische Sackgassen → Abschnitt unten.

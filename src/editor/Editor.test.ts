@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { Bauwerk } from '../model/Bauwerk';
 import { Dreibein } from '../model/Dreibein';
+import { ABock } from '../model/ABock';
 import { Baum } from '../model/Baum';
 import { Plane } from '../model/Plane';
-import { STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
+import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
 import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
@@ -33,7 +34,7 @@ describe('Editor', () => {
   it('setzt einen A-Bock und ignoriert Stangenklicks beim Platzieren', () => {
     const e = neuerEditor();
     e.waehleWerkzeug('abock');
-    e.klick({ art: 'stange', punkt: Vec3.NULL, stangeId: 'x' });
+    e.klick({ art: 'objekt', objektArt: 'stange', id: 'x', punkt: Vec3.NULL });
     expect(e.bauwerk.istLeer).toBe(true);
     e.klick(boden(0, 0));
     expect(e.bauwerk.gruppe('abock-1')?.typ).toBe('abock');
@@ -57,7 +58,7 @@ describe('Editor', () => {
     e.waehleWerkzeug('stange');
     e.klick(boden(3, 0));
     expect(e.zustand().stangenStart?.equals(new Vec3(3, 0, 0), 1e-9)).toBe(true);
-    e.klick({ art: 'stange', punkt: spitze.add(new Vec3(0.05, 0, 0)), stangeId: 'd-bein-0' });
+    e.klick({ art: 'objekt', objektArt: 'dreibein', id: 'd-bein-0', punkt: spitze.add(new Vec3(0.05, 0, 0)) });
     const s = e.bauwerk.stange('stange-1');
     expect(s?.start.equals(new Vec3(3, 0, 0), 1e-9)).toBe(true);
     expect(s?.naechsterPunkt(spitze).distanceTo(spitze)).toBeLessThan(1e-9);
@@ -86,7 +87,7 @@ describe('Editor', () => {
 
   it('wählt per Klick die ganze Gruppe, dreht sie mit R und löscht sie mit Entf', () => {
     const e = neuerEditor(Bauwerk.leer().mitGruppe(dreibein));
-    e.klick({ art: 'stange', punkt: Vec3.NULL, stangeId: 'd-bein-1' });
+    e.klick({ art: 'objekt', objektArt: 'dreibein', id: 'd-bein-1', punkt: Vec3.NULL });
     expect(e.zustand().auswahl).toBe('d');
     expect(e.taste('r', false)).toBe(true);
     expect(e.bauwerk.gruppe('d')?.drehung).toBeCloseTo(Math.PI / 12, 9);
@@ -97,7 +98,7 @@ describe('Editor', () => {
 
   it('hebt die Auswahl bei Bodenklick auf und tut ohne Auswahl bei Entf und R nichts', () => {
     const e = neuerEditor(Bauwerk.leer().mitGruppe(dreibein));
-    e.klick({ art: 'stange', punkt: Vec3.NULL, stangeId: 'd-bein-0' });
+    e.klick({ art: 'objekt', objektArt: 'dreibein', id: 'd-bein-0', punkt: Vec3.NULL });
     e.klick(boden(5, 5));
     expect(e.zustand().auswahl).toBeNull();
     e.taste('Delete', false);
@@ -155,7 +156,7 @@ describe('Editor', () => {
   it('spannt ein Seil von der Spitze zum Boden; das Bodenende wird ein Haring', () => {
     const e = neuerEditor(Bauwerk.leer().mitGruppe(dreibein));
     e.waehleWerkzeug('seil');
-    e.klick({ art: 'stange', punkt: dreibein.spitze(), stangeId: dreibein.stangen()[0]!.id });
+    e.klick({ art: 'objekt', objektArt: 'dreibein', id: dreibein.stangen()[0]!.id, punkt: dreibein.spitze() });
     expect(e.zustand().stangenStart).not.toBeNull();
     e.klick(boden(3, 0));
     const seil = e.bauwerk.seil('seil-1');
@@ -189,10 +190,10 @@ describe('Editor', () => {
     const seil = new Seil('s', new Vec3(0, 2, 0), new Vec3(2, 0, 0));
     const baum = new Baum('b', new Vec3(5, 0, 0), STANDARD_BAUM);
     const e = neuerEditor(Bauwerk.leer().mitSeil(seil).mitBaum(baum));
-    e.klick({ art: 'seil', punkt: new Vec3(1, 1, 0), seilId: 's' });
+    e.klick({ art: 'objekt', objektArt: 'seil', id: 's', punkt: new Vec3(1, 1, 0) });
     expect(e.zustand().auswahl).toBe('s');
     e.loescheAuswahl();
-    e.klick({ art: 'baum', punkt: new Vec3(4.85, 1, 0), baumId: 'b' });
+    e.klick({ art: 'objekt', objektArt: 'baum', id: 'b', punkt: new Vec3(4.85, 1, 0) });
     expect(e.zustand().auswahl).toBe('b');
     e.loescheAuswahl();
     expect(e.bauwerk.istLeer).toBe(true);
@@ -224,8 +225,8 @@ describe('Editor', () => {
       const pfosten = (id: string, x: number) => new Stange(id, new Vec3(x, 0, 0), new Vec3(x, hoehe, 0), 0.08);
       const e = neuerEditor(Bauwerk.leer().mitStange(pfosten('p1', 0)).mitStange(pfosten('p2', 4)));
       e.waehleWerkzeug('plane');
-      e.klick({ art: 'stange', punkt: new Vec3(0, hoehe, 0), stangeId: 'p1' });
-      e.klick({ art: 'stange', punkt: new Vec3(4, hoehe, 0), stangeId: 'p2' });
+      e.klick({ art: 'objekt', objektArt: 'stange', id: 'p1', punkt: new Vec3(0, hoehe, 0) });
+      e.klick({ art: 'objekt', objektArt: 'stange', id: 'p2', punkt: new Vec3(4, hoehe, 0) });
       return e.bauwerk.plane('plane-1')?.params.neigungGrad;
     };
     expect(spanne(2)).toBe(30); // Unterkante bei 2 − 3 · sin 30° = 0,5 m
@@ -236,7 +237,7 @@ describe('Editor', () => {
     const e = neuerEditor(Bauwerk.leer().mitStange(new Stange('p', new Vec3(2, 0, 0), new Vec3(2, 1, 0), 0.08)));
     e.waehleWerkzeug('plane');
     e.klick(boden(0, 0));
-    e.klick({ art: 'stange', punkt: new Vec3(2, 1, 0), stangeId: 'p' });
+    e.klick({ art: 'objekt', objektArt: 'stange', id: 'p', punkt: new Vec3(2, 1, 0) });
     expect(e.bauwerk.planen).toHaveLength(0);
     expect(e.zustand().meldung).toBe('Plane reicht in den Boden: Aufhängelinie höher oder waagrechter spannen.');
     expect(e.zustand().stangenStart).toBeNull();
@@ -245,7 +246,7 @@ describe('Editor', () => {
   it('meldet eine fast senkrechte Aufhängelinie und ignoriert zweimal denselben Punkt ohne Meldung', () => {
     const e = neuerEditor(Bauwerk.leer().mitStange(new Stange('p', Vec3.NULL, new Vec3(0, 3, 0), 0.08)));
     e.waehleWerkzeug('plane');
-    e.klick({ art: 'stange', punkt: new Vec3(0, 3, 0), stangeId: 'p' });
+    e.klick({ art: 'objekt', objektArt: 'stange', id: 'p', punkt: new Vec3(0, 3, 0) });
     e.klick(boden(0.1, 0));
     expect(e.zustand().meldung).toBe('Aufhängelinie zu steil.');
     e.zeigeMeldung(null);
@@ -259,7 +260,7 @@ describe('Editor', () => {
     const plane = new Plane('pl', new Vec3(0, 2, 0), new Vec3(4, 2, 0), { ...STANDARD_PLANE, neigungGrad: 0 });
     const e = neuerEditor(Bauwerk.leer().mitPlane(plane));
     e.waehleWerkzeug('seil');
-    e.klick({ art: 'plane', punkt: new Vec3(3.6, 2, -0.3), planeId: 'pl' });
+    e.klick({ art: 'objekt', objektArt: 'plane', id: 'pl', punkt: new Vec3(3.6, 2, -0.3) });
     e.klick(boden(6, 0));
     expect(e.bauwerk.seil('seil-1')?.start.equals(new Vec3(4, 2, 0), 1e-9)).toBe(true);
     expect(e.bauwerk.verankerung(new Vec3(4, 2, 0))).toEqual({ art: 'plane', planeId: 'pl' });
@@ -268,9 +269,56 @@ describe('Editor', () => {
   it('wählt eine Plane per Klick aus und löscht sie', () => {
     const plane = new Plane('pl', new Vec3(0, 2, 0), new Vec3(4, 2, 0), STANDARD_PLANE);
     const e = neuerEditor(Bauwerk.leer().mitPlane(plane));
-    e.klick({ art: 'plane', punkt: new Vec3(2, 1.5, -1), planeId: 'pl' });
+    e.klick({ art: 'objekt', objektArt: 'plane', id: 'pl', punkt: new Vec3(2, 1.5, -1) });
     expect(e.zustand().auswahl).toBe('pl');
     e.taste('Delete', false);
     expect(e.bauwerk.istLeer).toBe(true);
+  });
+
+  it('wählt per Klick auf den Riegel den ganzen A-Bock (Spec v3, D4)', () => {
+    const abock = new ABock('a', new Vec3(6, 0, 0), 0, STANDARD_ABOCK);
+    const e = neuerEditor(Bauwerk.leer().mitGruppe(abock));
+    e.klick({ art: 'objekt', objektArt: 'abock', id: 'a-riegel', punkt: new Vec3(6.3, 0.4, 0) });
+    expect(e.zustand().auswahl).toBe('a');
+  });
+
+  it('führt die Auswahl als Menge; auswahl ist die eine id oder null (Spec v3, D6)', () => {
+    const seil = new Seil('l', new Vec3(5, 2, 0), new Vec3(7, 0, 0));
+    const e = neuerEditor(Bauwerk.leer().mitGruppe(dreibein).mitSeil(seil));
+    e.klick({ art: 'objekt', objektArt: 'dreibein', id: 'd-bein-2', punkt: Vec3.NULL });
+    expect([...e.zustand().ausgewaehlt]).toEqual(['d']);
+    expect(e.zustand().auswahl).toBe('d');
+    e.waehleMehrere(['d', 'l', 'weg']);
+    expect([...e.zustand().ausgewaehlt]).toEqual(['d', 'l']);
+    expect(e.zustand().auswahl).toBeNull();
+    e.waehleMehrere(['l', 'weg']);
+    expect(e.zustand().auswahl).toBe('l');
+    e.taste('r', false); // R dreht nur Baugruppen (Spec v3, D6)
+    expect(e.zustand().kannRueckgaengig).toBe(false);
+    e.taste('Escape', false);
+    expect(e.zustand().ausgewaehlt.size).toBe(0);
+  });
+
+  it('ändert mehrere Objekte in einem Undo-Schritt (Spec v3, D6)', () => {
+    const seil = new Seil('l', new Vec3(5, 2, 0), new Vec3(7, 0, 0));
+    const anfang = Bauwerk.leer().mitGruppe(dreibein).mitSeil(seil);
+    const e = neuerEditor(anfang);
+    expect(e.aendereObjekte(['d', 'l', 'weg'], (o) => o.verschobenUm(new Vec3(1, 0, 0)))).toBe(true);
+    expect(e.bauwerk.gruppe('d')?.position.equals(new Vec3(1, 0, 0), 1e-9)).toBe(true);
+    expect(e.bauwerk.seil('l')?.start.equals(new Vec3(6, 2, 0), 1e-9)).toBe(true);
+    e.rueckgaengig();
+    expect(e.bauwerk).toBe(anfang);
+    expect(e.zustand().kannRueckgaengig).toBe(false);
+  });
+
+  it('lehnt eine ungültige Mehrfachänderung ganz ab und legt ohne Änderung keinen Undo-Schritt an', () => {
+    const plane = new Plane('pl', new Vec3(0, 2, 0), new Vec3(4, 2, 0), STANDARD_PLANE);
+    const anfang = Bauwerk.leer().mitGruppe(dreibein).mitPlane(plane);
+    const e = neuerEditor(anfang);
+    expect(e.aendereObjekte(['d', 'pl'], (o) => o.verschobenUm(new Vec3(0, -1, 0)))).toBe(false);
+    expect(e.zustand().meldung).toBe('Plane reicht in den Boden: Neigung, Breite oder Länge verringern.');
+    expect(e.bauwerk).toBe(anfang);
+    expect(e.aendereObjekte(['weg'], (o) => o.verschobenUm(new Vec3(1, 0, 0)))).toBe(true);
+    expect(e.zustand().kannRueckgaengig).toBe(false);
   });
 });

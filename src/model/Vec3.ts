@@ -55,6 +55,15 @@ export class Vec3 {
     return this.distanceTo(o) <= eps;
   }
 
+  /** Um die senkrechte Achse durch `um` gedreht; positiv wie `Baugruppe.drehung` (x dreht nach z). Die Höhe bleibt. */
+  gedrehtUmY(winkelRad: number, um: Vec3 = Vec3.NULL): Vec3 {
+    const c = Math.cos(winkelRad);
+    const s = Math.sin(winkelRad);
+    const dx = this.x - um.x;
+    const dz = this.z - um.z;
+    return new Vec3(um.x + dx * c - dz * s, this.y, um.z + dx * s + dz * c);
+  }
+
   toArray(): [number, number, number] {
     return [this.x, this.y, this.z];
   }

@@ -83,8 +83,9 @@ export class ABock extends Baugruppe {
     return new ABock(this.id, this.position, this.drehung, params);
   }
 
-  gedreht(delta: number): ABock {
-    return new ABock(this.id, this.position, this.drehung + delta, this.params);
+  gedreht(delta: number, um?: Vec3): ABock {
+    const position = um === undefined ? this.position : this.position.gedrehtUmY(delta, um);
+    return new ABock(this.id, position, this.drehung + delta, this.params);
   }
 
   verschoben(position: Vec3): ABock {

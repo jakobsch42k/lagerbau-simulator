@@ -1,7 +1,12 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest';
+import { BaumArt } from '../arten/BaumArt';
+import type { PanelSpec } from '../arten/ObjektArt';
+import { ObjektRegister } from '../arten/ObjektRegister';
+import { standardArten } from '../arten/standardArten';
 import { kochstelle } from '../beispiele/kochstelle';
 import { Editor } from '../editor/Editor';
+import { ABock } from '../model/ABock';
 import { Bauwerk } from '../model/Bauwerk';
 import { Baum } from '../model/Baum';
 import { Dreibein } from '../model/Dreibein';
@@ -145,5 +150,43 @@ describe('ParameterPanel', () => {
     expect(editor.zustand().meldung).toBe('Plane reicht in den Boden: Neigung, Breite oder Länge verringern.');
     expect(form(wurzel).value).toBe('satteldach');
     expect(editor.bauwerk.plane('pl')?.params.form).toBe('satteldach');
+  });
+
+  it('nimmt Felder und Info aus der Panel-Beschreibung der Art im übergebenen Register (Spec v3, D4)', () => {
+    class Testbaum extends BaumArt {
+      override panel(b: Baum): PanelSpec {
+        return { ...super.panel(b), info: 'Panel aus dem übergebenen Register' };
+      }
+    }
+    const arten = new ObjektRegister([...standardArten().alle.filter((a) => a.name !== 'baum'), new Testbaum()]);
+    const wurzel = document.createElement('section');
+    const editor = new Editor(Bauwerk.leer().mitBaum(new Baum('b', Vec3.NULL, STANDARD_BAUM)), { arten });
+    const panel = new ParameterPanel(wurzel, editor, arten);
+    editor.waehle('b');
+    panel.zeige(editor.zustand());
+    expect(wurzel.textContent).toContain('Panel aus dem übergebenen Register');
+    expect(feld(wurzel, 'Höhe').value).toBe('8');
+  });
+
+  it('baut das Formular des A-Bocks wie bisher', () => {
+    const { wurzel, editor } = panelMit(kochstelle(), 'abock');
+    expect(wurzel.querySelector('h2')?.textContent).toBe('A-Bock');
+    expect([...wurzel.querySelectorAll('label')].map((l) => l.textContent)).toEqual(['Stangenlänge (m)', 'Fußabstand (m)', 'Riegelhöhe (m)', 'Ø (cm)']);
+    expect(feld(wurzel, 'Ø').value).toBe('8');
+    expect(wurzel.textContent).toContain('Höhe 2.05 m · Beinwinkel 21° · R dreht');
+    tippe(feld(wurzel, 'Riegelhöhe'), '0.6');
+    const a = editor.bauwerk.gruppe('abock');
+    expect(a instanceof ABock && a.params.riegelhoehe).toBe(0.6);
+  });
+
+  it('zeigt bei der freien Stange nur den Durchmesser und setzt 0 zurück', () => {
+    const { wurzel, editor } = panelMit(kochstelle(), 'first');
+    expect(wurzel.querySelector('h2')?.textContent).toBe('Stange');
+    expect(wurzel.querySelectorAll('input')).toHaveLength(1);
+    tippe(feld(wurzel, 'Ø'), '10');
+    expect(editor.bauwerk.stange('first')?.durchmesser).toBeCloseTo(0.1, 9);
+    tippe(feld(wurzel, 'Ø'), '0');
+    expect(editor.zustand().meldung).toBe('Durchmesser muss größer als 0 sein');
+    expect(feld(wurzel, 'Ø').value).toBe('10');
   });
 });
