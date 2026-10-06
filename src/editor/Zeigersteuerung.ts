@@ -61,15 +61,16 @@ export class Zeigersteuerung {
 
   private bewegt(e: PointerEvent): void {
     const druck = this.druck;
-    if (druck && this.rahmenStart) return this.ziehRahmen(druck, e);
-    if (!druck || !this.editor.zieht) return;
+    if (!druck) return;
+    // Auch beim Kamera-Orbit/-Pan zählt die Wanderung: sonst löst das Loslassen einen Klick aus.
     druck.entfernt ||= Math.hypot(e.clientX - druck.x, e.clientY - druck.y) >= KLICK_TOLERANZ_PX;
+    if (this.rahmenStart) return this.ziehRahmen(druck, e);
+    if (!this.editor.zieht) return;
     const boden = druck.entfernt ? this.szene.bodenPunkt(e) : null;
     if (boden) this.editor.ziehe(boden);
   }
 
   private ziehRahmen(druck: Druck, e: PointerEvent): void {
-    druck.entfernt ||= Math.hypot(e.clientX - druck.x, e.clientY - druck.y) >= KLICK_TOLERANZ_PX;
     if (!druck.entfernt) return;
     const box = this.szene.leinwand.getBoundingClientRect();
     const stil = this.rahmenElement.style;

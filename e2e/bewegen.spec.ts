@@ -37,3 +37,36 @@ test('Doppelklick wählt den ganzen Bau, Ziehen bewegt alle Teile gleich weit, d
   await page.keyboard.press('Control+z');
   expect((await gespeichert(page)).map(lage)).toEqual(vorher.map(lage));
 });
+
+test('Kamera drehen über leerem Boden löst keinen Klick aus: nichts wird gesetzt, die Auswahl bleibt', async ({ page }) => {
+  await page.goto('./?t=orbit');
+  await page.getByRole('button', { name: 'Beispiel laden' }).click();
+  const vorher = await gespeichert(page);
+  const first = vorher.find((o) => o.art === 'stange');
+  if (!first?.start) throw new Error('First fehlt');
+  const ende = (first as unknown as { ende: V3 }).ende;
+  const auf = await bildschirmPunkt(page, [(first.start[0] + ende[0]) / 2, (first.start[1] + ende[1]) / 2, (first.start[2] + ende[2]) / 2]);
+  await page.mouse.click(auf.x, auf.y);
+  const titel = await page.locator('#parameter h2').innerText();
+  const leer = await bildschirmPunkt(page, [1, 0, 4]);
+  const drehen = async (): Promise<void> => {
+    await page.mouse.move(leer.x, leer.y);
+    await page.mouse.down();
+    await page.mouse.move(leer.x + 40, leer.y + 10, { steps: 5 });
+    await page.mouse.move(leer.x + 90, leer.y + 20, { steps: 5 });
+    await page.mouse.up();
+  };
+
+  await drehen();
+  expect(await page.locator('#parameter h2').innerText()).toBe(titel);
+
+  for (const werkzeug of ['Baum setzen', 'Stange ziehen', 'Seil spannen', 'Plane spannen', 'Dreibein setzen']) {
+    await page.getByRole('button', { name: werkzeug }).click();
+    await page.mouse.move(leer.x, leer.y);
+    await page.mouse.down();
+    await page.mouse.move(leer.x + 40, leer.y + 10, { steps: 5 });
+    await page.mouse.move(leer.x + 90, leer.y + 20, { steps: 5 });
+    await page.mouse.up();
+    expect((await gespeichert(page)).map((o) => o.id), werkzeug).toEqual(vorher.map((o) => o.id));
+  }
+});
