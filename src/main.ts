@@ -55,10 +55,16 @@ function pruefung(bauwerk: Bauwerk): { hinweise: readonly Hinweis[]; liste: Mate
   return geprueft;
 }
 
+/** Ein geladener Link oder eine geladene Datei wird eingepasst (Spec E1, D5); das Beispiel lässt die Kamera, wo sie ist. */
+function ladeUndZeigeAlles(bauwerk: Bauwerk): void {
+  editor.setzeBauwerk(bauwerk);
+  szene.zeigeAlles(bauwerk);
+}
+
 function ladeAusAdresse(): void {
   try {
     const bauwerk = teilen.ausAdresse();
-    if (bauwerk) editor.setzeBauwerk(bauwerk);
+    if (bauwerk) ladeUndZeigeAlles(bauwerk);
     setzeModus(bauwerk !== null);
   } catch (e) {
     setzeModus(false);
@@ -73,6 +79,16 @@ for (const knopf of werkzeugKnoepfe) {
 }
 element('#btn-beispiel').addEventListener('click', () => editor.setzeBauwerk(kochstelle()));
 element('#btn-rueck').addEventListener('click', () => editor.rueckgaengig());
+const ansichtKnopf = element<HTMLButtonElement>('#btn-ansicht');
+
+/** Plan / 3D (Taste P). Die Pfeiltasten richten sich danach: in der Planansicht zeigt „oben“ nach Norden. */
+function schalteAnsicht(): void {
+  szene.setzeAnsicht(szene.ansicht === 'plan' ? 'drei-d' : 'plan');
+  editor.setzeBlickrichtung(szene.blickrichtung());
+  ansichtKnopf.setAttribute('aria-pressed', String(szene.ansicht === 'plan'));
+}
+ansichtKnopf.addEventListener('click', schalteAnsicht);
+element('#btn-alles').addEventListener('click', () => szene.zeigeAlles(editor.bauwerk));
 element('#btn-wieder').addEventListener('click', () => editor.wiederholen());
 element('#btn-bearbeiten').addEventListener('click', () => setzeModus(false));
 element('#btn-speichern').addEventListener('click', () => teilen.speichere(editor.bauwerk));
@@ -93,13 +109,17 @@ element<HTMLInputElement>('#inp-laden').addEventListener('change', async (e) => 
   input.value = '';
   if (!datei) return;
   try {
-    editor.setzeBauwerk(await teilen.lade(datei));
+    ladeUndZeigeAlles(await teilen.lade(datei));
   } catch (fehler) {
     editor.zeigeMeldung((fehler as Error).message);
   }
 });
 window.addEventListener('keydown', (e) => {
-  if (modus.aktiv || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+  const ansichtstaste = e.ctrlKey || e.metaKey || e.altKey ? '' : e.key.toLowerCase();
+  if (ansichtstaste === 'p') return schalteAnsicht();
+  if (ansichtstaste === 'f') return szene.zeigeAlles(editor.bauwerk);
+  if (modus.aktiv) return;
   if (e.key.startsWith('Arrow')) editor.setzeBlickrichtung(szene.blickrichtung());
   if (editor.taste(e.key, e.ctrlKey || e.metaKey, e.shiftKey)) e.preventDefault();
 });
@@ -111,6 +131,7 @@ editor.abonniere((z) => {
   const markiert = new Set(z.markiert);
   z.ausgewaehlt.forEach((id) => markiert.add(id));
   szene.zeige(z.vorschau ?? z.bauwerk, markiert, z.stangenStart);
+  szene.zeigeMessung(z.messung);
   parameter.zeige(z);
   hinweisPanel.zeige(hinweise);
   regelnPanel.zeige(z.bauwerk.regelEinstellungen);
@@ -119,7 +140,7 @@ editor.abonniere((z) => {
   element<HTMLButtonElement>('#btn-rueck').disabled = !z.kannRueckgaengig;
   element<HTMLButtonElement>('#btn-wieder').disabled = !z.kannWiederholen;
   // Nur Zwei-Klick-Werkzeuge haben einen Startpunkt; ihr Label ist „Stange“, „Seil“ oder „Plane“.
-  const teil = z.werkzeug === 'auswahl' ? 'Teil' : arten.art(z.werkzeug).label;
+  const teil = z.werkzeug === 'auswahl' ? 'Teil' : z.werkzeug === 'messen' ? 'Messen' : arten.art(z.werkzeug).label;
   meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : '');
   if (z.meldung) {
     clearTimeout(meldungsTimer);

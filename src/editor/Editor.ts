@@ -5,6 +5,8 @@ import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
 import { kopiere, mitte } from '../model/Duplikat';
 import { bewege, mitgenommen } from '../model/Mitbewegung';
 import { Vec3 } from '../model/Vec3';
+import { idsImRechteck, type Rechteck } from './Rahmenwahl';
+import type { Messung } from './Messung';
 import { DREH_SCHRITT, DUPLIKAT_VERSATZ, PFEIL_SCHRITT, PFEIL_SCHRITT_GROSS } from './konstanten';
 import { SnapService, type Treffer } from './SnapService';
 import { Verlauf } from './Verlauf';
@@ -22,6 +24,8 @@ export interface EditorZustand {
   readonly markiert: ReadonlySet<string>;
   readonly werkzeug: WerkzeugName;
   readonly stangenStart: Vec3 | null;
+  /** Die angezeigte Messung (nicht im Bauwerk, nicht gespeichert); sonst null. */
+  readonly messung: Messung | null;
   readonly meldung: string | null;
   readonly kannRueckgaengig: boolean;
   readonly kannWiederholen: boolean;
@@ -47,6 +51,7 @@ export class Editor implements EditorKontext {
   private markiertIds: ReadonlySet<string> = new Set();
   private werkzeug: Werkzeug;
   private meldung: string | null = null;
+  private messungWert: Messung | null = null;
   private ziehen: Ziehvorgang | null = null;
   private zwischenablage: readonly LagerObjekt[] = [];
   private mausPunkt: Vec3 | null = null;
@@ -99,6 +104,16 @@ export class Editor implements EditorKontext {
     return this.idErzeuger(praefix);
   }
 
+  setzeMessung(messung: Messung | null): void {
+    this.messungWert = messung;
+  }
+
+  /** Rahmen-Auswahl der Planansicht: wählt alle Objekte im Rechteck (ersetzt die Auswahl). Nur im Auswahl-Werkzeug. */
+  waehleImRahmen(rechteck: Rechteck): void {
+    if (this.werkzeug.name !== 'auswahl') return;
+    this.waehleMehrere(idsImRechteck(this.bauwerk, rechteck));
+  }
+
   abonniere(beobachter: (z: EditorZustand) => void): void {
     this.beobachter.push(beobachter);
     beobachter(this.zustand());
@@ -114,6 +129,7 @@ export class Editor implements EditorKontext {
       markiert: this.markiertIds,
       werkzeug: this.werkzeug.name,
       stangenStart: this.werkzeug.angefangen,
+      messung: this.messungWert,
       meldung: this.meldung,
       kannRueckgaengig: this.verlauf.kannRueckgaengig,
       kannWiederholen: this.verlauf.kannWiederholen,
@@ -136,6 +152,7 @@ export class Editor implements EditorKontext {
 
   waehleWerkzeug(name: WerkzeugName): void {
     this.werkzeug.abbrechen();
+    this.messungWert = null;
     this.werkzeug = erzeugeWerkzeug(name, this.arten);
     this.melde();
   }
@@ -334,6 +351,7 @@ export class Editor implements EditorKontext {
       return true;
     }
     this.werkzeug.abbrechen();
+    this.messungWert = null;
     this.waehle(null);
     this.melde();
     return true;

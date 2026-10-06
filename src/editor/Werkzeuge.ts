@@ -5,9 +5,10 @@ import { Bau } from '../model/Bau';
 import type { Bauwerk } from '../model/Bauwerk';
 import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
 import type { Vec3 } from '../model/Vec3';
+import { Messung } from './Messung';
 import type { SnapPunkt, SnapService, Treffer } from './SnapService';
 
-export type WerkzeugName = ArtName | 'auswahl';
+export type WerkzeugName = ArtName | 'auswahl' | 'messen';
 
 /** Was ein Werkzeug vom Editor sehen und ändern darf. Diese Methoden benachrichtigen nicht. */
 export interface EditorKontext {
@@ -20,6 +21,8 @@ export interface EditorKontext {
   /** Ersetzt die ganze Auswahl. */
   setzeAuswahl(ids: Iterable<string>): void;
   neueId(praefix: string): string;
+  /** Zeigt eine Messung an (null löscht sie). Sie gehört nicht ins Bauwerk. */
+  setzeMessung(messung: Messung | null): void;
 }
 
 /** Klick-Zusatz: gedrückte Umschalttaste. */
@@ -133,11 +136,45 @@ export class SelectTool implements Werkzeug {
 }
 
 /**
+ * Messen (Spec E1, D5): zwei Klicks mit denselben Fangpunkten wie beim Seil. Die Messung bleibt sichtbar, bis man neu misst
+ * (der nächste erste Klick), Esc drückt oder das Werkzeug wechselt; das Bauwerk ändert sich nicht.
+ */
+export class MessTool implements Werkzeug {
+  readonly name = 'messen' as const;
+  private start: SnapPunkt | null = null;
+
+  constructor(
+    readonly klickZiele: readonly ArtName[],
+    private readonly fangtOesen: boolean,
+  ) {}
+
+  get angefangen(): Vec3 | null {
+    return this.start?.punkt ?? null;
+  }
+
+  onKlick(treffer: Treffer, k: EditorKontext): void {
+    const punkt = k.snap.snap(treffer, k.bauwerk, this.fangtOesen);
+    if (this.start === null) {
+      this.start = punkt;
+      k.setzeMessung(new Messung(punkt.punkt, null));
+      return;
+    }
+    k.setzeMessung(new Messung(this.start.punkt, punkt.punkt));
+    this.start = null;
+  }
+
+  abbrechen(): void {
+    this.start = null;
+  }
+}
+
+/**
  * Die Klickziele kommen aus dem Register: Die Auswahl nennt alle Arten mit Klickverhalten `wahlweise`,
  * ein Werkzeug, das Ösen fängt, die Arten mit Ösen, alle anderen keine.
  */
 export function erzeugeWerkzeug(name: WerkzeugName, arten: ObjektRegister = standardArten()): Werkzeug {
   if (name === 'auswahl') return new SelectTool(arten.wahlweise());
+  if (name === 'messen') return new MessTool(arten.mitOesen(), true);
   const art = arten.art(name);
   const fangtOesen = art.platzieren.modus === 'linie' && art.platzieren.fangtOesen;
   return new PlatziereTool(art, fangtOesen ? arten.mitOesen() : []);

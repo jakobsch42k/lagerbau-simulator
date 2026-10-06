@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { ObjektRegister } from '../arten/ObjektRegister';
 import { standardArten } from '../arten/standardArten';
 import type { Bauwerk } from '../model/Bauwerk';
@@ -8,15 +7,22 @@ import { Vec3 } from '../model/Vec3';
 import { standardDarstellungen } from './darstellung/standardDarstellungen';
 import type { Treffer } from './SnapService';
 import { SzenenInhalt } from './SzenenInhalt';
+import type { AnsichtsArt } from './Ansicht';
+import { Kameras } from './Kameras';
+import { Massstabsleiste } from './Massstabsleiste';
+import { Messanzeige } from './Messanzeige';
+import type { Messung } from './Messung';
 
 const BODEN_EBENE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
 /** three.js mit Renderer, Kamera und Boden. Kennt das Modell nur lesend; die Meshes hält der SzenenInhalt. */
 export class Szene {
   private readonly renderer = new THREE.WebGLRenderer({ antialias: true });
-  private readonly kamera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+  private readonly kameras: Kameras;
+  private readonly massstab: Massstabsleiste;
+  private readonly messanzeige: Messanzeige;
+  private letzteMessung: Messung | null = null;
   private readonly szene = new THREE.Scene();
-  private readonly steuerung: OrbitControls;
   private readonly inhalt: SzenenInhalt;
   private readonly boden: THREE.Mesh;
   private readonly raycaster = new THREE.Raycaster();
@@ -28,9 +34,9 @@ export class Szene {
     this.inhalt = new SzenenInhalt(standardDarstellungen(), arten);
     this.renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(this.renderer.domElement);
-    this.kamera.position.set(5, 4, 6);
-    this.steuerung = new OrbitControls(this.kamera, this.renderer.domElement);
-    this.steuerung.target.set(1.2, 1, 0);
+    this.kameras = new Kameras(this.renderer.domElement);
+    this.massstab = new Massstabsleiste(container);
+    this.messanzeige = new Messanzeige(container);
     this.szene.background = new THREE.Color(0xdfe9f3);
     const sonne = new THREE.DirectionalLight(0xffffff, 1.5);
     sonne.position.set(5, 10, 4);
@@ -42,12 +48,15 @@ export class Szene {
       this.boden,
       new THREE.GridHelper(40, 40, 0x5d8a3f, 0x6b9a4b),
       this.inhalt.wurzel,
+      this.messanzeige.wurzel,
     );
     new ResizeObserver(() => this.passeGroesseAn()).observe(container);
     this.passeGroesseAn();
     this.renderer.setAnimationLoop(() => {
-      this.steuerung.update();
-      this.renderer.render(this.szene, this.kamera);
+      this.kameras.update();
+      this.renderer.render(this.szene, this.kameras.aktiv);
+      this.massstab.zeige(this.kameras.ansicht === 'plan', this.kameras.planMeterProPixel());
+      this.messanzeige.positioniere(this.kameras.aktiv, this.container.clientWidth, this.container.clientHeight);
     });
   }
 
@@ -58,6 +67,26 @@ export class Szene {
   /** Baut nur neu, was sich geändert hat (Spec v3, D5). */
   zeige(bauwerk: Bauwerk, markiert: ReadonlySet<string>, stangenStart: Vec3 | null): void {
     this.inhalt.zeige(bauwerk, markiert, stangenStart);
+  }
+
+  get ansicht(): AnsichtsArt {
+    return this.kameras.ansicht;
+  }
+
+  /** Schaltet zwischen Plan (senkrecht von oben, Norden oben) und 3D um; jede Kamera behält ihre Lage. */
+  setzeAnsicht(art: AnsichtsArt): void {
+    this.kameras.setzeArt(art);
+  }
+
+  /** „Alles zeigen“ für die aktive Kamera. */
+  zeigeAlles(bauwerk: Bauwerk): void {
+    this.kameras.zeigeAlles(bauwerk);
+  }
+
+  zeigeMessung(messung: Messung | null): void {
+    if (messung === this.letzteMessung) return;
+    this.letzteMessung = messung;
+    this.messanzeige.zeige(messung);
   }
 
   treffer(e: MouseEvent, klickZiele: readonly ArtName[]): Treffer | null {
@@ -75,28 +104,26 @@ export class Szene {
     return punkt ? new Vec3(punkt.x, 0, punkt.z) : null;
   }
 
-  /** Schaltet das Drehen und Zoomen mit der Maus ein oder aus (beim Ziehen eines Objekts aus). */
+  /** Schaltet die Maus-Steuerung der Kamera ein oder aus (beim Ziehen eines Objekts oder Rahmens aus). */
   setzeKamerasteuerung(aktiv: boolean): void {
-    this.steuerung.enabled = aktiv;
+    this.kameras.setzeSteuerung(aktiv);
   }
 
-  /** Wohin die Kamera schaut, nur waagrecht; für „oben“ der Pfeiltasten. */
+  /** Wohin „oben“ der Pfeiltasten zeigt (Plan: Norden, 3D: Blickrichtung, nur waagrecht). */
   blickrichtung(): Vec3 {
-    const richtung = this.kamera.getWorldDirection(new THREE.Vector3());
-    return new Vec3(richtung.x, 0, richtung.z);
+    return this.kameras.blickrichtung();
   }
 
   private strahl(e: MouseEvent): THREE.Ray {
     const rect = this.leinwand.getBoundingClientRect();
     const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
-    this.raycaster.setFromCamera(ndc, this.kamera);
+    this.raycaster.setFromCamera(ndc, this.kameras.aktiv);
     return this.raycaster.ray;
   }
 
   private passeGroesseAn(): void {
     const { clientWidth: breite, clientHeight: hoehe } = this.container;
     this.renderer.setSize(breite, hoehe, false);
-    this.kamera.aspect = breite / Math.max(hoehe, 1);
-    this.kamera.updateProjectionMatrix();
+    this.kameras.passeGroesseAn(breite, hoehe);
   }
 }
