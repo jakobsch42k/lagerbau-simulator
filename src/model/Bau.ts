@@ -59,6 +59,15 @@ export class Bau {
       if (haengtAn) ids.add(seil.id);
     }
     for (const plane of bauwerk.planen) if (Bau.haengtAn(plane, stangen)) ids.add(plane.id);
+    // Seile an der Öse einer Plane mit beiden Enden am Bau wandern mit der Plane (siehe `Mitbewegung`).
+    const ganzePlanen = new Set(bauwerk.planen.filter((p) => Bau.haengtAnPunkt(p.start, stangen) && Bau.haengtAnPunkt(p.ende, stangen)).map((p) => p.id));
+    for (const seil of bauwerk.seile) {
+      const anPlane = seil.endpunkte().some((p) => {
+        const v = bauwerk.verankerung(p);
+        return v.art === 'plane' && ganzePlanen.has(v.planeId);
+      });
+      if (anPlane) ids.add(seil.id);
+    }
     return new Bau(stangenIds, bauwerk.objekte.map((o) => o.id).filter((id) => ids.has(id)));
   }
 

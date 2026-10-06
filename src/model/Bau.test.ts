@@ -67,6 +67,19 @@ describe('Bau', () => {
     expect(Bau.von(platz(), 'p-fremd').objektIds).toEqual(['p-fremd']);
   });
 
+  it('nimmt ein Seil auf, das nur an der Öse einer Plane des Baus hängt', () => {
+    const plane = new Plane('p-oese', abock.spitze(), dreibein.spitze(), STANDARD_PLANE);
+    const b = kochstelle().mitPlane(plane).mitSeil(new Seil('s-oese', plane.oesen[0] as Vec3, new Vec3(0, 0, 8)));
+    expect(Bau.von(b, 'abock').objektIds).toContain('s-oese');
+  });
+
+  it('nimmt ein Seil an der Öse einer Plane mit einem Ende am Baum nicht auf (es wandert nicht mit)', () => {
+    const baumEnde = new Vec3(-3.85, 3, 0);
+    const plane = new Plane('p-b', abock.spitze(), baumEnde, STANDARD_PLANE);
+    const b = platz().mitPlane(plane).mitSeil(new Seil('s-oese', plane.oesen[1] as Vec3, new Vec3(0, 0, 8)));
+    expect(Bau.von(b, 'abock').objektIds).not.toContain('s-oese');
+  });
+
   it('gibt für einen Baum nur den Baum zurück', () => {
     expect(Bau.von(platz(), 'baum').objektIds).toEqual(['baum']);
   });
