@@ -23,4 +23,5 @@ Das Programm ist nicht signiert, deshalb zeigt Windows beim ersten Start „Der 
 „Weitere Informationen“ → „Trotzdem ausführen“.
 „Link kopieren“ erzeugt einen Link auf die Web-Version, den man z. B. am Handy öffnet.
 Alle Links und Dateien, die mit Version 1.1 gespeichert wurden (Format-Version geändert), öffnet nur die .exe ab 1.1.0; ältere zeigen „Ungültige Bauwerk-Daten“.
-Alle Links und Dateien, die mit Version 1.2 gespeichert wurden (Format-Version geändert, auch ohne Planen), öffnet nur die .exe ab 1.2.0; ältere zeigen „Ungültige Bauwerk-Daten“.
+Alle Links und Dateien, die mit Version 1.2 gespeichert wurden (Format-Version geändert, auch ohne Planen), öffnet nur die .exe ab 1.2.0; ältere zeigen „Ungültige Bauwerk-Daten”.
+Alle Links und Dateien, die mit Version 1.3 gespeichert wurden (Format-Version geändert), öffnet nur die .exe ab 1.3.0; ältere zeigen „Ungültige Bauwerk-Daten”.
