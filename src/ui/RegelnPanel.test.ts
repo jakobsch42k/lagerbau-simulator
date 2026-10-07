@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { Editor } from '../editor/Editor';
 import { Bauwerk } from '../model/Bauwerk';
+import { AusgeschaltetZeile } from './AusgeschaltetZeile';
 import { RegelnPanel } from './RegelnPanel';
 
 const aufbau = (nurLesen = false): { knopf: HTMLButtonElement; liste: HTMLElement; zeile: HTMLElement; editor: Editor } => {
@@ -10,7 +11,7 @@ const aufbau = (nurLesen = false): { knopf: HTMLButtonElement; liste: HTMLElemen
   liste.hidden = true;
   const zeile = document.createElement('p');
   const editor = new Editor(Bauwerk.leer());
-  const panel = new RegelnPanel(knopf, liste, zeile, editor, () => nurLesen);
+  const panel = new RegelnPanel(knopf, liste, new AusgeschaltetZeile(zeile), editor, () => nurLesen);
   editor.abonniere((z) => panel.zeige(z.bauwerk.regelEinstellungen));
   return { knopf, liste, zeile, editor };
 };
