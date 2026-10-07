@@ -31,7 +31,9 @@ describe('ZeltGeometrie: umriss und flaeche (Spec E4, D3)', () => {
   it('doppelkegel: Oval aus zwei Halbkreisen (Ø Breite), Länge entlang x', () => {
     const k = new Zelt('k', Vec3.NULL, KEGEL);
     const u = ZeltGeometrie.umriss(k);
-    expect(u).toHaveLength(16);
+    expect(u).toHaveLength(18);
+    expect(u[8]?.z).toBeCloseTo(u[9]?.z ?? 0, 9); // gerade Seiten waagrecht
+    expect(u[17]?.z).toBeCloseTo(u[0]?.z ?? 0, 9);
     expect(Math.max(...u.map((p) => p.z))).toBeCloseTo(2, 9);
     expect(ZeltGeometrie.kegelHalbachse(k)).toBeCloseTo(0.775, 9);
     expect(ZeltGeometrie.flaeche(k)).toBeGreaterThan(Math.PI * 4 + 1.55 * 4 - 0.8);
