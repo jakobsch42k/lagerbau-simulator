@@ -11,7 +11,7 @@ const flach = {
 test('R4 abschalten: der Hinweis verschwindet und bleibt nach Speichern und Laden aus (Spec v3, D8)', async ({ page }) => {
   await page.goto(`./?t=regeln#b=${LZString.compressToEncodedURIComponent(JSON.stringify(flach))}`);
   await expect(page.locator('#hinweise')).toContainText('R4: Beine sehr flach gespreizt');
-  await page.getByRole('button', { name: 'Regeln…' }).click();
+  await page.getByRole('button', { name: 'Regeln…', exact: true }).click();
   const r4 = page.getByRole('checkbox', { name: /^R4:/ });
   await expect(r4).toBeDisabled(); // geteilter Link: Ansicht, nur lesbar
   await page.getByRole('button', { name: 'Bearbeiten' }).click();
