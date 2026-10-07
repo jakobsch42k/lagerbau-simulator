@@ -49,7 +49,7 @@ test('Luftbild laden, Maßstab mit zwei Klicks, Speichern und Laden, Link ohne B
 
   await panel(page).getByRole('slider').fill('50');
   const gespeichert = await speichern(page);
-  expect(gespeichert.json.version).toBe(6);
+  expect(gespeichert.json.version).toBe(7);
   const original = `data:image/png;base64,${(await fs.readFile(TESTBILD)).toString('base64')}`;
   expect(gespeichert.json.luftbild?.daten).toBe(original);
   expect(gespeichert.json.luftbild?.deckkraft).toBe(0.5);
