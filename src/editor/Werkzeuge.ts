@@ -5,10 +5,12 @@ import { Bau } from '../model/Bau';
 import type { Bauwerk } from '../model/Bauwerk';
 import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
 import type { Vec3 } from '../model/Vec3';
+import { MassstabTool } from './MassstabTool';
 import { Messung } from './Messung';
 import type { SnapPunkt, SnapService, Treffer } from './SnapService';
+import { ZeichenTool } from './ZeichenTool';
 
-export type WerkzeugName = ArtName | 'auswahl' | 'messen';
+export type WerkzeugName = ArtName | 'auswahl' | 'messen' | 'massstab';
 
 /** Was ein Werkzeug vom Editor sehen und ändern darf. Diese Methoden benachrichtigen nicht. */
 export interface EditorKontext {
@@ -30,9 +32,18 @@ export interface KlickOptionen {
   readonly shift?: boolean;
 }
 
+/** Die Punkte, die ein Mehrpunkt-Werkzeug bisher gesetzt hat (Spec E3); die Szene zeigt sie als Vorschau. Bei jeder Änderung eine neue Instanz. */
+export interface Zeichnung {
+  readonly punkte: readonly Vec3[];
+  /** Ob die Vorschau den Linienzug zum Vieleck schließt. */
+  readonly geschlossen: boolean;
+}
+
 export interface Werkzeug {
   readonly name: WerkzeugName;
   readonly angefangen: Vec3 | null;
+  /** Nur Mehrpunkt-Werkzeuge (Zone, Linie): die bisher gesetzten Punkte; null, solange nichts gezeichnet wird. */
+  readonly zeichnung?: Zeichnung | null;
   /**
    * Welche Arten mit Klickverhalten `wahlweise` (Seile, Planen) Klicks fangen (Spec v2b, D2). Sonst trifft der Strahl,
    * was dahinter liegt: Ein großes Regendach blockiert so nicht das Setzen eines Dreibeins darunter.
@@ -41,6 +52,8 @@ export interface Werkzeug {
   onKlick(treffer: Treffer, kontext: EditorKontext, optionen?: KlickOptionen): void;
   /** Nur Werkzeuge, die auf Doppelklick reagieren (die Auswahl). */
   onDoppelklick?(treffer: Treffer, kontext: EditorKontext, optionen?: KlickOptionen): void;
+  /** Nur Mehrpunkt-Werkzeuge: Enter schließt die Zeichnung ab. Wirft das Modell einen RangeError, bleibt die Zeichnung. */
+  onBestaetigen?(kontext: EditorKontext): void;
   /**
    * Nur Werkzeuge ohne halben Zustand, die Objekte bewegen (die Auswahl): Drücken der Maus auf ein Objekt. Wählt es bei Bedarf allein
    * aus und liefert true, wenn ein Ziehen beginnen darf. Fehlt die Methode, reagiert das Werkzeug nicht auf Ziehen.
@@ -75,6 +88,7 @@ export class PlatziereTool implements Werkzeug {
       if (treffer.art === 'boden') this.fuegeHinzu(k, platzieren.erzeuge(k.neueId(this.art.name), k.snap.aufRaster(treffer.punkt)));
       return;
     }
+    if (platzieren.modus === 'mehrpunkt') return; // dafür gibt es das ZeichenTool
     const punkt = k.snap.snap(treffer, k.bauwerk, platzieren.fangtOesen);
     if (this.start === null) {
       this.start = punkt;
@@ -175,7 +189,9 @@ export class MessTool implements Werkzeug {
 export function erzeugeWerkzeug(name: WerkzeugName, arten: ObjektRegister = standardArten()): Werkzeug {
   if (name === 'auswahl') return new SelectTool(arten.wahlweise());
   if (name === 'messen') return new MessTool(arten.mitOesen(), true);
+  if (name === 'massstab') return new MassstabTool();
   const art = arten.art(name);
+  if (art.platzieren.modus === 'mehrpunkt') return new ZeichenTool(art, art.platzieren);
   const fangtOesen = art.platzieren.modus === 'linie' && art.platzieren.fangtOesen;
   return new PlatziereTool(art, fangtOesen ? arten.mitOesen() : []);
 }

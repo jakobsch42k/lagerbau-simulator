@@ -30,7 +30,7 @@ export class Messanzeige {
     this.wurzel.add(linie, this.marke(bis));
     this.mitte = von.clone().add(bis).multiplyScalar(0.5);
     this.beschriftung.textContent = messung.text;
-    this.beschriftung.hidden = false;
+    this.beschriftung.hidden = !messung.beschriftet;
   }
 
   /** Setzt den Text auf die Bildschirmstelle der Mitte; jedes Bild aufrufen. */

@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { kochstelle } from '../beispiele/kochstelle';
 import { Baum } from '../model/Baum';
 import { Bauwerk } from '../model/Bauwerk';
+import { Luftbild } from '../model/Luftbild';
 import { Vec3 } from '../model/Vec3';
-import { dreiDEinpassen, EINPASS_RAND, massstabsLaenge, planEinpassen, rahmenUm, sichtbarePunkte } from './Ansicht';
+import { bodenGroesse, dreiDEinpassen, EINPASS_RAND, massstabsLaenge, nordwinkelGrad, planEinpassen, rahmenUm, sichtbarePunkte } from './Ansicht';
 
 describe('rahmenUm', () => {
   it('passt bei einem leeren Bauwerk den Boden mit 40 × 40 m ein', () => {
@@ -91,5 +92,36 @@ describe('massstabsLaenge', () => {
   it('bleibt bei starkem Hineinzoomen bei 1 m und bei weitem Herauszoomen bei 50 m', () => {
     expect(massstabsLaenge(0.0001).meter).toBe(1);
     expect(massstabsLaenge(5).meter).toBe(50);
+  });
+});
+
+describe('Luftbild in der Ansicht (Spec E2, D3)', () => {
+  const bild = (breitePx: number, hoehePx: number, mpp: number): Luftbild =>
+    new Luftbild('data:image/png;base64,iVBORw0KGgo=', breitePx, hoehePx, mpp, 1);
+
+  it('„Alles zeigen“ ohne Objekte passt auf das Bild ein, mit Objekten auf die Objekte', () => {
+    const l = bild(200, 100, 0.5);
+    const r = rahmenUm(sichtbarePunkte(Bauwerk.leer().mitLuftbild(l)));
+    expect([r.minX, r.maxX, r.minZ, r.maxZ]).toEqual([-50, 50, -25, 25]);
+    const mitBaum = Bauwerk.leer().mitLuftbild(l).mit(new Baum('b', new Vec3(7, 0, -3), { durchmesser: 0.3, hoehe: 6 }));
+    const r2 = rahmenUm(sichtbarePunkte(mitBaum));
+    expect([r2.minX, r2.maxX]).toEqual([7, 7]);
+  });
+
+  it('die Bodenfläche ist mindestens 40 × 40 m und mindestens Bildgröße + 20 m', () => {
+    expect(bodenGroesse(null)).toEqual({ breite: 40, tiefe: 40 });
+    expect(bodenGroesse(bild(200, 100, 0.1))).toEqual({ breite: 40, tiefe: 40 });
+    expect(bodenGroesse(bild(200, 100, 0.5))).toEqual({ breite: 120, tiefe: 70 });
+    expect(bodenGroesse(bild(100, 200, 0.5))).toEqual({ breite: 70, tiefe: 120 });
+    expect(bodenGroesse(bild(100, 100, 0.2))).toEqual({ breite: 40, tiefe: 40 });
+  });
+
+  it('der Nordpfeil zeigt bei Blick nach Norden nach oben und dreht sich mit dem Azimut', () => {
+    expect(nordwinkelGrad(0, -1)).toBeCloseTo(0);
+    expect(nordwinkelGrad(1, 0)).toBeCloseTo(-90);
+    expect(nordwinkelGrad(-1, 0)).toBeCloseTo(90);
+    expect(Math.abs(nordwinkelGrad(0, 1))).toBeCloseTo(180);
+    expect(nordwinkelGrad(0, 0)).toBe(0);
+    expect(nordwinkelGrad(0, -5)).toBeCloseTo(0);
   });
 });

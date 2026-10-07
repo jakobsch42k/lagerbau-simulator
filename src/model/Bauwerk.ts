@@ -3,6 +3,7 @@ import { Baum } from './Baum';
 import { type Bund, BundFinder } from './Bund';
 import { Fuss } from './Fuss';
 import type { LagerObjekt } from './LagerObjekt';
+import type { Luftbild } from './Luftbild';
 import { RegelEinstellungen } from '../rules/RegelEinstellungen';
 import { Plane } from './Plane';
 import { Seil } from './Seil';
@@ -28,6 +29,8 @@ export class Bauwerk {
     readonly objekte: readonly LagerObjekt[],
     /** Regeln an/aus und eingestellte Werte (Spec v3, D8). Gehören zum Plan, nicht zu einem Objekt. */
     readonly regelEinstellungen: RegelEinstellungen = RegelEinstellungen.standard(),
+    /** Das Luftbild als Boden (Spec E2, D1). Kein Objekt: nicht auswählbar, nicht verschiebbar, nicht in `objekte`. */
+    readonly luftbild: Luftbild | null = null,
   ) {
     this.gruppen = objekte.filter((o): o is Baugruppe => o instanceof Baugruppe);
     this.freieStangen = objekte.filter((o): o is Stange => o instanceof Stange);
@@ -41,8 +44,12 @@ export class Bauwerk {
   }
 
   /** Baut ein Bauwerk in einem Schritt, z. B. beim Laden. Wirft bei doppelten ids. */
-  static von(liste: readonly LagerObjekt[], regelEinstellungen: RegelEinstellungen = RegelEinstellungen.standard()): Bauwerk {
-    const bauwerk = new Bauwerk([...liste], regelEinstellungen);
+  static von(
+    liste: readonly LagerObjekt[],
+    regelEinstellungen: RegelEinstellungen = RegelEinstellungen.standard(),
+    luftbild: Luftbild | null = null,
+  ): Bauwerk {
+    const bauwerk = new Bauwerk([...liste], regelEinstellungen, luftbild);
     bauwerk.index();
     return bauwerk;
   }
@@ -103,7 +110,7 @@ export class Bauwerk {
 
   mit(o: LagerObjekt): Bauwerk {
     this.pruefeFrei(o.ids());
-    return new Bauwerk([...this.objekte, o], this.regelEinstellungen);
+    return new Bauwerk([...this.objekte, o], this.regelEinstellungen, this.luftbild);
   }
 
   /** Ersetzt das Objekt mit derselben id. Alle anderen Objekte bleiben dieselben (`===`). */
@@ -112,18 +119,23 @@ export class Bauwerk {
     if (!alt) throw new Error(`Objekt ${o.id} gibt es nicht`);
     if (alt === o) return this;
     this.pruefeFrei(o.ids(), alt);
-    return new Bauwerk(this.objekte.map((x) => (x === alt ? o : x)), this.regelEinstellungen);
+    return new Bauwerk(this.objekte.map((x) => (x === alt ? o : x)), this.regelEinstellungen, this.luftbild);
   }
 
   /** Entfernt das Objekt mit dieser id. Teil-ids (Stangen einer Gruppe) entfernen nichts. */
   ohne(id: string): Bauwerk {
     const rest = this.objekte.filter((o) => o.id !== id);
-    return rest.length === this.objekte.length ? this : new Bauwerk(rest, this.regelEinstellungen);
+    return rest.length === this.objekte.length ? this : new Bauwerk(rest, this.regelEinstellungen, this.luftbild);
   }
 
   /** Neue Regel-Einstellungen; alle Objekte bleiben dieselben (`===`). Über den Editor ein Undo-Schritt. */
   mitRegelEinstellungen(e: RegelEinstellungen): Bauwerk {
-    return e === this.regelEinstellungen ? this : new Bauwerk(this.objekte, e);
+    return e === this.regelEinstellungen ? this : new Bauwerk(this.objekte, e, this.luftbild);
+  }
+
+  /** Luftbild laden, ändern oder (mit null) entfernen; alle Objekte bleiben dieselben (`===`). Über den Editor ein Undo-Schritt. */
+  mitLuftbild(luftbild: Luftbild | null): Bauwerk {
+    return luftbild === this.luftbild ? this : new Bauwerk(this.objekte, this.regelEinstellungen, luftbild);
   }
 
   mitGruppe(gruppe: Baugruppe): Bauwerk {

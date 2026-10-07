@@ -38,6 +38,9 @@ export class ObjektRegister {
     return this.alle.filter((a) => a.klick === 'wahlweise').map((a) => a.name);
   }
 
+  /** Ob ein Objekt zum Platzbedarf zählt (Spec E3, D3); Arten ohne Angabe zählen. Als Funktion für `Platzbedarf.aus`, das die Arten nicht kennt. */
+  readonly zaehltZumPlatzbedarf = (o: LagerObjekt): boolean => this.art(o.art).zaehltZumPlatzbedarf ?? true;
+
   /** Arten mit Ösen, an denen ein Seil einrastet. */
   mitOesen(): readonly ArtName[] {
     return this.alle.filter((a) => a.hatOesen).map((a) => a.name);

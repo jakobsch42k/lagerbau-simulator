@@ -7,18 +7,21 @@ export interface TastenBefehle {
   auswahl(): ReadonlySet<string>;
   brichZiehenAb(): void;
   abbrechen(): void;
+  bestaetige(): boolean;
   rueckgaengig(): void;
   wiederholen(): void;
   waehleAlle(): void;
   dupliziere(): void;
   kopiereAuswahl(): void;
   fuegeEin(): void;
+  /** Entfernt den gewählten Griff einer Zone oder Linie; false, wenn keiner gewählt ist. */
+  entferneEcke(): boolean;
   loescheAuswahl(): void;
   dreheAuswahl(winkel: number): void;
   verschiebeAuswahl(dv: Vec3): boolean;
 }
 
-/** Übersetzt Tastenkürzel in Editor-Befehle (Spec E1, D3): Pfeile, R, Entf, Esc, Strg+Z/Y/A/D/C/V. */
+/** Übersetzt Tastenkürzel in Editor-Befehle (Spec E1, D3): Pfeile, R, Entf, Esc, Enter (Zeichnung abschließen), Strg+Z/Y/A/D/C/V. */
 export class Tastatur {
   /** Blickrichtung der Ansicht (waagrechter Anteil); „oben“ der Pfeiltasten. Standard Norden (-z), wie in der Planansicht. */
   private blick: Vec3 = new Vec3(0, 0, -1);
@@ -34,9 +37,12 @@ export class Tastatur {
   verarbeite(taste: string, strg: boolean, umschalt: boolean): boolean {
     if (taste === 'Escape') return this.escape();
     if (this.editor.zieht) return false;
+    if (taste === 'Enter') return this.editor.bestaetige();
     if (strg) return this.strgTaste(taste.toLowerCase());
     const klein = taste.toLowerCase();
-    if (taste === 'Delete' || taste === 'Backspace') this.editor.loescheAuswahl();
+    if (taste === 'Delete' || taste === 'Backspace') {
+      if (!this.editor.entferneEcke()) this.editor.loescheAuswahl();
+    }
     else if (klein === 'r') this.editor.dreheAuswahl(umschalt ? -DREH_SCHRITT : DREH_SCHRITT);
     else if (taste.startsWith('Arrow')) return this.pfeil(taste, umschalt);
     else return false;

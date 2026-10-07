@@ -1,24 +1,31 @@
 import './style.css';
+import { VorlagenWahl } from './arten/platz/vorlagen';
 import { standardArten } from './arten/standardArten';
 import { kochstelle } from './beispiele/kochstelle';
-import { Editor } from './editor/Editor';
+import { Editor, type EditorZustand } from './editor/Editor';
 import { Szene } from './editor/Szene';
 import { Zeigersteuerung } from './editor/Zeigersteuerung';
 import type { WerkzeugName } from './editor/Werkzeuge';
 import { Bauwerk } from './model/Bauwerk';
+import type { Luftbild } from './model/Luftbild';
 import { Materialliste } from './model/Materialliste';
 import type { Hinweis } from './rules/Rule';
 import { RuleEngine } from './rules/RuleEngine';
 import { SEIL_ZUGABE_PRO_ENDE } from './rules/constants';
 import { LinkBasis } from './share/LinkBasis';
 import { AnsichtsModus } from './ui/AnsichtsModus';
+import { BildLader } from './ui/BildLader';
 import { HinweisPanel } from './ui/HinweisPanel';
+import { LuftbildPanel } from './ui/LuftbildPanel';
 import { ParameterPanel } from './ui/ParameterPanel';
 import { RegelnPanel } from './ui/RegelnPanel';
 import { MateriallistePanel } from './ui/MateriallistePanel';
 import { Teilen } from './ui/Teilen';
+import { VorlagenAuswahl } from './ui/VorlagenAuswahl';
 
 const MELDUNG_DAUER_MS = 4000;
+const MASSSTAB_HINWEIS = 'Klicke zwei Punkte, deren Abstand du kennst.';
+const LUFTBILD_NUR_IN_DATEI = 'Das Luftbild ist nur in der gespeicherten Datei enthalten.';
 
 
 function element<T extends HTMLElement>(selektor: string): T {
@@ -27,7 +34,8 @@ function element<T extends HTMLElement>(selektor: string): T {
   return el;
 }
 
-const arten = standardArten();
+const vorlagenWahl = new VorlagenWahl();
+const arten = standardArten(vorlagenWahl);
 const editor = new Editor(Bauwerk.leer(), { arten });
 const szene = new Szene(element('#ansicht'), arten);
 const modus = new AnsichtsModus(document.body);
@@ -40,6 +48,8 @@ function setzeModus(ansicht: boolean): void {
   regelnPanel.zeige(editor.bauwerk.regelEinstellungen);
 }
 const parameter = new ParameterPanel(element('#parameter'), editor, arten);
+const luftbildPanel = new LuftbildPanel(element('#luftbild'), element('#btn-luftbild'), editor, szene);
+const bildLader = new BildLader();
 const hinweisPanel = new HinweisPanel(element('#hinweise'), (h) => editor.markiere(h.betroffeneTeile));
 const materialPanel = new MateriallistePanel(element('#stangenliste'), element('#platzbedarf'));
 const meldung = element<HTMLParagraphElement>('#meldung');
@@ -50,7 +60,7 @@ let geprueft: { bauwerk: Bauwerk; hinweise: readonly Hinweis[]; liste: Materiall
 function pruefung(bauwerk: Bauwerk): { hinweise: readonly Hinweis[]; liste: Materialliste } {
   if (geprueft?.bauwerk !== bauwerk) {
     const hinweise = RuleEngine.fuer(bauwerk.regelEinstellungen).pruefe(bauwerk);
-    geprueft = { bauwerk, hinweise, liste: Materialliste.aus(bauwerk, SEIL_ZUGABE_PRO_ENDE) };
+    geprueft = { bauwerk, hinweise, liste: Materialliste.aus(bauwerk, SEIL_ZUGABE_PRO_ENDE, arten.zaehltZumPlatzbedarf) };
   }
   return geprueft;
 }
@@ -61,11 +71,19 @@ function ladeUndZeigeAlles(bauwerk: Bauwerk): void {
   szene.zeigeAlles(bauwerk);
 }
 
+/** Ein neues Luftbild wird eingepasst: „Alles zeigen“ auf ein Bauwerk, das nur das Bild enthält. */
+function ladeLuftbild(bild: Luftbild): void {
+  editor.ladeLuftbild(bild);
+  szene.zeigeAlles(Bauwerk.leer().mitLuftbild(bild));
+}
+
 function ladeAusAdresse(): void {
   try {
-    const bauwerk = teilen.ausAdresse();
-    if (bauwerk) ladeUndZeigeAlles(bauwerk);
-    setzeModus(bauwerk !== null);
+    const gelesen = teilen.ausAdresseMitHinweis();
+    if (gelesen) ladeUndZeigeAlles(gelesen.bauwerk);
+    setzeModus(gelesen !== null);
+    // Das Bild steckt nicht im Link (Spec E2, D4); die Meldung kommt nach dem Laden, das sie sonst löschen würde.
+    if (gelesen?.luftbildEntfernt) editor.zeigeMeldung(LUFTBILD_NUR_IN_DATEI);
   } catch (e) {
     setzeModus(false);
     editor.zeigeMeldung((e as Error).message);
@@ -89,6 +107,12 @@ function schalteAnsicht(): void {
 }
 ansichtKnopf.addEventListener('click', schalteAnsicht);
 element('#btn-alles').addEventListener('click', () => szene.zeigeAlles(editor.bauwerk));
+const beschriftungenKnopf = element<HTMLButtonElement>('#btn-beschriftungen');
+beschriftungenKnopf.addEventListener('click', () => {
+  szene.setzeBeschriftungen(!szene.beschriftungenSichtbar);
+  beschriftungenKnopf.setAttribute('aria-pressed', String(szene.beschriftungenSichtbar));
+});
+new VorlagenAuswahl(element('#sel-vorlage'), vorlagenWahl, () => editor.waehleWerkzeug('platzobjekt'));
 element('#btn-wieder').addEventListener('click', () => editor.wiederholen());
 element('#btn-bearbeiten').addEventListener('click', () => setzeModus(false));
 element('#btn-speichern').addEventListener('click', () => teilen.speichere(editor.bauwerk));
@@ -114,6 +138,17 @@ element<HTMLInputElement>('#inp-laden').addEventListener('change', async (e) => 
     editor.zeigeMeldung((fehler as Error).message);
   }
 });
+element<HTMLInputElement>('#inp-luftbild').addEventListener('change', async (e) => {
+  const input = e.currentTarget as HTMLInputElement;
+  const datei = input.files?.[0];
+  input.value = '';
+  if (!datei) return;
+  try {
+    ladeLuftbild(await bildLader.lade(datei));
+  } catch (fehler) {
+    editor.zeigeMeldung((fehler as Error).message);
+  }
+});
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   const ansichtstaste = e.ctrlKey || e.metaKey || e.altKey ? '' : e.key.toLowerCase();
@@ -125,23 +160,36 @@ window.addEventListener('keydown', (e) => {
 });
 window.addEventListener('hashchange', ladeAusAdresse);
 
+/** Statuszeile der Mehrpunkt-Werkzeuge (Zone, Linie): wie viele Punkte schon stehen und wie man abschließt. */
+function zeichenHinweis(z: EditorZustand): string {
+  if (z.werkzeug === 'auswahl' || z.werkzeug === 'messen' || z.werkzeug === 'massstab') return '';
+  const art = arten.art(z.werkzeug);
+  if (art.platzieren.modus !== 'mehrpunkt') return '';
+  const anzahl = z.zeichnung?.punkte.length ?? 0;
+  if (anzahl === 0) return `${art.label} zeichnen: Punkte anklicken, mindestens ${art.platzieren.mindestpunkte}`;
+  return `${art.label}: ${anzahl} ${anzahl === 1 ? 'Punkt' : 'Punkte'} gesetzt, weiter klicken; Doppelklick oder Enter schließt ab, Esc bricht ab`;
+}
+
 let meldungsTimer: number | undefined;
 editor.abonniere((z) => {
   const { hinweise, liste } = pruefung(z.bauwerk);
   const markiert = new Set(z.markiert);
   z.ausgewaehlt.forEach((id) => markiert.add(id));
-  szene.zeige(z.vorschau ?? z.bauwerk, markiert, z.stangenStart);
+  szene.zeige(z.vorschau ?? z.bauwerk, markiert, z.stangenStart, z.zeichnung);
   szene.zeigeMessung(z.messung);
+  szene.zeigeEcken(z.ecken);
   parameter.zeige(z);
   hinweisPanel.zeige(hinweise);
   regelnPanel.zeige(z.bauwerk.regelEinstellungen);
+  luftbildPanel.zeige(z);
   materialPanel.zeige(liste);
   for (const knopf of werkzeugKnoepfe) knopf.setAttribute('aria-pressed', String(knopf.dataset.werkzeug === z.werkzeug));
   element<HTMLButtonElement>('#btn-rueck').disabled = !z.kannRueckgaengig;
   element<HTMLButtonElement>('#btn-wieder').disabled = !z.kannWiederholen;
   // Nur Zwei-Klick-Werkzeuge haben einen Startpunkt; ihr Label ist „Stange“, „Seil“ oder „Plane“.
-  const teil = z.werkzeug === 'auswahl' ? 'Teil' : z.werkzeug === 'messen' ? 'Messen' : arten.art(z.werkzeug).label;
-  meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : '');
+  const teil = z.werkzeug === 'auswahl' ? 'Teil' : z.werkzeug === 'messen' ? 'Messen' : z.werkzeug === 'massstab' ? '' : arten.art(z.werkzeug).label;
+  const massstab = z.werkzeug === 'massstab' && !z.messung?.bis ? MASSSTAB_HINWEIS : '';
+  meldung.textContent = z.meldung ?? (z.stangenStart ? `${teil}: zweiten Punkt anklicken (Esc bricht ab)` : massstab || zeichenHinweis(z));
   if (z.meldung) {
     clearTimeout(meldungsTimer);
     meldungsTimer = window.setTimeout(() => editor.zeigeMeldung(null), MELDUNG_DAUER_MS);

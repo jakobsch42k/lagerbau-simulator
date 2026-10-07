@@ -1,4 +1,5 @@
 import type { Bauwerk } from './Bauwerk';
+import type { LagerObjekt } from './LagerObjekt';
 import { Platzbedarf } from './Platzbedarf';
 import { Stangenliste } from './Stangenliste';
 
@@ -27,8 +28,11 @@ export class Materialliste {
     readonly platzbedarf: Platzbedarf | null,
   ) {}
 
-  /** @param zugabeProEnde Seil für den Knoten je Ende in m (SEIL_ZUGABE_PRO_ENDE aus src/rules/constants.ts). */
-  static aus(bauwerk: Bauwerk, zugabeProEnde: number): Materialliste {
+  /**
+   * @param zugabeProEnde Seil für den Knoten je Ende in m (SEIL_ZUGABE_PRO_ENDE aus src/rules/constants.ts).
+   * @param zaehltZumPlatzbedarf welche Objekte der Platzbedarf umfasst (`ObjektRegister.zaehltZumPlatzbedarf`); ohne: alle.
+   */
+  static aus(bauwerk: Bauwerk, zugabeProEnde: number, zaehltZumPlatzbedarf?: (o: LagerObjekt) => boolean): Materialliste {
     const zaehler = new Map<number, number>();
     for (const s of bauwerk.seile) {
       const laenge = Math.ceil(s.laenge + 2 * zugabeProEnde - 1e-6);
@@ -40,7 +44,7 @@ export class Materialliste {
       seile,
       bauwerk.haringe().length,
       Materialliste.planen(bauwerk),
-      Platzbedarf.aus(bauwerk),
+      Platzbedarf.aus(bauwerk, zaehltZumPlatzbedarf),
     );
   }
 

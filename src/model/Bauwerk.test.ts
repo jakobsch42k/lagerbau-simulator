@@ -4,6 +4,7 @@ import { Baum } from './Baum';
 import { Bauwerk } from './Bauwerk';
 import { RegelEinstellungen } from '../rules/RegelEinstellungen';
 import { Dreibein } from './Dreibein';
+import { Luftbild } from './Luftbild';
 import { Plane } from './Plane';
 import { Seil } from './Seil';
 import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from './params';
@@ -196,5 +197,38 @@ describe('Regel-Einstellungen im Bauwerk (Spec v3, D8)', () => {
     const geaendert = b.mit(abock).ersetze(dreibein.gedreht(0.1)).ohne('s');
     expect(geaendert.regelEinstellungen).toBe(e);
     expect(Bauwerk.von([dreibein], e).regelEinstellungen).toBe(e);
+  });
+});
+
+describe('Bauwerk mit Luftbild (Spec E2, D1)', () => {
+  const l = Luftbild.vorlaeufig('data:image/png;base64,iVBORw0KGgo=', 200, 100);
+
+  it('hat standardmäßig kein Luftbild und führt es nicht unter den Objekten', () => {
+    expect(Bauwerk.leer().luftbild).toBeNull();
+    const b = Bauwerk.leer().mitLuftbild(l);
+    expect(b.luftbild).toBe(l);
+    expect(b.objekte).toEqual([]);
+    expect(b.istLeer).toBe(true);
+  });
+
+  it('mitLuftbild mit demselben Wert ergibt dasselbe Bauwerk, null entfernt das Bild', () => {
+    const b = Bauwerk.leer().mitLuftbild(l);
+    expect(b.mitLuftbild(l)).toBe(b);
+    expect(b.mitLuftbild(null).luftbild).toBeNull();
+    expect(Bauwerk.leer().mitLuftbild(null)).not.toBeNull();
+  });
+
+  it('bleibt beim Hinzufügen, Ersetzen, Entfernen und bei neuen Regel-Einstellungen erhalten', () => {
+    const stange = new Stange('s', Vec3.NULL, new Vec3(0, 2, 0), 0.08);
+    const b = Bauwerk.leer().mitLuftbild(l).mit(stange);
+    expect(b.luftbild).toBe(l);
+    expect(b.ersetze(new Stange('s', Vec3.NULL, new Vec3(0, 3, 0), 0.08)).luftbild).toBe(l);
+    expect(b.ohne('s').luftbild).toBe(l);
+    expect(b.mitRegelEinstellungen(RegelEinstellungen.von(['R1'], {})).luftbild).toBe(l);
+    expect(b.mitLuftbild(null).objekte[0]).toBe(stange);
+  });
+
+  it('Bauwerk.von nimmt ein Luftbild an', () => {
+    expect(Bauwerk.von([], RegelEinstellungen.standard(), l).luftbild).toBe(l);
   });
 });

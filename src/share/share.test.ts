@@ -10,7 +10,7 @@ import { Vec3 } from '../model/Vec3';
 import { STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
 import { Teilen } from '../ui/Teilen';
 import { BauwerkSerializer } from './BauwerkSerializer';
-import { MAX_HASH_ZEICHEN, MAX_JSON_ZEICHEN, MAX_TEILE, pruefeDateigroesse } from './grenzen';
+import { MAX_DATEI_ZEICHEN, MAX_HASH_ZEICHEN, MAX_JSON_ZEICHEN, MAX_TEILE, pruefeDateigroesse } from './grenzen';
 import { UrlCodec } from './UrlCodec';
 
 const serializer = new BauwerkSerializer();
@@ -35,7 +35,7 @@ function zufall(saat: number): () => number {
 describe('BauwerkSerializer', () => {
   it('speichert Gruppen als Parameter und nur freie Stangen einzeln', () => {
     const json = serializer.zuJson(kochstelle());
-    expect(json.version).toBe(4);
+    expect(json.version).toBe(6);
     expect(json.objekte.map((o) => `${o.art}:${o.id}`)).toEqual(['abock:abock', 'dreibein:dreibein', 'stange:first']);
     expect(json.objekte[1]).toEqual({ art: 'dreibein', id: 'dreibein', position: [2.5, 0, 0], drehung: 0, params: STANDARD_DREIBEIN });
   });
@@ -49,7 +49,7 @@ describe('BauwerkSerializer', () => {
 
   it.each([
     ['kein Objekt', 'hallo'],
-    ['falsche Version', { version: 5, objekte: [] }],
+    ['falsche Version', { version: 7, objekte: [] }],
     ['v3 ohne Planen-Liste', { version: 3, gruppen: [], stangen: [], seile: [], baeume: [] }],
     ['Plane mit unbekannter Form', v3([{ ...planeJson, form: 'schief' }])],
     ['Plane mit Seite 0', v3([{ ...planeJson, seite: 0 }])],
@@ -92,10 +92,10 @@ describe('BauwerkSerializer', () => {
     expect(b.baeume).toEqual([]);
   });
 
-  it('übersteht die Rundreise mit Planen (Version 4)', () => {
+  it('übersteht die Rundreise mit Planen (Version 5)', () => {
     const plane = new Plane('plane', new Vec3(0, 2, 0), new Vec3(4, 2, 0), { ...STANDARD_PLANE, form: 'satteldach' });
     const json = serializer.zuJson(kochstelle().mitPlane(plane));
-    expect(json.version).toBe(4);
+    expect(json.version).toBe(6);
     expect(json.objekte.filter((o) => o.art === 'plane')).toEqual([
       { art: 'plane', id: 'plane', start: [0, 2, 0], ende: [4, 2, 0], breite: 3, laenge: 4, form: 'satteldach', neigung: 30, seite: 1 },
     ]);
@@ -185,8 +185,8 @@ describe('Größengrenzen', () => {
   });
 
   it('lehnt zu große Dateien vor dem Einlesen ab', () => {
-    expect(() => pruefeDateigroesse(MAX_JSON_ZEICHEN)).not.toThrow();
-    expect(() => pruefeDateigroesse(MAX_JSON_ZEICHEN + 1)).toThrow('Die Datei ist kein gültiges JSON');
+    expect(() => pruefeDateigroesse(MAX_DATEI_ZEICHEN)).not.toThrow();
+    expect(() => pruefeDateigroesse(MAX_DATEI_ZEICHEN + 1)).toThrow('Die Datei ist kein gültiges JSON');
   });
 
   it('zählt Seile und Bäume zu den Teilen', () => {

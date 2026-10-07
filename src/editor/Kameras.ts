@@ -2,11 +2,16 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Bauwerk } from '../model/Bauwerk';
 import { Vec3 } from '../model/Vec3';
-import { type AnsichtsArt, dreiDEinpassen, planEinpassen, rahmenUm, sichtbarePunkte } from './Ansicht';
+import { type AnsichtsArt, dreiDEinpassen, MIN_BODEN, nordwinkelGrad, planEinpassen, rahmenUm, sichtbarePunkte } from './Ansicht';
 
 const OEFFNUNGSWINKEL_GRAD = 50;
 const PLAN_HOEHE = 100; // m, die Planansicht schaut von hier senkrecht nach unten
 const PLAN_MIN_ZOOM = 0.001;
+/** Die Far-Plane der 3D-Kamera ist mindestens so lang (m) und sonst ein Vielfaches der Bodengröße. */
+const MIN_FAR = 200;
+const FAR_PRO_BODEN = 6;
+/** Beim Auszoomen in der Planansicht soll der ganze Boden noch ins Bild passen (Anteil der Boden-Kantenlänge als halbe Höhe). */
+const PLAN_HALBE_HOEHE_PRO_BODEN = 2;
 const PLAN_MAX_ZOOM = 50;
 /** Anfangsausschnitt der Planansicht: der Boden mit 40 m Seitenlänge samt Rand. */
 const PLAN_START_HALBE_HOEHE = 22;
@@ -78,6 +83,26 @@ export class Kameras {
     this.plan.updateProjectionMatrix();
   }
 
+  /**
+   * Die Reichweite wächst mit dem Boden (Spec E2, D3): Far-Plane der 3D-Kamera und kleinster Zoom der Planansicht.
+   * `groesse` ist die Kantenlänge des Bodens in m; bei 40 m bleibt alles wie vorher.
+   */
+  setzeBodengroesse(groesse: number): void {
+    const far = Math.max(MIN_FAR, groesse * FAR_PRO_BODEN);
+    if (far !== this.perspektive.far) {
+      this.perspektive.far = far;
+      this.perspektive.updateProjectionMatrix();
+    }
+    this.steuerungPlan.minZoom = Math.min(PLAN_MIN_ZOOM, 1 / (Math.max(groesse, MIN_BODEN) * PLAN_HALBE_HOEHE_PRO_BODEN));
+  }
+
+  /** Drehung des Nordpfeils in Grad im Uhrzeigersinn: in der Planansicht immer 0, in 3D nach dem Azimut. */
+  nordwinkelGrad(): number {
+    if (this.art === 'plan') return 0;
+    const richtung = this.perspektive.getWorldDirection(new THREE.Vector3());
+    return nordwinkelGrad(richtung.x, richtung.z);
+  }
+
   /** Wohin „oben“ der Pfeiltasten zeigt: in der Planansicht Norden, in 3D die Blickrichtung (nur waagrecht). */
   blickrichtung(): Vec3 {
     if (this.art === 'plan') return new Vec3(0, 0, -1);
@@ -105,7 +130,7 @@ export class Kameras {
     const { mitteX, mitteZ, halbeHoehe } = planEinpassen(rahmen, this.seitenverhaeltnis);
     this.steuerungPlan.target.set(mitteX, 0, mitteZ);
     this.plan.position.set(mitteX, PLAN_HOEHE, mitteZ);
-    this.plan.zoom = THREE.MathUtils.clamp(1 / halbeHoehe, PLAN_MIN_ZOOM, PLAN_MAX_ZOOM);
+    this.plan.zoom = THREE.MathUtils.clamp(1 / halbeHoehe, this.steuerungPlan.minZoom, PLAN_MAX_ZOOM);
     this.plan.updateProjectionMatrix();
     this.steuerungPlan.update();
   }

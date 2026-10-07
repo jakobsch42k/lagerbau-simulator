@@ -11,6 +11,7 @@ import { Bauwerk } from '../model/Bauwerk';
 import { Baum } from '../model/Baum';
 import { Dreibein } from '../model/Dreibein';
 import { Plane } from '../model/Plane';
+import { Platzobjekt } from '../model/Platzobjekt';
 import { STANDARD_BAUM, STANDARD_PLANE } from '../model/params';
 import { Seil } from '../model/Seil';
 import { Vec3 } from '../model/Vec3';
@@ -210,5 +211,64 @@ describe('ParameterPanel', () => {
     editor.waehleMehrere(['abock', 'dreibein']);
     duplizieren()?.click();
     expect(editor.bauwerk.gruppen).toHaveLength(5);
+  });
+});
+
+describe('ParameterPanel: Text-, Farb- und Auswahlfelder (Spec E3, D1)', () => {
+  const feuer = (): Platzobjekt => new Platzobjekt('po', new Vec3(1, 0, 1), { vorlage: 'feuerstelle', name: 'Feuerstelle', form: 'kreis', breite: 1.5, laenge: 1.5, hoehe: 0.3, farbe: '#e8590c' });
+  const eingabe = (wurzel: HTMLElement, label: string, typ: string): HTMLInputElement => {
+    const l = [...wurzel.querySelectorAll('label')].find((x) => x.textContent?.startsWith(label));
+    const i = l?.querySelector<HTMLInputElement>(`input[type=${typ}]`);
+    if (!i) throw new Error(`${typ}-Feld ${label} fehlt`);
+    return i;
+  };
+  const wahl = (wurzel: HTMLElement, label: string): HTMLSelectElement => {
+    const l = [...wurzel.querySelectorAll('label')].find((x) => x.textContent?.startsWith(label));
+    const s = l?.querySelector('select');
+    if (!s) throw new Error(`Auswahl ${label} fehlt`);
+    return s;
+  };
+
+  it('zeigt Vorlage, Name, Form, Durchmesser, Höhe und Farbe; Länge erst beim Rechteck', () => {
+    const { wurzel } = panelMit(Bauwerk.leer().mit(feuer()), 'po');
+    const beschriftungen = (): string[] => [...wurzel.querySelectorAll('label')].map((l) => l.firstChild?.textContent ?? '');
+    expect(beschriftungen()).toEqual(['Vorlage', 'Name', 'Form', 'Durchmesser (m)', 'Höhe (m)', 'Farbe']);
+    expect(eingabe(wurzel, 'Name', 'text').value).toBe('Feuerstelle');
+    expect(eingabe(wurzel, 'Farbe', 'color').value).toBe('#e8590c');
+    expect(wahl(wurzel, 'Vorlage').value).toBe('feuerstelle');
+    const formWahl = wahl(wurzel, 'Form');
+    formWahl.value = 'rechteck';
+    formWahl.dispatchEvent(new Event('change'));
+    expect(beschriftungen()).toEqual(['Vorlage', 'Name', 'Form', 'Breite (m)', 'Länge (m)', 'Höhe (m)', 'Farbe']);
+  });
+
+  it('Name und Farbe ändern das Objekt; ein ungültiger Name zeigt die Meldung und springt zurück', () => {
+    const { wurzel, editor } = panelMit(Bauwerk.leer().mit(feuer()), 'po');
+    const name = eingabe(wurzel, 'Name', 'text');
+    name.value = 'Lagerfeuer';
+    name.dispatchEvent(new Event('change'));
+    expect((editor.bauwerk.objekt('po') as Platzobjekt).params.name).toBe('Lagerfeuer');
+    const neu = eingabe(wurzel, 'Name', 'text');
+    neu.value = '';
+    neu.dispatchEvent(new Event('change'));
+    expect(editor.zustand().meldung).toBe('Name muss 1 bis 40 Zeichen lang sein');
+    expect(eingabe(wurzel, 'Name', 'text').value).toBe('Lagerfeuer');
+    const farbe = eingabe(wurzel, 'Farbe', 'color');
+    farbe.value = '#00ff00';
+    farbe.dispatchEvent(new Event('change'));
+    expect((editor.bauwerk.objekt('po') as Platzobjekt).params.farbe).toBe('#00ff00');
+  });
+
+  it('ein Wechsel der Vorlage setzt alle Felder und ist ein Undo-Schritt', () => {
+    const { wurzel, editor } = panelMit(Bauwerk.leer().mit(feuer()), 'po');
+    const auswahl = wahl(wurzel, 'Vorlage');
+    auswahl.value = 'holzlager';
+    auswahl.dispatchEvent(new Event('change'));
+    const p = (editor.bauwerk.objekt('po') as Platzobjekt).params;
+    expect([p.vorlage, p.name, p.form, p.breite, p.laenge, p.hoehe]).toEqual(['holzlager', 'Holzlager', 'rechteck', 3, 2, 1]);
+    expect(eingabe(wurzel, 'Name', 'text').value).toBe('Holzlager');
+    editor.rueckgaengig();
+    expect((editor.bauwerk.objekt('po') as Platzobjekt).params.vorlage).toBe('feuerstelle');
+    expect(editor.zustand().kannRueckgaengig).toBe(false);
   });
 });

@@ -1,7 +1,8 @@
 import type { Editor } from './Editor';
 import type { Vec3 } from '../model/Vec3';
-import { KLICK_TOLERANZ_PX } from './konstanten';
-import { rechteckAus } from './Rahmenwahl';
+import { naheKante, naherGriff } from './eckenTreffer';
+import { GRIFF_TREFFER_PX, KLICK_TOLERANZ_PX } from './konstanten';
+import { rahmenMoeglich, rechteckAus } from './Rahmenwahl';
 import type { Szene } from './Szene';
 
 /** Zustand von Drücken bis Loslassen der linken Maustaste. */
@@ -22,6 +23,8 @@ export class Zeigersteuerung {
   private druck: Druck | null = null;
   /** Der Bodenpunkt, an dem ein Auswahlrahmen begann; null, wenn keiner aufgezogen wird. */
   private rahmenStart: Vec3 | null = null;
+  /** Der Druck begann auf einem Griff oder an einer Kante der gewählten Zone/Linie: Loslassen ist dann kein Klick (er träfe oft den Boden und würde abwählen). */
+  private ohneKlick = false;
   private readonly rahmenElement = document.createElement('div');
 
   constructor(
@@ -48,15 +51,23 @@ export class Zeigersteuerung {
     if (!this.druck) return;
     const treffer = this.szene.treffer(e, this.editor.klickZiele);
     const boden = this.szene.bodenPunkt(e);
-    if ((!treffer || treffer.art === 'boden') && boden && this.rahmenMoeglich(e)) {
+    if (boden && this.greifeGriff(e, boden)) return;
+    this.ohneKlick = this.amRand(e);
+    if (boden && rahmenMoeglich(e.shiftKey, this.szene.ansicht, this.editor.zustand().werkzeug)) {
       this.rahmenStart = boden;
       this.szene.setzeKamerasteuerung(false);
     } else if (treffer && boden && this.editor.beginneZiehen(treffer, boden, { shift: e.shiftKey })) this.szene.setzeKamerasteuerung(false);
   }
 
-  /** Shift+Drücken auf leeren Boden in der Planansicht mit dem Auswahl-Werkzeug beginnt einen Auswahlrahmen. */
-  private rahmenMoeglich(e: PointerEvent): boolean {
-    return e.shiftKey && this.szene.ansicht === 'plan' && this.editor.zustand().werkzeug === 'auswahl';
+  /** Drücken auf einen Griff der ausgewählten Zone oder Linie beginnt das Ziehen der Ecke (Spec E3). */
+  private greifeGriff(e: MouseEvent, boden: Vec3): boolean {
+    const ecken = this.editor.zustand().ecken;
+    if (!ecken) return false;
+    const index = naherGriff({ x: e.clientX, y: e.clientY }, ecken.punkte.map((p) => this.szene.zuBildschirm(p)), GRIFF_TREFFER_PX);
+    if (index === null || !this.editor.beginneEckenZiehen(index, boden)) return false;
+    this.szene.setzeKamerasteuerung(false);
+    this.ohneKlick = true;
+    return true;
   }
 
   private bewegt(e: PointerEvent): void {
@@ -100,6 +111,10 @@ export class Zeigersteuerung {
       if (druck?.entfernt) return this.editor.beendeZiehen();
       this.editor.brichZiehenAb();
     }
+    if (this.ohneKlick) {
+      this.ohneKlick = false;
+      return;
+    }
     if (!druck || druck.entfernt || e.target !== this.szene.leinwand) return;
     const treffer = this.szene.treffer(e, this.editor.klickZiele);
     if (treffer) this.editor.klick(treffer, { shift: e.shiftKey });
@@ -108,6 +123,7 @@ export class Zeigersteuerung {
   private abgebrochen(): void {
     this.druck = null;
     this.rahmenStart = null;
+    this.ohneKlick = false;
     this.rahmenElement.hidden = true;
     this.szene.setzeKamerasteuerung(true);
     this.editor.brichZiehenAb();
@@ -115,7 +131,28 @@ export class Zeigersteuerung {
 
   private doppelklick(e: MouseEvent): void {
     if (!this.bearbeitbar()) return;
+    if (this.fuegeEckeEin(e)) return;
     const treffer = this.szene.treffer(e, this.editor.klickZiele);
     if (treffer) this.editor.doppelklick(treffer, { shift: e.shiftKey });
+  }
+
+  /** Der Zeiger steht an einer Kante der ausgewählten Zone oder Linie. */
+  private amRand(e: MouseEvent): boolean {
+    const ecken = this.editor.zustand().ecken;
+    if (!ecken) return false;
+    const pixel = ecken.punkte.map((p) => this.szene.zuBildschirm(p));
+    return naheKante({ x: e.clientX, y: e.clientY }, pixel, ecken.geschlossen, GRIFF_TREFFER_PX) !== null;
+  }
+
+  /** Doppelklick auf eine Kante der ausgewählten Zone oder Linie fügt dort eine Ecke ein; nicht auf einem Griff. */
+  private fuegeEckeEin(e: MouseEvent): boolean {
+    const ecken = this.editor.zustand().ecken;
+    const boden = this.szene.bodenPunkt(e);
+    if (!ecken || !boden) return false;
+    const maus = { x: e.clientX, y: e.clientY };
+    const pixel = ecken.punkte.map((p) => this.szene.zuBildschirm(p));
+    if (naherGriff(maus, pixel, GRIFF_TREFFER_PX) !== null) return false;
+    const kante = naheKante(maus, pixel, ecken.geschlossen, GRIFF_TREFFER_PX);
+    return kante !== null && this.editor.fuegeEckeEin(kante, boden);
   }
 }

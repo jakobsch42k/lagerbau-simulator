@@ -9,7 +9,7 @@ import { Plane } from '../model/Plane';
 import { Seil } from '../model/Seil';
 import { Stange } from '../model/Stange';
 import { Vec3 } from '../model/Vec3';
-import type { PanelSpec, Platzieren, PlatzierenLinie, PlatzierenPunkt } from './ObjektArt';
+import type { PanelFeld, PanelSpec, Platzieren, PlatzierenLinie, PlatzierenPunkt } from './ObjektArt';
 import { standardArten } from './standardArten';
 
 const arten = standardArten();
@@ -35,7 +35,7 @@ const linie = (p: Platzieren): PlatzierenLinie => {
 };
 
 describe('Klickverhalten (Spec v2b, D2)', () => {
-  it('lässt Seile und Planen nur wahlweise Klicks fangen; nur Planen haben Ösen', () => {
+  it('lässt Seile und Planen nur wahlweise Klicks fangen (Platz-Objekte und Beschriftungen auch, Spec E3, D3: in der Auswahl immer klickbar); nur Planen haben Ösen', () => {
     expect(arten.alle.map((x) => [x.name, x.klick])).toEqual([
       ['dreibein', 'immer'],
       ['abock', 'immer'],
@@ -43,8 +43,12 @@ describe('Klickverhalten (Spec v2b, D2)', () => {
       ['seil', 'wahlweise'],
       ['plane', 'wahlweise'],
       ['baum', 'immer'],
+      ['platzobjekt', 'wahlweise'],
+      ['beschriftung', 'wahlweise'],
+      ['zone', 'wahlweise'],
+      ['linie', 'wahlweise'],
     ]);
-    expect(arten.wahlweise()).toEqual(['seil', 'plane']);
+    expect(arten.wahlweise()).toEqual(['seil', 'plane', 'platzobjekt', 'beschriftung', 'zone', 'linie']);
     expect(arten.mitOesen()).toEqual(['plane']);
   });
 });
@@ -53,7 +57,7 @@ describe('Panel je Art (Spec v3, D4)', () => {
   it('Dreibein: Felder, Werte und Info wie bisher; mit() prüft neu', () => {
     const spec = panel(d);
     expect(labels(spec)).toEqual(['Stangenlänge (m)', 'Fußkreisradius (m)', 'Ø (cm)']);
-    expect(spec.felder.map((f) => f.faktor)).toEqual([1, 1, 100]);
+    expect(spec.felder.map((f) => (f as PanelFeld).faktor)).toEqual([1, 1, 100]);
     expect(spec.werte).toEqual({ stangenlaenge: 2.4, fusskreisradius: 0.7, durchmesser: 0.08 });
     expect(spec.info).toBe('Höhe 2.09 m · Beinwinkel 19° · R dreht');
     expect(spec.extras).toEqual([]);
@@ -83,7 +87,7 @@ describe('Panel je Art (Spec v3, D4)', () => {
   it('Baum: Stammdurchmesser in cm und Höhe in m', () => {
     const spec = panel(b);
     expect(labels(spec)).toEqual(['Stammdurchmesser (cm)', 'Höhe (m)']);
-    expect(spec.felder.map((f) => f.faktor)).toEqual([100, 1]);
+    expect(spec.felder.map((f) => (f as PanelFeld).faktor)).toEqual([100, 1]);
     expect(spec.info).toBe('Steht auf dem Platz, gehört nicht zum Bau.');
     expect((spec.mit({ ...spec.werte, hoehe: 12 }) as Baum).params.hoehe).toBe(12);
     expect(() => spec.mit({ ...spec.werte, hoehe: 0 })).toThrow('Baumhöhe muss größer als 0 sein');
@@ -99,7 +103,7 @@ describe('Panel je Art (Spec v3, D4)', () => {
   it('Plane: drei Felder, Form-Auswahl und „Seite wechseln“ nur bei eben', () => {
     const spec = panel(pl);
     expect(labels(spec)).toEqual(['Breite (m)', 'Länge (m)', 'Neigung (°)']);
-    expect(spec.felder[2]?.schritt).toBe('1');
+    expect((spec.felder[2] as PanelFeld).schritt).toBe('1');
     expect(spec.werte).toEqual({ breite: 3, laenge: 4, form: 'eben', neigungGrad: 30, seite: 1 });
     expect(spec.info).toBe('Aufhängelinie 4.00 m · zum Verschieben neu spannen');
     expect(spec.extras).toEqual([

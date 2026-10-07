@@ -5,6 +5,8 @@ export class Messung {
   constructor(
     readonly von: Vec3,
     readonly bis: Vec3 | null,
+    /** Ob die Länge angezeigt wird. Beim „Maßstab setzen“ (Spec E2) ist die Strecke noch nicht in Metern bekannt. */
+    readonly beschriftet = true,
   ) {}
 
   /** Abstand in m; null nach dem ersten Klick. */
@@ -20,6 +22,6 @@ export class Messung {
   /** „3.42 m (waagrecht 3.40 m)“; leer nach dem ersten Klick. */
   get text(): string {
     const { laenge, waagrecht } = this;
-    return laenge === null || waagrecht === null ? '' : `${laenge.toFixed(2)} m (waagrecht ${waagrecht.toFixed(2)} m)`;
+    return !this.beschriftet || laenge === null || waagrecht === null ? '' : `${laenge.toFixed(2)} m (waagrecht ${waagrecht.toFixed(2)} m)`;
   }
 }

@@ -1,20 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import { ABock } from './ABock';
 import { Baum } from './Baum';
+import { Beschriftung } from './Beschriftung';
 import { Dreibein } from './Dreibein';
 import { ART_NAMEN, type LagerObjekt } from './LagerObjekt';
-import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from './params';
+import { Linie } from './Linie';
+import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_BESCHRIFTUNG, STANDARD_DREIBEIN, STANDARD_LINIE, STANDARD_PLANE, STANDARD_ZONE } from './params';
 import { Plane } from './Plane';
+import { Platzobjekt } from './Platzobjekt';
 import { Seil } from './Seil';
 import { Stange } from './Stange';
 import { Vec3 } from './Vec3';
+import { Zone } from './Zone';
 
 const istBei = (p: Vec3 | undefined, x: number, y: number, z: number): void => {
   expect(p?.equals(new Vec3(x, y, z), 1e-9), `${p?.toArray().join(', ')} ≠ ${x}, ${y}, ${z}`).toBe(true);
 };
 const VIERTEL = Math.PI / 2;
 
-it('erfüllen alle sechs Klassen die gemeinsame Schnittstelle (Spec v3, D1)', () => {
+it('erfüllen alle zehn Klassen die gemeinsame Schnittstelle (Spec v3, D1)', () => {
   const alle: readonly LagerObjekt[] = [
     new Dreibein('d', Vec3.NULL, 0, STANDARD_DREIBEIN),
     new ABock('a', Vec3.NULL, 0, STANDARD_ABOCK),
@@ -22,6 +26,10 @@ it('erfüllen alle sechs Klassen die gemeinsame Schnittstelle (Spec v3, D1)', ()
     new Seil('l', new Vec3(0, 2, 0), new Vec3(2, 0, 0)),
     new Baum('b', Vec3.NULL, STANDARD_BAUM),
     new Plane('pl', new Vec3(0, 2, 0), new Vec3(4, 2, 0), STANDARD_PLANE),
+    new Platzobjekt('po', Vec3.NULL, { vorlage: 'eigenes', name: 'Eigenes', form: 'rechteck', breite: 2, laenge: 2, hoehe: 1, farbe: '#868e96' }),
+    new Beschriftung('be', Vec3.NULL, STANDARD_BESCHRIFTUNG),
+    new Zone('zo', [Vec3.NULL, new Vec3(4, 0, 0), new Vec3(0, 0, 4)], STANDARD_ZONE),
+    new Linie('li', [Vec3.NULL, new Vec3(4, 0, 0)], STANDARD_LINIE),
   ];
   expect(alle.map((o) => o.art)).toEqual([...ART_NAMEN]);
 });

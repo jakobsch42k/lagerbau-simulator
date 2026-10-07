@@ -3,11 +3,20 @@ import { bewege } from '../model/Mitbewegung';
 import { Vec3 } from '../model/Vec3';
 import { BODEN_RASTER } from './konstanten';
 
+/** Ein laufendes Ziehen in der Maus-Steuerung des Editors: Objekte (`Ziehvorgang`) oder eine Ecke (`EckenZiehen`). */
+export interface Zug {
+  readonly vorschau: Bauwerk | null;
+  readonly fehler: string | null;
+  mitZiel(boden: Vec3): Zug;
+  /** Das Bauwerk nach dem Ziehen; wirft einen RangeError, wenn die Lage nicht geht. */
+  ergebnis(): Bauwerk;
+}
+
 /**
  * Ein laufendes Ziehen (Spec E1, D3): Startpunkt am Boden, bewegte ids und der letzte Versatz samt Vorschau.
  * Unveränderlich; `mitZiel` liefert den nächsten Stand. Ändert nichts am Bauwerk, die Vorschau ist nur ein Zwischenstand.
  */
-export class Ziehvorgang {
+export class Ziehvorgang implements Zug {
   private constructor(
     readonly basis: Bauwerk,
     readonly ids: readonly string[],

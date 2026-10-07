@@ -15,6 +15,11 @@ export function textWert(werte: Werte, schluessel: string): string {
   return typeof wert === 'string' ? wert : '';
 }
 
+/** Eine Zahl für Infozeilen im deutschen Format (48,3), mit höchstens `nachkomma` Stellen. */
+export function zahlText(wert: number, nachkomma: number): string {
+  return new Intl.NumberFormat('de-AT', { maximumFractionDigits: nachkomma }).format(wert);
+}
+
 export function stangenEnden(stangen: readonly Stange[]): Fangpunkt[] {
   return stangen.flatMap((s) => s.endpunkte().map((punkt): Fangpunkt => ({ punkt, art: 'ende' })));
 }

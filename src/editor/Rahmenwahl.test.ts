@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { kochstelle } from '../beispiele/kochstelle';
 import { Baum } from '../model/Baum';
 import { Vec3 } from '../model/Vec3';
-import { idsImRechteck, rechteckAus } from './Rahmenwahl';
+import { idsImRechteck, rahmenMoeglich, rechteckAus } from './Rahmenwahl';
 
 describe('Rahmen-Auswahl', () => {
   const baum = new Baum('baum', new Vec3(10, 0, 10), { durchmesser: 0.3, hoehe: 5 });
@@ -23,5 +23,17 @@ describe('Rahmen-Auswahl', () => {
 
   it('wählt nichts, wenn der Rahmen leer ist', () => {
     expect(idsImRechteck(bauwerk, rechteckAus(new Vec3(50, 0, 50), new Vec3(60, 0, 60)))).toEqual([]);
+  });
+});
+
+describe('Wann Shift+Drücken einen Auswahlrahmen beginnt', () => {
+  it('im Plan mit der Auswahl und Shift immer, auch wenn die Maus auf einer Zone oder Linie steht', () => {
+    expect(rahmenMoeglich(true, 'plan', 'auswahl')).toBe(true);
+  });
+
+  it('nicht ohne Shift, nicht in 3D, nicht mit einem anderen Werkzeug', () => {
+    expect(rahmenMoeglich(false, 'plan', 'auswahl')).toBe(false);
+    expect(rahmenMoeglich(true, 'drei-d', 'auswahl')).toBe(false);
+    expect(rahmenMoeglich(true, 'plan', 'zone')).toBe(false);
   });
 });

@@ -28,8 +28,19 @@ export function text(d: unknown, name: string): string {
   return d;
 }
 
+/** Ein Text, der auch leer sein darf; das Modell prüft die Länge mit seiner eigenen Meldung. */
+export function freierText(d: unknown, name: string): string {
+  if (typeof d !== 'string') throw new Error(`${name} ist kein Text`);
+  return d;
+}
+
 export function vektor(d: unknown, name: string): Vec3 {
   const l = liste(d, name);
   if (l.length !== 3) throw new Error(`${name} braucht drei Koordinaten`);
   return new Vec3(zahl(l[0], name), zahl(l[1], name), zahl(l[2], name));
+}
+
+/** Eine Liste von Punkten `[x, y, z]`; die Mindestzahl prüft das Modell mit seiner eigenen Meldung. */
+export function punkte(d: unknown, name: string): Vec3[] {
+  return liste(d, name).map((p) => vektor(p, name));
 }

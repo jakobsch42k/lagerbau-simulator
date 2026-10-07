@@ -108,9 +108,9 @@ describe('Alte Formate 1–3 lesen wie vor E0 (Spec v3, D3)', () => {
     };
     const b = serializer.ausJson(daten);
     expect(b.objekte.map((o) => `${o.art}:${o.id}`)).toEqual(['dreibein:dreibein', 'stange:s', 'baum:b', 'plane:p', 'seil:l']);
-    const v4 = serializer.zuJson(b);
-    expect(v4.version).toBe(4);
-    expect(v4.objekte.map((o) => o.id)).toEqual(['dreibein', 's', 'b', 'p', 'l']);
+    const v5 = serializer.zuJson(b);
+    expect(v5.version).toBe(6);
+    expect(v5.objekte.map((o) => o.id)).toEqual(['dreibein', 's', 'b', 'p', 'l']);
   });
 
   it('übergeht in v1 Seile, Bäume und Planen und in v2 Planen, auch wenn die Listen dastehen', () => {

@@ -1,5 +1,5 @@
 import { zahlWert } from '../arten/gemeinsam';
-import type { PanelAuswahl, PanelFeld, PanelKnopf, PanelSpec, Werte } from '../arten/ObjektArt';
+import type { PanelAuswahl, PanelEingabe, PanelFarbe, PanelFeld, PanelKnopf, PanelSpec, PanelText, Werte } from '../arten/ObjektArt';
 import type { ObjektRegister } from '../arten/ObjektRegister';
 import { standardArten } from '../arten/standardArten';
 import type { Editor, EditorZustand } from '../editor/Editor';
@@ -58,13 +58,36 @@ export class ParameterPanel {
     const uebernehme: Uebernehme = (werte) => this.editor.aendereMit((b) => b.ersetze(spec.mit(werte)));
     const kopf = document.createElement('h2');
     kopf.textContent = titel;
-    const eingaben = spec.felder.map((feld) => this.zahlenfeld(feld, spec.werte, uebernehme));
+    const eingaben = spec.felder.map((eingabe) => this.eingabe(eingabe, spec.werte, uebernehme));
     const extras = spec.extras.map((extra) =>
       extra.art === 'auswahl' ? this.auswahlfeld(extra, spec.werte, uebernehme) : this.knopf(extra, spec.werte, uebernehme),
     );
     const infoZeile = document.createElement('p');
     infoZeile.textContent = spec.info;
     this.wurzel.append(kopf, ...eingaben, ...extras, infoZeile, this.loeschenKnopf(), this.duplizierenKnopf());
+  }
+
+  /** Die Art der Eingabe entscheidet allein die Beschreibung; Zahlenfelder haben kein `art`. */
+  private eingabe(e: PanelEingabe, werte: Werte, uebernehme: Uebernehme): HTMLLabelElement {
+    if (!('art' in e)) return this.zahlenfeld(e, werte, uebernehme);
+    if (e.art === 'auswahl') return this.auswahlfeld(e, werte, uebernehme);
+    return this.textfeld(e, werte, uebernehme);
+  }
+
+  /** Text und Farbe: derselbe Ablauf, nur der Typ des Eingabefelds unterscheidet sich. */
+  private textfeld(feld: PanelText | PanelFarbe, werte: Werte, uebernehme: Uebernehme): HTMLLabelElement {
+    const label = document.createElement('label');
+    label.className = 'feld';
+    label.textContent = feld.label;
+    const input = document.createElement('input');
+    input.type = feld.art === 'farbe' ? 'color' : 'text';
+    const modellwert = String(werte[feld.schluessel]);
+    input.value = modellwert;
+    input.addEventListener('change', () => {
+      if (!uebernehme({ ...werte, [feld.schluessel]: input.value })) input.value = modellwert;
+    });
+    label.append(input);
+    return label;
   }
 
   private zahlenfeld(feld: PanelFeld, werte: Werte, uebernehme: Uebernehme): HTMLLabelElement {

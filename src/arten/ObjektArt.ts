@@ -10,10 +10,10 @@ export interface ObjektJson {
 }
 
 /**
- * Woran ein Klick einrastet. Vorrang bei gleichem Abstand: Spitze → Bund → Ende → Öse.
+ * Woran ein Klick einrastet. Vorrang bei gleichem Abstand: Spitze → Bund → Ende → Öse (zuletzt `ecke`, eine Ecke einer Zone oder Linie, Spec E3).
  * `stange` und `baum` liefert nur das getroffene Objekt selbst (`beiTreffer`).
  */
-export type FangArt = 'spitze' | 'bund' | 'ende' | 'oese' | 'stange' | 'baum';
+export type FangArt = 'spitze' | 'bund' | 'ende' | 'oese' | 'stange' | 'baum' | 'ecke';
 
 export interface Fangpunkt {
   readonly punkt: Vec3;
@@ -47,11 +47,31 @@ export interface PanelKnopf {
   readonly aenderung: Werte;
 }
 
+/** Ein Textfeld (Name, Beschriftung). Das Modell prüft die Länge mit seiner eigenen Meldung. */
+export interface PanelText {
+  readonly art: 'text';
+  readonly schluessel: string;
+  readonly label: string;
+}
+
+/** Eine Farbwahl (`<input type="color">`); der Wert ist `#rrggbb`. */
+export interface PanelFarbe {
+  readonly art: 'farbe';
+  readonly schluessel: string;
+  readonly label: string;
+}
+
+/**
+ * Eine Eingabe im Formular, in der Reihenfolge des Panels. Zahlenfelder haben kein `art`. Welche Eingaben es gibt, entscheidet
+ * die Art beim Bauen der Beschreibung (z. B. „Länge“ nur beim Rechteck); ändert eine Eingabe das Objekt, baut das Panel neu auf.
+ */
+export type PanelEingabe = PanelFeld | PanelAuswahl | PanelText | PanelFarbe;
+
 export type PanelExtra = PanelAuswahl | PanelKnopf;
 
 /** Beschreibung des Formulars für ein Objekt (Spec v3, D4). Das ParameterPanel baut daraus die Eingaben. */
 export interface PanelSpec {
-  readonly felder: readonly PanelFeld[];
+  readonly felder: readonly PanelEingabe[];
   readonly werte: Werte;
   readonly info: string;
   readonly extras: readonly PanelExtra[];
@@ -74,7 +94,20 @@ export interface PlatzierenLinie {
   erzeuge(id: string, a: Vec3, b: Vec3): LagerObjekt;
 }
 
-export type Platzieren = PlatzierenPunkt | PlatzierenLinie;
+/**
+ * Beliebig viele Klicks auf Einrastpunkte (Zone, Linie; Spec E3): jeder Klick setzt einen Punkt, Doppelklick oder Enter schließt ab,
+ * Esc bricht ab. `erzeuge` wirft einen RangeError mit der Meldung des Modells, wenn es zu wenige oder ungültige Punkte sind.
+ */
+export interface PlatzierenMehrpunkt {
+  readonly modus: 'mehrpunkt';
+  /** So viele Punkte braucht das Objekt mindestens (für die Statuszeile; die Prüfung macht das Modell). */
+  readonly mindestpunkte: number;
+  /** Ob die Vorschau den Linienzug zum Vieleck schließt (Zone) oder offen lässt (Linie). */
+  readonly geschlossen: boolean;
+  erzeuge(id: string, punkte: readonly Vec3[]): LagerObjekt;
+}
+
+export type Platzieren = PlatzierenPunkt | PlatzierenLinie | PlatzierenMehrpunkt;
 
 /** `immer`: fängt Klicks in jedem Werkzeug; `wahlweise`: nur, wo das Werkzeug die Art als Klickziel nennt (ersetzt `KlickZiel`). */
 export type KlickVerhalten = 'immer' | 'wahlweise';
@@ -86,6 +119,8 @@ export interface ObjektArt<T extends LagerObjekt = LagerObjekt> {
   readonly label: string;
   readonly klick: KlickVerhalten;
   readonly hatOesen: boolean;
+  /** Ob die Objekte dieser Art zum Platzbedarf zählen (Spec E3, D3). Fehlt die Angabe: ja. */
+  readonly zaehltZumPlatzbedarf?: boolean;
   readonly platzieren: Platzieren;
   istVon(o: LagerObjekt): o is T;
   zuJson(o: T): ObjektJson;

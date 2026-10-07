@@ -1,5 +1,5 @@
 import type { Bauwerk } from '../model/Bauwerk';
-import { BauwerkSerializer } from '../share/BauwerkSerializer';
+import { BauwerkSerializer, type Gelesen } from '../share/BauwerkSerializer';
 import { pruefeDateigroesse } from '../share/grenzen';
 import { LinkBasis } from '../share/LinkBasis';
 import { UrlCodec } from '../share/UrlCodec';
@@ -48,5 +48,10 @@ export class Teilen {
   /** Bauwerk aus dem aktuellen Adress-Hash, null wenn keiner da ist. Wirft bei kaputtem Link. */
   ausAdresse(): Bauwerk | null {
     return this.codec.ausHash(location.hash);
+  }
+
+  /** Wie `ausAdresse`, sagt aber auch, ob der Link ein Luftbild nur angekündigt hat (Spec E2, D4). */
+  ausAdresseMitHinweis(): Gelesen | null {
+    return this.codec.ausHashMitHinweis(location.hash);
   }
 }

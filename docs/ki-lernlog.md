@@ -152,3 +152,9 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Stage-Review von E1 (nachgestellt mit einem e2e-Test).
 **Richtig ist:** `entfernt` wird am Anfang von `bewegt` für jede Mausbewegung bei gedrückter Taste aktualisiert; e2e „Kamera drehen über leerem Boden“ mit jedem Platzierwerkzeug.
 **Lehre:** Zieht Eingabebehandlung in eine neue Klasse um, die alte Absicherung (Klick-Toleranz) mitnehmen und den Orbit-Fall im e2e testen, nicht nur Klick und Ziehen.
+
+### 2026-10-06 — Raster unter dem Luftbild versteckt (E2)
+**Was die KI gemacht hat:** Das Luftbild lag 1 cm über dem Boden, das Raster auf Bodenhöhe. Bei voller Deckkraft (Standard) verdeckte das Bild das Raster; der Schalter „Raster zeigen“ tat sichtbar nichts. Die Tests prüften nur `raster.visible`, nicht die Reihenfolge der Schichten. Außerdem flimmerte das Bild aus der Ferne mit dem Boden (1 cm Abstand ist zu wenig Tiefenauflösung).
+**Gefunden durch:** Stage-Review von E2.
+**Richtig ist:** Alle Bodenhöhen an einer Stelle (`BODEN_HOEHEN`: Boden −0,05 m, Bild 0,001 m, Raster 0,002 m; Zonen ab E3 bei 0,005 m) und ein Test auf die Reihenfolge; das Bild bekommt zusätzlich `polygonOffset`.
+**Lehre:** Bei übereinanderliegenden flachen Schichten testen, was oben liegt, nicht nur, ob etwas sichtbar geschaltet ist; Höhen zentral festlegen, weil spätere Etappen (Zonen, Planen) dazwischen passen müssen.

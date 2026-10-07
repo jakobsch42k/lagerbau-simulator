@@ -6,6 +6,7 @@ import { Bauwerk } from './Bauwerk';
 import { Plane } from './Plane';
 import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_PLANE } from './params';
 import { Platzbedarf } from './Platzbedarf';
+import { Platzobjekt } from './Platzobjekt';
 import { Seil } from './Seil';
 import { Vec3 } from './Vec3';
 import type { LagerObjekt } from './LagerObjekt';
@@ -101,5 +102,15 @@ describe('Platzbedarf', () => {
       Math.min(...alt.map((q) => q.z)),
       Math.max(...alt.map((q) => q.z)),
     ]);
+  });
+
+  it('lässt Objekte weg, die der Filter ausschließt (Platz-Objekte, Spec E3, D3)', () => {
+    const feuer = new Platzobjekt('f', new Vec3(50, 0, 50), { vorlage: 'x', name: 'Feuer', form: 'kreis', breite: 1, laenge: 1, hoehe: 0, farbe: '#ff0000' });
+    const b = kochstelle().mit(feuer);
+    const ohneFilter = Platzbedarf.aus(b);
+    const mitFilter = Platzbedarf.aus(b, (o) => o.art !== 'platzobjekt');
+    expect(ohneFilter?.maxX).toBeGreaterThan(50);
+    expect(mitFilter?.laenge).toBeCloseTo(3.2, 9);
+    expect(Platzbedarf.aus(Bauwerk.leer().mit(feuer), (o) => o.art !== 'platzobjekt')).toBeNull();
   });
 });

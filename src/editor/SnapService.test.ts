@@ -4,8 +4,12 @@ import { Dreibein } from '../model/Dreibein';
 import { ABock } from '../model/ABock';
 import { Baum } from '../model/Baum';
 import { Plane } from '../model/Plane';
+import { Stange } from '../model/Stange';
 import { STANDARD_ABOCK, STANDARD_BAUM, STANDARD_DREIBEIN, STANDARD_PLANE } from '../model/params';
+import { Linie } from '../model/Linie';
+import { STANDARD_LINIE, STANDARD_ZONE } from '../model/params';
 import { Vec3 } from '../model/Vec3';
+import { Zone } from '../model/Zone';
 import { SnapService, type Treffer } from './SnapService';
 
 const dreibein = new Dreibein('d', Vec3.NULL, 0, STANDARD_DREIBEIN);
@@ -101,5 +105,29 @@ describe('SnapService', () => {
     const p = snap.snap({ art: 'objekt', objektArt: 'abock', id: 'a-riegel', punkt: new Vec3(6.3, 0.45, 0.04) }, bauwerk.mitGruppe(abock));
     expect(p.art).toBe('stange');
     expect(p.punkt.equals(new Vec3(6.3, 0.4, 0), 1e-9)).toBe(true);
+  });
+
+  it('rastet auf Ecken von Zonen und Punkte von Linien ein (Fangart ecke, Radius SNAP_RADIUS)', () => {
+    const zone = new Zone('z', [new Vec3(10, 0, 10), new Vec3(20, 0, 10), new Vec3(20, 0, 20)], STANDARD_ZONE);
+    const linie = new Linie('l', [new Vec3(-5, 0, 0), new Vec3(-5, 0, 7)], STANDARD_LINIE);
+    const b = Bauwerk.leer().mit(zone).mit(linie);
+    const nahZone = snap.snap({ art: 'boden', punkt: new Vec3(20.2, 0, 9.9) }, b);
+    expect([nahZone.art, nahZone.punkt.toArray()]).toEqual(['ecke', [20, 0, 10]]);
+    const nahLinie = snap.snap({ art: 'boden', punkt: new Vec3(-5.1, 0, 7.2) }, b);
+    expect([nahLinie.art, nahLinie.punkt.toArray()]).toEqual(['ecke', [-5, 0, 7]]);
+  });
+
+  it('rastet nicht auf eine Ecke weiter weg als SNAP_RADIUS, sondern aufs Raster', () => {
+    const zone = new Zone('z', [new Vec3(10, 0, 10), new Vec3(20, 0, 10), new Vec3(20, 0, 20)], STANDARD_ZONE);
+    const p = snap.snap({ art: 'boden', punkt: new Vec3(20.4, 0, 10) }, Bauwerk.leer().mit(zone));
+    expect(p.art).toBe('boden');
+    expect(p.punkt.x).toBeCloseTo(20.4);
+  });
+
+  it('bei gleichem Abstand gewinnt ein Stangenende vor einer Ecke', () => {
+    const stange = new Stange('s', new Vec3(1, 0, 0), new Vec3(1, 2, 0), 0.08);
+    const linie = new Linie('l', [new Vec3(1, 0, 0), new Vec3(5, 0, 0)], STANDARD_LINIE);
+    const p = snap.snap({ art: 'boden', punkt: new Vec3(1.1, 0, 0) }, Bauwerk.leer().mit(linie).mit(stange));
+    expect(p.art).toBe('ende');
   });
 });
