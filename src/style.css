@@ -42,7 +42,9 @@ label.feld input { display: block; width: 100%; }
 #meldung:empty { display: none; }
 #ausgeschaltet { margin: 0 0 8px; color: var(--warn); }
 #ausgeschaltet:empty { display: none; }
-#regeln .regel { margin: 8px 0; padding-top: 6px; border-top: 1px solid var(--rand); }
+#regeln .regel, #platzregeln .regel { margin: 8px 0; padding-top: 6px; border-top: 1px solid var(--rand); }
+#platzregeln .quelle { display: block; color: var(--text-schwach, #666); font-size: 0.8em; }
+#platzregeln .forstgesetz { font-size: 0.85em; margin: 8px 0; }
 body.ansicht { grid-template-columns: 1fr 280px; grid-template-areas: 'kopf kopf' 'ansicht rechts' 'fuss fuss'; }
 body.ansicht .nur-editor, body:not(.ansicht) .nur-ansicht { display: none; }
 @media (max-width: 767px) {
