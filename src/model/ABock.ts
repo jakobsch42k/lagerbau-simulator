@@ -88,6 +88,10 @@ export class ABock extends Baugruppe {
     return new ABock(this.id, position, this.drehung + delta, this.params);
   }
 
+  mitId(id: string): ABock {
+    return new ABock(id, this.position, this.drehung, this.params);
+  }
+
   verschoben(position: Vec3): ABock {
     return new ABock(this.id, position, this.drehung, this.params);
   }

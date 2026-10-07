@@ -1,3 +1,4 @@
+import { Bau } from '../model/Bau';
 import type { Bauwerk } from '../model/Bauwerk';
 import type { Bund } from '../model/Bund';
 import type { Fuss } from '../model/Fuss';
@@ -70,23 +71,8 @@ export class Analyse {
     });
   }
 
-  /** Stangen-IDs je zusammenhängendem Bau (über Bünde verbunden), per Union-Find. Seile verbinden nichts. */
+  /** Stangen-IDs je zusammenhängendem Bau (über Bünde verbunden). Seile verbinden nichts. */
   komponenten(): string[][] {
-    const eltern = new Map(this.stangen.map((s) => [s.id, s.id]));
-    const wurzel = (id: string): string => {
-      let w = id;
-      while (eltern.get(w) !== w) w = eltern.get(w) as string;
-      return w;
-    };
-    for (const b of this.buende) {
-      const [erste, ...rest] = b.stangenIds;
-      for (const id of rest) eltern.set(wurzel(id), wurzel(erste as string));
-    }
-    const gruppen = new Map<string, string[]>();
-    for (const s of this.stangen) {
-      const w = wurzel(s.id);
-      gruppen.set(w, [...(gruppen.get(w) ?? []), s.id]);
-    }
-    return [...gruppen.values()];
+    return Bau.stangenGruppen(this.stangen, this.buende);
   }
 }

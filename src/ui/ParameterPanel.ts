@@ -22,12 +22,35 @@ export class ParameterPanel {
   ) {}
 
   zeige(z: EditorZustand): void {
+    const mehrere = z.ausgewaehlt.size > 1;
     const objekt = z.auswahl === null ? undefined : z.bauwerk.objekt(z.auswahl);
-    if (!this.neuaufbau.noetig(z.auswahl, objekt ?? null)) return;
+    if (!this.neuaufbau.noetig(mehrere ? [...z.ausgewaehlt].join('|') : z.auswahl, objekt ?? null)) return;
     this.wurzel.replaceChildren();
+    if (mehrere) return this.mehrfachauswahl(z.ausgewaehlt.size);
     if (!objekt) return;
     const art = this.arten.artVon(objekt);
     this.formular(art.label, art.panel(objekt));
+  }
+
+  /** Bei mehreren ausgewählten Objekten: nur die Anzahl, Löschen und Duplizieren (Spec E1, D1). */
+  private mehrfachauswahl(anzahl: number): void {
+    const kopf = document.createElement('h2');
+    kopf.textContent = `${anzahl} Objekte ausgewählt`;
+    this.wurzel.append(kopf, this.loeschenKnopf(), this.duplizierenKnopf());
+  }
+
+  private loeschenKnopf(): HTMLButtonElement {
+    const loeschen = document.createElement('button');
+    loeschen.textContent = 'Löschen (Entf)';
+    loeschen.addEventListener('click', () => this.editor.loescheAuswahl());
+    return loeschen;
+  }
+
+  private duplizierenKnopf(): HTMLButtonElement {
+    const duplizieren = document.createElement('button');
+    duplizieren.textContent = 'Duplizieren (Strg+D)';
+    duplizieren.addEventListener('click', () => this.editor.dupliziere());
+    return duplizieren;
   }
 
   private formular(titel: string, spec: PanelSpec): void {
@@ -41,10 +64,7 @@ export class ParameterPanel {
     );
     const infoZeile = document.createElement('p');
     infoZeile.textContent = spec.info;
-    const loeschen = document.createElement('button');
-    loeschen.textContent = 'Löschen (Entf)';
-    loeschen.addEventListener('click', () => this.editor.loescheAuswahl());
-    this.wurzel.append(kopf, ...eingaben, ...extras, infoZeile, loeschen);
+    this.wurzel.append(kopf, ...eingaben, ...extras, infoZeile, this.loeschenKnopf(), this.duplizierenKnopf());
   }
 
   private zahlenfeld(feld: PanelFeld, werte: Werte, uebernehme: Uebernehme): HTMLLabelElement {

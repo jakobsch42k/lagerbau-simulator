@@ -146,3 +146,9 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Jakob („Du brennst gerade viel zu schnell durch mein Limit“); die fehlenden roten Testläufe durch die Reviews.
 **Richtig ist:** Bei einem vorab getesteten Plan kein Vorab-Scan und kein Review je Task; ein günstiges Modell für Tasks, die fertigen Code abschreiben; ein Review am Ende über den ganzen Branch. Vor einem langen Lauf die Kosten grob nennen.
 **Lehre:** Den Prüfaufwand am Risiko ausrichten, nicht am Rezept des Ablaufs.
+
+### 2026-10-06 — Kamera drehen löste einen Klick aus (E1)
+**Was die KI gemacht hat:** Beim Verschieben der Mauslogik in die neue Klasse `Zeigersteuerung` wurde die Klick-Toleranz nur beim Ziehen eines Objekts nachgeführt. Ein reines Drehen oder Verschieben der Kamera setzte `entfernt` nie, und das Loslassen löste trotzdem `editor.klick` aus: Die Auswahl verschwand, oder das aktive Werkzeug setzte einen Baum, eine Stange, ein Seil oder eine Plane.
+**Gefunden durch:** Stage-Review von E1 (nachgestellt mit einem e2e-Test).
+**Richtig ist:** `entfernt` wird am Anfang von `bewegt` für jede Mausbewegung bei gedrückter Taste aktualisiert; e2e „Kamera drehen über leerem Boden“ mit jedem Platzierwerkzeug.
+**Lehre:** Zieht Eingabebehandlung in eine neue Klasse um, die alte Absicherung (Klick-Toleranz) mitnehmen und den Orbit-Fall im e2e testen, nicht nur Klick und Ziehen.

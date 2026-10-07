@@ -293,8 +293,8 @@ describe('Editor', () => {
     expect(e.zustand().auswahl).toBeNull();
     e.waehleMehrere(['l', 'weg']);
     expect(e.zustand().auswahl).toBe('l');
-    e.taste('r', false); // R dreht nur Baugruppen (Spec v3, D6)
-    expect(e.zustand().kannRueckgaengig).toBe(false);
+    e.taste('r', false); // R dreht alle Arten (Spec E1, D3)
+    expect(e.zustand().kannRueckgaengig).toBe(true);
     e.taste('Escape', false);
     expect(e.zustand().ausgewaehlt.size).toBe(0);
   });
@@ -320,5 +320,92 @@ describe('Editor', () => {
     expect(e.bauwerk).toBe(anfang);
     expect(e.aendereObjekte(['weg'], (o) => o.verschobenUm(new Vec3(1, 0, 0)))).toBe(true);
     expect(e.zustand().kannRueckgaengig).toBe(false);
+  });
+
+  it('ändert ein doppelt genanntes Objekt nur einmal', () => {
+    const anfang = Bauwerk.leer().mitGruppe(dreibein);
+    const e = neuerEditor(anfang);
+    expect(e.aendereObjekte(['d', 'd', 'd-bein-0'], (o) => o.verschobenUm(new Vec3(1, 0, 0)))).toBe(true);
+    expect(e.bauwerk.gruppe('d')?.position.equals(new Vec3(1, 0, 0), 1e-9)).toBe(true);
+  });
+
+  describe('Auswahl (Spec E1, D1)', () => {
+    const seil = new Seil('s-a', new ABock('abock', Vec3.NULL, Math.PI / 2, STANDARD_ABOCK).spitze(), new Vec3(-1.5, 0, 1));
+    const baum = new Baum('baum', new Vec3(-6, 0, 0), STANDARD_BAUM);
+    const platz = (): Bauwerk => kochstelle().mitSeil(seil).mitBaum(baum);
+    const bein = (id: string, art: 'abock' | 'dreibein' = 'abock'): Treffer => ({ art: 'objekt', objektArt: art, id, punkt: Vec3.NULL });
+    const auswahl = (e: Editor): string[] => [...e.zustand().ausgewaehlt].sort();
+
+    it('Shift+Klick fügt ein Teil hinzu und nimmt es wieder weg', () => {
+      const e = neuerEditor(platz());
+      e.klick(bein('abock-bein-0'));
+      e.klick(bein('dreibein-bein-1', 'dreibein'), { shift: true });
+      expect(auswahl(e)).toEqual(['abock', 'dreibein']);
+      expect(e.zustand().auswahl).toBeNull();
+      e.klick(bein('abock-bein-1'), { shift: true });
+      expect(auswahl(e)).toEqual(['dreibein']);
+      expect(e.zustand().auswahl).toBe('dreibein');
+    });
+
+    it('Klick ohne Shift ersetzt die Auswahl; Shift+Klick auf den Boden lässt sie stehen', () => {
+      const e = neuerEditor(platz());
+      e.klick(bein('abock-bein-0'));
+      e.klick(bein('first', 'abock'), { shift: false });
+      expect(auswahl(e)).toEqual(['first']);
+      e.klick(boden(30, 30), { shift: true });
+      expect(auswahl(e)).toEqual(['first']);
+      e.klick(boden(30, 30));
+      expect(auswahl(e)).toEqual([]);
+    });
+
+    it('Doppelklick wählt den ganzen Bau samt Seil, aber nicht den Baum', () => {
+      const e = neuerEditor(platz());
+      e.doppelklick(bein('abock-bein-0'));
+      expect(auswahl(e)).toEqual(['abock', 'dreibein', 'first', 's-a']);
+    });
+
+    it('Shift+Doppelklick fügt den Bau zur Auswahl hinzu', () => {
+      const e = neuerEditor(platz());
+      e.klick({ art: 'objekt', objektArt: 'baum', id: 'baum', punkt: Vec3.NULL });
+      e.doppelklick(bein('abock-bein-0'), { shift: true });
+      expect(auswahl(e)).toEqual(['abock', 'baum', 'dreibein', 'first', 's-a']);
+    });
+
+    it('Doppelklick auf den Boden hebt die Auswahl auf; ein Platzier-Werkzeug ignoriert ihn', () => {
+      const e = neuerEditor(platz());
+      e.klick(bein('first'));
+      e.doppelklick(boden(30, 30));
+      expect(auswahl(e)).toEqual([]);
+      const vorher = e.bauwerk;
+      e.waehleWerkzeug('dreibein');
+      e.doppelklick(boden(30, 30));
+      expect(e.bauwerk).toBe(vorher);
+    });
+
+    it('Strg+A wählt alles, Esc hebt auf', () => {
+      const e = neuerEditor(platz());
+      expect(e.taste('a', true)).toBe(true);
+      expect(auswahl(e)).toEqual(['abock', 'baum', 'dreibein', 'first', 's-a']);
+      e.taste('Escape', false);
+      expect(auswahl(e)).toEqual([]);
+    });
+
+    it('Entf löscht die ganze Auswahl in einem Undo-Schritt', () => {
+      const anfang = platz();
+      const e = neuerEditor(anfang);
+      e.doppelklick(bein('abock-bein-0'));
+      e.taste('Delete', false);
+      expect(e.bauwerk.objekte.map((o) => o.id)).toEqual(['baum']);
+      expect(auswahl(e)).toEqual([]);
+      e.rueckgaengig();
+      expect(e.bauwerk).toBe(anfang);
+      expect(e.zustand().kannRueckgaengig).toBe(false);
+    });
+
+    it('Entf ohne Auswahl tut nichts', () => {
+      const e = neuerEditor(platz());
+      e.taste('Delete', false);
+      expect(e.zustand().kannRueckgaengig).toBe(false);
+    });
   });
 });

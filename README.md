@@ -5,6 +5,19 @@
 
 Online: https://jakobsch42k.github.io/lagerbau-simulator/
 
+## Bedienung (Editor)
+
+- **Auswählen:** Klick wählt ein Teil (Baugruppe, freie Stange, Seil, Baum, Plane). Shift+Klick fügt hinzu oder nimmt weg. **Doppelklick** wählt den ganzen Bau samt Seilen und Planen. Strg+A wählt alles, Esc oder Klick auf den Boden hebt die Auswahl auf.
+- **Verschieben:** ein Objekt der Auswahl mit der Maus ziehen (Raster 0,1 m), oder mit den Pfeiltasten (0,1 m, mit Shift 1 m). Abspannungen, Haringe und Planen wandern mit; geht das nicht (z. B. wird eine Plane zu steil), bleibt alles, wie es war, und eine Meldung erscheint.
+- **Drehen:** R dreht die Auswahl um 15°, Shift+R zurück.
+- **Kopieren:** Strg+D (oder „Duplizieren“) legt eine Kopie 1 m daneben. Strg+C / Strg+V kopiert und fügt an der Maus ein (nur innerhalb der App).
+- **Löschen:** Entf löscht die ganze Auswahl. Alles lässt sich mit Strg+Z / Strg+Y rückgängig machen.
+- **Planansicht:** Knopf „Plan / 3D“ oder Taste P. Der Plan schaut senkrecht von oben, Norden ist oben; Ziehen verschiebt, das Mausrad zoomt, unten links zeigt eine Maßstabsleiste die Länge. In der Planansicht wählt **Shift+Ziehen** auf leerem Boden alle Objekte im Rahmen; „oben“ der Pfeiltasten ist dann Norden.
+- **Alles zeigen:** Knopf oder Taste F passt die Ansicht an. Geschieht auch beim Laden eines Links oder einer Datei.
+- **Messen:** Werkzeug „Messen“, zwei Klicks (Spitzen, Bünde, Stangenenden und Boden rasten ein). Es erscheinen die Länge und der waagrechte Abstand. Esc oder ein anderes Werkzeug löscht die Messung; gespeichert wird sie nicht.
+
+Am Handy gibt es nur die Ansicht, aber auch dort Plan / 3D und „Alles zeigen“.
+
 ## Entwickeln
 
     npm install

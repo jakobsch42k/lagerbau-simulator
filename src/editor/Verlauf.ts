@@ -19,7 +19,9 @@ export class Verlauf<T> {
     return this.nachher.length > 0;
   }
 
+  /** Ein neuer Stand; ist er derselbe wie der aktuelle (`===`), entsteht kein Schritt. */
   mit(neu: T): Verlauf<T> {
+    if (neu === this.aktuell) return this;
     return new Verlauf([...this.vorher, this.aktuell].slice(-this.max), neu, [], this.max);
   }
 

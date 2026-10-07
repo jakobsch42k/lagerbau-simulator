@@ -2,31 +2,21 @@ import type { ObjektRegister } from '../arten/ObjektRegister';
 import { standardArten } from '../arten/standardArten';
 import type { Bauwerk } from '../model/Bauwerk';
 import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
-import type { Vec3 } from '../model/Vec3';
-import { DREH_SCHRITT } from './konstanten';
+import { kopiere, mitte } from '../model/Duplikat';
+import { bewege, mitgenommen } from '../model/Mitbewegung';
+import { Vec3 } from '../model/Vec3';
+import { idsImRechteck, type Rechteck } from './Rahmenwahl';
+import type { Messung } from './Messung';
+import { DREH_SCHRITT, DUPLIKAT_VERSATZ } from './konstanten';
 import { SnapService, type Treffer } from './SnapService';
+import type { EditorOptionen, EditorZustand } from './EditorZustand';
+import { Tastatur } from './Tastatur';
 import { Verlauf } from './Verlauf';
-import { type EditorKontext, erzeugeWerkzeug, type Werkzeug, type WerkzeugName } from './Werkzeuge';
+import { Ziehvorgang } from './Ziehvorgang';
+import { Zwischenablage } from './Zwischenablage';
+import { type EditorKontext, erzeugeWerkzeug, type KlickOptionen, type Werkzeug, type WerkzeugName } from './Werkzeuge';
 
-export interface EditorZustand {
-  readonly bauwerk: Bauwerk;
-  /** Alle ausgewählten Objekte (Spec v3, D6). Ids, die das Bauwerk nicht kennt, fallen heraus. */
-  readonly ausgewaehlt: ReadonlySet<string>;
-  /** Die eine ausgewählte id; null, wenn nichts oder mehr als ein Objekt ausgewählt ist. */
-  readonly auswahl: string | null;
-  readonly markiert: ReadonlySet<string>;
-  readonly werkzeug: WerkzeugName;
-  readonly stangenStart: Vec3 | null;
-  readonly meldung: string | null;
-  readonly kannRueckgaengig: boolean;
-  readonly kannWiederholen: boolean;
-}
-
-export interface EditorOptionen {
-  readonly arten?: ObjektRegister;
-  readonly snap?: SnapService;
-  readonly neueId?: (praefix: string) => string;
-}
+export type { EditorOptionen, EditorZustand } from './EditorZustand';
 
 const zufallsId = (praefix: string): string => `${praefix}-${crypto.randomUUID().slice(0, 8)}`;
 
@@ -42,6 +32,11 @@ export class Editor implements EditorKontext {
   private markiertIds: ReadonlySet<string> = new Set();
   private werkzeug: Werkzeug;
   private meldung: string | null = null;
+  private messungWert: Messung | null = null;
+  private ziehen: Ziehvorgang | null = null;
+  private readonly zwischenablage = new Zwischenablage();
+  private readonly tastatur = new Tastatur(this);
+  private mausPunkt: Vec3 | null = null;
   private readonly beobachter: ((z: EditorZustand) => void)[] = [];
   private readonly idErzeuger: (praefix: string) => string;
 
@@ -71,7 +66,15 @@ export class Editor implements EditorKontext {
     this.ausgewaehltIds = id === null ? new Set() : new Set([id]);
   }
 
-  /** Wählt mehrere Objekte auf einmal (Spec v3, D6). Die Bedienung dafür kommt mit E1. */
+  auswahl(): ReadonlySet<string> {
+    return this.zustand().ausgewaehlt;
+  }
+
+  setzeAuswahl(ids: Iterable<string>): void {
+    this.ausgewaehltIds = new Set(ids);
+  }
+
+  /** Wählt mehrere Objekte auf einmal (Spec v3, D6). */
   waehleMehrere(ids: readonly string[]): void {
     this.ausgewaehltIds = new Set(ids);
     this.melde();
@@ -79,6 +82,16 @@ export class Editor implements EditorKontext {
 
   neueId(praefix: string): string {
     return this.idErzeuger(praefix);
+  }
+
+  setzeMessung(messung: Messung | null): void {
+    this.messungWert = messung;
+  }
+
+  /** Rahmen-Auswahl der Planansicht: wählt alle Objekte im Rechteck (ersetzt die Auswahl). Nur im Auswahl-Werkzeug. */
+  waehleImRahmen(rechteck: Rechteck): void {
+    if (this.werkzeug.name !== 'auswahl') return;
+    this.waehleMehrere(idsImRechteck(this.bauwerk, rechteck));
   }
 
   abonniere(beobachter: (z: EditorZustand) => void): void {
@@ -90,23 +103,36 @@ export class Editor implements EditorKontext {
     const ausgewaehlt: ReadonlySet<string> = new Set([...this.ausgewaehltIds].filter((id) => this.bauwerk.enthaelt(id)));
     return {
       bauwerk: this.bauwerk,
+      vorschau: this.ziehen?.vorschau ?? null,
       ausgewaehlt,
       auswahl: ausgewaehlt.size === 1 ? ([...ausgewaehlt][0] ?? null) : null,
       markiert: this.markiertIds,
       werkzeug: this.werkzeug.name,
       stangenStart: this.werkzeug.angefangen,
+      messung: this.messungWert,
       meldung: this.meldung,
       kannRueckgaengig: this.verlauf.kannRueckgaengig,
       kannWiederholen: this.verlauf.kannWiederholen,
     };
   }
 
-  klick(treffer: Treffer): void {
-    this.fuehreAus(() => this.werkzeug.onKlick(treffer, this));
+  klick(treffer: Treffer, optionen: KlickOptionen = {}): void {
+    this.fuehreAus(() => this.werkzeug.onKlick(treffer, this, optionen));
+  }
+
+  /** Doppelklick: wählt den ganzen Bau. Werkzeuge ohne Doppelklick-Verhalten ignorieren ihn. */
+  doppelklick(treffer: Treffer, optionen: KlickOptionen = {}): void {
+    const werkzeug = this.werkzeug;
+    if (werkzeug.onDoppelklick) this.fuehreAus(() => werkzeug.onDoppelklick?.(treffer, this, optionen));
+  }
+
+  waehleAlle(): void {
+    this.waehleMehrere(this.bauwerk.objekte.map((o) => o.id));
   }
 
   waehleWerkzeug(name: WerkzeugName): void {
     this.werkzeug.abbrechen();
+    this.messungWert = null;
     this.werkzeug = erzeugeWerkzeug(name, this.arten);
     this.melde();
   }
@@ -132,7 +158,7 @@ export class Editor implements EditorKontext {
    */
   aendereObjekte(ids: readonly string[], fn: (o: LagerObjekt) => LagerObjekt): boolean {
     return this.fuehreAus(() => {
-      const neu = ids.reduce((b, id) => {
+      const neu = [...new Set(ids)].reduce((b, id) => {
         const o = b.objekt(id);
         return o ? b.ersetze(fn(o)) : b;
       }, this.bauwerk);
@@ -140,21 +166,118 @@ export class Editor implements EditorKontext {
     });
   }
 
+  /** Löscht die ganze Auswahl in einem Undo-Schritt. */
   loescheAuswahl(): void {
-    const id = this.zustand().auswahl;
-    if (id === null) return;
+    const ids = this.zustand().ausgewaehlt;
+    if (ids.size === 0) return;
     this.fuehreAus(() => {
       this.waehle(null);
-      this.aendere(this.bauwerk.ohne(id));
+      this.aendere([...ids].reduce((b, id) => b.ohne(id), this.bauwerk));
     });
   }
 
-  /** Dreht wie bisher nur Baugruppen; das Drehen aller Arten kommt mit E1. */
+  /**
+   * Dreht die Auswahl um den Mittelpunkt ihrer Platzpunkte (bei Objekten ohne Platzpunkte um deren eigenen Drehpunkt),
+   * samt Seilen und Planen (Spec E1, D3). Ein Undo-Schritt.
+   */
   dreheAuswahl(winkel = DREH_SCHRITT): void {
-    const id = this.zustand().auswahl;
-    const gruppe = id === null ? undefined : this.bauwerk.gruppe(id);
-    if (!gruppe) return;
-    this.aendereMit((b) => b.ersetzeGruppe(gruppe.gedreht(winkel)));
+    const ids = [...this.zustand().ausgewaehlt];
+    const um = mitte(ids.flatMap((id) => this.bauwerk.objekt(id) ?? []));
+    if (um === null) return;
+    this.aendereMit((b) => bewege(b, ids, { art: 'drehung', winkelRad: winkel, um }));
+  }
+
+  /** Verschiebt die Auswahl samt Seilen und Planen waagrecht um `dv`. Ein Undo-Schritt; false, wenn nichts ausgewählt oder abgelehnt. */
+  verschiebeAuswahl(dv: Vec3): boolean {
+    const ids = [...this.zustand().ausgewaehlt];
+    if (ids.length === 0) return false;
+    return this.aendereMit((b) => bewege(b, ids, { art: 'verschiebung', dv }));
+  }
+
+  /** Für die Pfeiltasten: wohin „oben“ zeigt. Nur der waagrechte Anteil zählt. */
+  setzeBlickrichtung(richtung: Vec3): void {
+    this.tastatur.setzeBlickrichtung(richtung);
+  }
+
+  /** Der Bodenpunkt unter der Maus für Strg+V; null, wenn die Maus nicht über der Szene ist. Benachrichtigt nicht. */
+  setzeMausPunkt(punkt: Vec3 | null): void {
+    this.mausPunkt = punkt;
+  }
+
+  get zieht(): boolean {
+    return this.ziehen !== null;
+  }
+
+  /**
+   * Maus auf einem Objekt gedrückt, `startBoden` ist der Bodenpunkt darunter. Liefert true, wenn ein Ziehen beginnt.
+   * Nur die Auswahl kann ziehen (siehe `Werkzeug.onZiehenStart`).
+   */
+  beginneZiehen(treffer: Treffer, startBoden: Vec3, optionen: KlickOptionen = {}): boolean {
+    const werkzeug = this.werkzeug;
+    if (!werkzeug.onZiehenStart) return false;
+    let beginnt = false;
+    this.fuehreAus(() => {
+      beginnt = werkzeug.onZiehenStart?.(treffer, this, optionen) ?? false;
+    });
+    const ids = [...this.zustand().ausgewaehlt];
+    if (beginnt && ids.length > 0) this.ziehen = Ziehvorgang.start(this.bauwerk, ids, startBoden);
+    return this.ziehen !== null;
+  }
+
+  /** Maus beim Ziehen bewegt: zeigt den Zwischenstand, ohne Verlaufseintrag. Eine unmögliche Lage zeigt die Meldung. */
+  ziehe(boden: Vec3): void {
+    if (this.ziehen === null) return;
+    const neu = this.ziehen.mitZiel(boden);
+    if (neu === this.ziehen) return;
+    this.ziehen = neu;
+    this.meldung = neu.fehler;
+    this.melde();
+  }
+
+  /** Maus losgelassen: ein Undo-Schritt, wenn sich etwas bewegt hat. Ist die Lage unmöglich, bleibt alles, wie es war. */
+  beendeZiehen(): void {
+    const vorgang = this.ziehen;
+    if (vorgang === null) return;
+    this.ziehen = null;
+    if (vorgang.vorschau === null && vorgang.fehler === null) return this.melde();
+    this.fuehreAus(() => this.aendere(vorgang.ergebnis()));
+  }
+
+  /** Esc oder Abbruch während des Ziehens: nichts ändert sich, die Auswahl bleibt. */
+  brichZiehenAb(): void {
+    if (this.ziehen === null) return;
+    this.ziehen = null;
+    this.meldung = null;
+    this.melde();
+  }
+
+  /** Strg+D: kopiert die Auswahl samt mitwandernder Seile und Planen um +1 m; die Kopie ist danach ausgewählt. Ein Undo-Schritt. */
+  dupliziere(): void {
+    const objekte = this.mitnahme();
+    if (objekte.length > 0) this.fuegeKopienEin(objekte, DUPLIKAT_VERSATZ);
+  }
+
+  /** Strg+C: merkt sich die Auswahl samt Mitnahme, nur innerhalb der App. */
+  kopiereAuswahl(): void {
+    this.zwischenablage.merke(this.mitnahme());
+  }
+
+  /** Strg+V: fügt die Zwischenablage mit ihrem Mittelpunkt auf den Bodenpunkt unter der Maus (gerastert) ein, sonst um +1 m versetzt. */
+  fuegeEin(): void {
+    const dv = this.zwischenablage.einfuegeVersatz(this.mausPunkt && this.snap.aufRaster(this.mausPunkt));
+    if (dv !== null) this.fuegeKopienEin(this.zwischenablage.objekte, dv);
+  }
+
+  private mitnahme(): readonly LagerObjekt[] {
+    return mitgenommen(this.bauwerk, [...this.zustand().ausgewaehlt]);
+  }
+
+  private fuegeKopienEin(objekte: readonly LagerObjekt[], dv: Vec3): void {
+    this.fuehreAus(() => {
+      const kopie = kopiere(this.bauwerk, objekte, dv, (p) => this.neueId(p));
+      this.aendere(kopie.bauwerk);
+      this.setzeAuswahl(kopie.neueIds);
+    });
   }
 
   rueckgaengig(): void {
@@ -180,18 +303,16 @@ export class Editor implements EditorKontext {
   }
 
   /** Tastenkürzel. Liefert true, wenn die Taste behandelt wurde. */
-  taste(taste: string, strg: boolean): boolean {
-    const klein = taste.toLowerCase();
-    if (strg && klein === 'z') this.rueckgaengig();
-    else if (strg && klein === 'y') this.wiederholen();
-    else if (!strg && (taste === 'Delete' || taste === 'Backspace')) this.loescheAuswahl();
-    else if (!strg && klein === 'r') this.dreheAuswahl();
-    else if (taste === 'Escape') {
-      this.werkzeug.abbrechen();
-      this.waehle(null);
-      this.melde();
-    } else return false;
-    return true;
+  taste(taste: string, strg: boolean, umschalt = false): boolean {
+    return this.tastatur.verarbeite(taste, strg, umschalt);
+  }
+
+  /** Esc ohne Ziehen: Werkzeug und Messung zurücksetzen, Auswahl aufheben. */
+  abbrechen(): void {
+    this.werkzeug.abbrechen();
+    this.messungWert = null;
+    this.waehle(null);
+    this.melde();
   }
 
   private fuehreAus(aktion: () => void): boolean {

@@ -67,6 +67,10 @@ export class Dreibein extends Baugruppe {
     return new Dreibein(this.id, position, this.drehung + delta, this.params);
   }
 
+  mitId(id: string): Dreibein {
+    return new Dreibein(id, this.position, this.drehung, this.params);
+  }
+
   verschoben(position: Vec3): Dreibein {
     return new Dreibein(this.id, position, this.drehung, this.params);
   }

@@ -189,4 +189,26 @@ describe('ParameterPanel', () => {
     expect(editor.zustand().meldung).toBe('Durchmesser muss größer als 0 sein');
     expect(feld(wurzel, 'Ø').value).toBe('10');
   });
+
+  it('zeigt bei mehreren Objekten die Anzahl mit Löschen, das alle löscht', () => {
+    const { wurzel, editor } = aufbau();
+    editor.waehleMehrere(['abock', 'dreibein']);
+    expect(wurzel.querySelector('h2')?.textContent).toBe('2 Objekte ausgewählt');
+    expect(wurzel.querySelectorAll('input')).toHaveLength(0);
+    wurzel.querySelector('button')?.click();
+    expect(editor.bauwerk.gruppen).toHaveLength(0);
+    expect(wurzel.querySelector('h2')).toBeNull();
+  });
+
+  it('Duplizieren kopiert die Auswahl, bei einem Objekt wie bei mehreren', () => {
+    const { wurzel, editor } = aufbau();
+    const duplizieren = (): HTMLButtonElement | undefined => [...wurzel.querySelectorAll('button')].find((k) => k.textContent?.startsWith('Duplizieren'));
+    editor.waehle('abock');
+    duplizieren()?.click();
+    expect(editor.bauwerk.gruppen).toHaveLength(3);
+    expect(editor.zustand().auswahl).not.toBe('abock');
+    editor.waehleMehrere(['abock', 'dreibein']);
+    duplizieren()?.click();
+    expect(editor.bauwerk.gruppen).toHaveLength(5);
+  });
 });

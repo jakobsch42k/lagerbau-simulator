@@ -27,9 +27,15 @@
       <button data-werkzeug="seil">Seil spannen</button>
       <button data-werkzeug="plane">Plane spannen</button>
       <button data-werkzeug="baum">Baum setzen</button>
+      <button data-werkzeug="messen">Messen</button>
       <section id="parameter"></section>
     </aside>
-    <main id="ansicht"></main>
+    <main id="ansicht">
+      <div class="ansichtsleiste">
+        <button id="btn-ansicht" aria-pressed="false" title="Taste P">Plan / 3D</button>
+        <button id="btn-alles" title="Taste F">Alles zeigen</button>
+      </div>
+    </main>
     <aside class="rechts">
       <h2>Hinweise</h2>
       <ul id="hinweise"></ul>
