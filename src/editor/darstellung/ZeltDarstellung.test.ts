@@ -84,11 +84,11 @@ describe('ZeltDarstellung (Spec E4, D4)', () => {
     }
   });
 
-  it('doppelkegel: zwei Spitzen auf firsthoehe bei ±laenge/4, Wände bis wandhoehe', () => {
+  it('doppelkegel: zwei Spitzen auf firsthoehe bei ±(Länge − Breite)/2, Wände bis wandhoehe', () => {
     const z = zelt('doppelkegler', 0, Vec3.NULL);
     const [dach, waende] = koerper(darstellung.baue(z)) as [THREE.Mesh, THREE.Mesh];
     const spitzen = scheitel(dach).filter((v) => nah(v.y, z.params.firsthoehe));
-    expect(new Set(spitzen.map((v) => v.x.toFixed(6)))).toEqual(new Set([(z.params.laenge / 4).toFixed(6), (-z.params.laenge / 4).toFixed(6)]));
+    expect(new Set(spitzen.map((v) => v.x.toFixed(6)))).toEqual(new Set([0.775.toFixed(6), (-0.775).toFixed(6)]));
     expect(Math.max(...scheitel(waende).map((v) => v.y))).toBeCloseTo(z.params.wandhoehe, 4);
   });
 

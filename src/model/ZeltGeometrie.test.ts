@@ -28,10 +28,17 @@ describe('ZeltGeometrie: umriss und flaeche (Spec E4, D3)', () => {
     expect(ZeltGeometrie.flaeche(z)).toBeCloseTo(ZeltGeometrie.flaeche(new Zelt('z', Vec3.NULL, JURTE6)), 9);
   });
 
-  it('doppelkegel und sattel: Rechteck, Länge entlang x, Breite entlang z', () => {
+  it('doppelkegel: Oval aus zwei Halbkreisen (Ø Breite), Länge entlang x', () => {
     const k = new Zelt('k', Vec3.NULL, KEGEL);
-    expect(ZeltGeometrie.umriss(k)).toHaveLength(4);
-    expect(ZeltGeometrie.flaeche(k)).toBeCloseTo(5.55 * 4, 9);
+    const u = ZeltGeometrie.umriss(k);
+    expect(u).toHaveLength(16);
+    expect(Math.max(...u.map((p) => p.z))).toBeCloseTo(2, 9);
+    expect(ZeltGeometrie.kegelHalbachse(k)).toBeCloseTo(0.775, 9);
+    expect(ZeltGeometrie.flaeche(k)).toBeGreaterThan(Math.PI * 4 + 1.55 * 4 - 0.8);
+    expect(ZeltGeometrie.flaeche(k)).toBeLessThan(Math.PI * 4 + 1.55 * 4);
+  });
+
+  it('sattel: Rechteck, Länge entlang x, Breite entlang z', () => {
     const s = new Zelt('s', Vec3.NULL, SATTEL);
     expect(ZeltGeometrie.flaeche(s)).toBeCloseTo(27, 9);
     const u = ZeltGeometrie.umriss(s);
@@ -70,10 +77,13 @@ describe('ZeltGeometrie: haringe und abspannseile', () => {
     expect(Math.hypot(h[1].x - h[0].x, h[1].z - h[0].z)).toBeCloseTo(3.625, 9);
   });
 
-  it('doppelkegel mit 20 Abspannungen: alle auf dem versetzten Rechteck', () => {
+  it('doppelkegel mit 20 Abspannungen: alle im Abstand haringAbstand vom Oval', () => {
     const h = ZeltGeometrie.haringe(new Zelt('k', Vec3.NULL, KEGEL));
     expect(h).toHaveLength(20);
-    for (const p of h) expect(abstandZurKante(p, 2.775, 2)).toBeCloseTo(1, 9);
+    for (const p of h) {
+      const qx = Math.max(-0.775, Math.min(0.775, p.x));
+      expect(Math.hypot(p.x - qx, p.z)).toBeCloseTo(3, 9);
+    }
   });
 
   it('rechteckig gedreht um 90 Grad: Abstand zur gedrehten Kante bleibt', () => {
