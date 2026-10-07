@@ -1,7 +1,9 @@
 import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
 import type { MaterialBeitrag } from '../model/MaterialPosten';
 import type { Vec3 } from '../model/Vec3';
+import type { Grundriss } from '../model/Grundriss';
 import type { Roh } from '../share/lesen';
+import type { Rolle } from './platz/rollen';
 
 /** Ein Objekt im Datenformat v4: Art und id vorneweg, danach die Felder der Art wie in v3 (Spec v3, D3). */
 export interface ObjektJson {
@@ -135,6 +137,12 @@ export interface ObjektArt<T extends LagerObjekt = LagerObjekt> {
   /** Beitrag eines Objekts zur Lagerliste; fehlt bei Arten, die nicht in die Liste kommen. `zugabeProEnde` ist die Seilzugabe je Ende. */
   material?(o: T, ctx: MaterialKontext): MaterialBeitrag;
   readonly platzieren: Platzieren;
+  /** Rolle in den Platzregeln (Spec E6, D2); fehlt oder `null` = das Objekt zählt dort nicht. */
+  rolle?(o: T): Rolle | null;
+  /** Grundriss am Boden für Abstände von Kante zu Kante (Spec E6, D2); fehlt oder `null` = keiner. */
+  grundriss?(o: T): Grundriss | null;
+  /** Name in Hinweisen („Jurte 6er“); fehlt er, nennt der Text die Art. */
+  anzeigeName?(o: T): string;
   /** Statuszeile nach dem Setzen eines Objekts (Zelt: „Zelt gesetzt: Jurte 6er“); fehlt sie, bleibt die Zeile leer. */
   meldungNachSetzen?(o: T): string;
   istVon(o: LagerObjekt): o is T;

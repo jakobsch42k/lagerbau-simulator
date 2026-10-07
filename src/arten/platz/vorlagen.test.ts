@@ -9,6 +9,7 @@ describe('Vorlagen (Spec E3, D2)', () => {
       ['Latrine/WC', 'rechteck', 1.5, 1.5, 2],
       ['Wasserstelle', 'kreis', 1, 1, 1],
       ['Holzlager', 'rechteck', 3, 2, 1],
+      ['Küche', 'rechteck', 4, 3, 0.1],
       ['Eigenes', 'rechteck', 2, 2, 1],
     ]);
   });

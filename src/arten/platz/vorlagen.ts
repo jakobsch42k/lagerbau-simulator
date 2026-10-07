@@ -29,6 +29,8 @@ export const VORLAGEN: readonly Vorlage[] = [
   { schluessel: 'wasserstelle', label: 'Wasserstelle', form: 'kreis', breite: 1, laenge: 1, hoehe: 1, farbe: '#339af0' },
   // CHECK MANUALLY: Startwert Claude (Spec E3, D2)
   { schluessel: 'holzlager', label: 'Holzlager', form: 'rechteck', breite: 3, laenge: 2, hoehe: 1, farbe: '#8b5a2b' },
+  // CHECK MANUALLY: keine Quelle, Startwert von Claude (Spec E6, D2)
+  { schluessel: 'kueche', label: 'Küche', form: 'rechteck', breite: 4, laenge: 3, hoehe: 0.1, farbe: '#c9a227' },
   // CHECK MANUALLY: Startwert Claude (Spec E3, D2)
   { schluessel: 'eigenes', label: 'Eigenes', form: 'rechteck', breite: 2, laenge: 2, hoehe: 1, farbe: '#868e96' },
 ];

@@ -1,9 +1,11 @@
 import { Baum } from '../model/Baum';
+import { Grundriss } from '../model/Grundriss';
 import type { LagerObjekt } from '../model/LagerObjekt';
 import { STANDARD_BAUM } from '../model/params';
 import type { Vec3 } from '../model/Vec3';
 import { type Roh, text, type V3, vektor, zahl } from '../share/lesen';
 import { zahlWert } from './gemeinsam';
+import type { Rolle } from './platz/rollen';
 import type { Fangpunkt, ObjektArt, ObjektJson, PanelSpec, PlatzierenPunkt } from './ObjektArt';
 
 export interface BaumJson extends ObjektJson {
@@ -24,6 +26,15 @@ export class BaumArt implements ObjektArt<Baum> {
     modus: 'punkt',
     erzeuge: (id, position) => new Baum(id, position, STANDARD_BAUM),
   };
+
+  rolle(): Rolle {
+    return 'baum';
+  }
+
+  /** Der Stamm als Kreis; den Kronenkreis baut P6 mit dem eingestellten Faktor selbst (die Art kennt die Einstellungen nicht). */
+  grundriss(o: Baum): Grundriss {
+    return Grundriss.kreis(o.position, o.params.durchmesser / 2);
+  }
 
   istVon(o: LagerObjekt): o is Baum {
     return o instanceof Baum;
