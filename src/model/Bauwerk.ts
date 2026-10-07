@@ -1,3 +1,4 @@
+import { Bau } from './Bau';
 import { Baugruppe } from './Baugruppe';
 import { Baum } from './Baum';
 import { type Bund, BundFinder } from './Bund';
@@ -10,6 +11,9 @@ import { Seil } from './Seil';
 import { Stange } from './Stange';
 import type { Vec3 } from './Vec3';
 import { type Haring, type Verankerung, VerankerungsFinder } from './Verankerung';
+
+/** Längster Bau-Name (Spec E5, D2). */
+export const MAX_BAUNAME = 40;
 
 /**
  * Unveränderliches Aggregat: eine geordnete Liste aller Objekte (Spec v3, D1). Bünde, Füße und Haringe werden abgeleitet.
@@ -31,6 +35,8 @@ export class Bauwerk {
     readonly regelEinstellungen: RegelEinstellungen = RegelEinstellungen.standard(),
     /** Das Luftbild als Boden (Spec E2, D1). Kein Objekt: nicht auswählbar, nicht verschiebbar, nicht in `objekte`. */
     readonly luftbild: Luftbild | null = null,
+    /** Namen der Bauten (Spec E5, D2): Objekt-id → Name, am ersten Objekt des Baus. Nicht jeder Eintrag gilt, siehe `bauName`. */
+    readonly bauNamen: ReadonlyMap<string, string> = new Map(),
   ) {
     this.gruppen = objekte.filter((o): o is Baugruppe => o instanceof Baugruppe);
     this.freieStangen = objekte.filter((o): o is Stange => o instanceof Stange);
@@ -48,8 +54,9 @@ export class Bauwerk {
     liste: readonly LagerObjekt[],
     regelEinstellungen: RegelEinstellungen = RegelEinstellungen.standard(),
     luftbild: Luftbild | null = null,
+    bauNamen: ReadonlyMap<string, string> = new Map(),
   ): Bauwerk {
-    const bauwerk = new Bauwerk([...liste], regelEinstellungen, luftbild);
+    const bauwerk = new Bauwerk([...liste], regelEinstellungen, luftbild, bauNamen);
     bauwerk.index();
     return bauwerk;
   }
@@ -110,7 +117,7 @@ export class Bauwerk {
 
   mit(o: LagerObjekt): Bauwerk {
     this.pruefeFrei(o.ids());
-    return new Bauwerk([...this.objekte, o], this.regelEinstellungen, this.luftbild);
+    return new Bauwerk([...this.objekte, o], this.regelEinstellungen, this.luftbild, this.bauNamen);
   }
 
   /** Ersetzt das Objekt mit derselben id. Alle anderen Objekte bleiben dieselben (`===`). */
@@ -119,23 +126,61 @@ export class Bauwerk {
     if (!alt) throw new Error(`Objekt ${o.id} gibt es nicht`);
     if (alt === o) return this;
     this.pruefeFrei(o.ids(), alt);
-    return new Bauwerk(this.objekte.map((x) => (x === alt ? o : x)), this.regelEinstellungen, this.luftbild);
+    return new Bauwerk(this.objekte.map((x) => (x === alt ? o : x)), this.regelEinstellungen, this.luftbild, this.bauNamen);
   }
 
-  /** Entfernt das Objekt mit dieser id. Teil-ids (Stangen einer Gruppe) entfernen nichts. */
+  /**
+   * Entfernt das Objekt mit dieser id. Teil-ids (Stangen einer Gruppe) entfernen nichts. Trug das Objekt den Namen eines Baus,
+   * geht er an das erste überlebende Objekt desselben Baus (Spec E5, D2); überlebt keines, entfällt er.
+   */
   ohne(id: string): Bauwerk {
     const rest = this.objekte.filter((o) => o.id !== id);
-    return rest.length === this.objekte.length ? this : new Bauwerk(rest, this.regelEinstellungen, this.luftbild);
+    if (rest.length === this.objekte.length) return this;
+    return new Bauwerk(rest, this.regelEinstellungen, this.luftbild, this.namenOhne(id));
   }
 
   /** Neue Regel-Einstellungen; alle Objekte bleiben dieselben (`===`). Über den Editor ein Undo-Schritt. */
   mitRegelEinstellungen(e: RegelEinstellungen): Bauwerk {
-    return e === this.regelEinstellungen ? this : new Bauwerk(this.objekte, e, this.luftbild);
+    return e === this.regelEinstellungen ? this : new Bauwerk(this.objekte, e, this.luftbild, this.bauNamen);
   }
 
   /** Luftbild laden, ändern oder (mit null) entfernen; alle Objekte bleiben dieselben (`===`). Über den Editor ein Undo-Schritt. */
   mitLuftbild(luftbild: Luftbild | null): Bauwerk {
-    return luftbild === this.luftbild ? this : new Bauwerk(this.objekte, this.regelEinstellungen, luftbild);
+    return luftbild === this.luftbild ? this : new Bauwerk(this.objekte, this.regelEinstellungen, luftbild, this.bauNamen);
+  }
+
+  /**
+   * Benennt einen Bau (Spec E5, D2): löscht alle Einträge der Objekte des Baus und schreibt den Namen (getrimmt) am ersten Objekt.
+   * `null` oder leerer Name entfernt den Namen („Bau N“). Wirft einen RangeError bei mehr als 40 Zeichen. Über den Editor ein Undo-Schritt.
+   */
+  mitBauName(bau: Bau, name: string | null): Bauwerk {
+    const sauber = (name ?? '').trim();
+    if (sauber.length > MAX_BAUNAME) throw new RangeError('Name muss 1 bis 40 Zeichen lang sein.');
+    const neu = new Map(this.bauNamen);
+    for (const id of bau.objektIds) neu.delete(id);
+    if (sauber.length > 0 && bau.erstesObjekt !== '') neu.set(bau.erstesObjekt, sauber);
+    return new Bauwerk(this.objekte, this.regelEinstellungen, this.luftbild, neu);
+  }
+
+  /** Name des Baus: der Eintrag des ersten Objekts, das einen hat; sonst „Bau N“ mit N = Position in `Bau.alle` (ab 1). */
+  bauName(bau: Bau): string {
+    for (const id of bau.objektIds) {
+      const name = this.bauNamen.get(id);
+      if (name !== undefined) return name;
+    }
+    const position = Bau.alle(this).findIndex((b) => b.stangenIds[0] === bau.stangenIds[0]);
+    return position < 0 ? 'Bau' : `Bau ${position + 1}`;
+  }
+
+  private namenOhne(id: string): ReadonlyMap<string, string> {
+    const name = this.bauNamen.get(id);
+    if (name === undefined) return this.bauNamen;
+    const neu = new Map(this.bauNamen);
+    neu.delete(id);
+    const bau = Bau.alle(this).find((b) => b.objektIds.includes(id));
+    const erbe = bau?.objektIds.find((x) => x !== id);
+    if (erbe !== undefined && !neu.has(erbe)) neu.set(erbe, name);
+    return neu;
   }
 
   mitGruppe(gruppe: Baugruppe): Bauwerk {
