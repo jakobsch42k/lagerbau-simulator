@@ -6,6 +6,7 @@ import { Fuss } from './Fuss';
 import type { LagerObjekt } from './LagerObjekt';
 import type { Luftbild } from './Luftbild';
 import { RegelEinstellungen } from '../rules/RegelEinstellungen';
+import { PlatzregelEinstellungen } from '../rules/platz/PlatzregelEinstellungen';
 import { Plane } from './Plane';
 import { Seil } from './Seil';
 import { Stange } from './Stange';
@@ -37,6 +38,8 @@ export class Bauwerk {
     readonly luftbild: Luftbild | null = null,
     /** Namen der Bauten (Spec E5, D2): Objekt-id → Name, am ersten Objekt des Baus. Nicht jeder Eintrag gilt, siehe `bauName`. */
     readonly bauNamen: ReadonlyMap<string, string> = new Map(),
+    /** Platzregeln an/aus und eingestellte Werte (Spec E6, D4). Wie `regelEinstellungen` Teil des Plans. */
+    readonly platzregelEinstellungen: PlatzregelEinstellungen = PlatzregelEinstellungen.standard(),
   ) {
     this.gruppen = objekte.filter((o): o is Baugruppe => o instanceof Baugruppe);
     this.freieStangen = objekte.filter((o): o is Stange => o instanceof Stange);
@@ -55,8 +58,9 @@ export class Bauwerk {
     regelEinstellungen: RegelEinstellungen = RegelEinstellungen.standard(),
     luftbild: Luftbild | null = null,
     bauNamen: ReadonlyMap<string, string> = new Map(),
+    platzregelEinstellungen: PlatzregelEinstellungen = PlatzregelEinstellungen.standard(),
   ): Bauwerk {
-    const bauwerk = new Bauwerk([...liste], regelEinstellungen, luftbild, bauNamen);
+    const bauwerk = new Bauwerk([...liste], regelEinstellungen, luftbild, bauNamen, platzregelEinstellungen);
     bauwerk.index();
     return bauwerk;
   }
@@ -117,7 +121,7 @@ export class Bauwerk {
 
   mit(o: LagerObjekt): Bauwerk {
     this.pruefeFrei(o.ids());
-    return new Bauwerk([...this.objekte, o], this.regelEinstellungen, this.luftbild, this.bauNamen);
+    return new Bauwerk([...this.objekte, o], this.regelEinstellungen, this.luftbild, this.bauNamen, this.platzregelEinstellungen);
   }
 
   /** Ersetzt das Objekt mit derselben id. Alle anderen Objekte bleiben dieselben (`===`). */
@@ -126,7 +130,7 @@ export class Bauwerk {
     if (!alt) throw new Error(`Objekt ${o.id} gibt es nicht`);
     if (alt === o) return this;
     this.pruefeFrei(o.ids(), alt);
-    return new Bauwerk(this.objekte.map((x) => (x === alt ? o : x)), this.regelEinstellungen, this.luftbild, this.bauNamen);
+    return new Bauwerk(this.objekte.map((x) => (x === alt ? o : x)), this.regelEinstellungen, this.luftbild, this.bauNamen, this.platzregelEinstellungen);
   }
 
   /**
@@ -136,17 +140,22 @@ export class Bauwerk {
   ohne(id: string): Bauwerk {
     const rest = this.objekte.filter((o) => o.id !== id);
     if (rest.length === this.objekte.length) return this;
-    return new Bauwerk(rest, this.regelEinstellungen, this.luftbild, this.namenOhne(id));
+    return new Bauwerk(rest, this.regelEinstellungen, this.luftbild, this.namenOhne(id), this.platzregelEinstellungen);
   }
 
   /** Neue Regel-Einstellungen; alle Objekte bleiben dieselben (`===`). Über den Editor ein Undo-Schritt. */
   mitRegelEinstellungen(e: RegelEinstellungen): Bauwerk {
-    return e === this.regelEinstellungen ? this : new Bauwerk(this.objekte, e, this.luftbild, this.bauNamen);
+    return e === this.regelEinstellungen ? this : new Bauwerk(this.objekte, e, this.luftbild, this.bauNamen, this.platzregelEinstellungen);
+  }
+
+  /** Neue Platzregel-Einstellungen (Spec E6, D4); alle Objekte bleiben dieselben (`===`). Über den Editor ein Undo-Schritt. */
+  mitPlatzregelEinstellungen(e: PlatzregelEinstellungen): Bauwerk {
+    return e === this.platzregelEinstellungen ? this : new Bauwerk(this.objekte, this.regelEinstellungen, this.luftbild, this.bauNamen, e);
   }
 
   /** Luftbild laden, ändern oder (mit null) entfernen; alle Objekte bleiben dieselben (`===`). Über den Editor ein Undo-Schritt. */
   mitLuftbild(luftbild: Luftbild | null): Bauwerk {
-    return luftbild === this.luftbild ? this : new Bauwerk(this.objekte, this.regelEinstellungen, luftbild, this.bauNamen);
+    return luftbild === this.luftbild ? this : new Bauwerk(this.objekte, this.regelEinstellungen, luftbild, this.bauNamen, this.platzregelEinstellungen);
   }
 
   /**
@@ -159,7 +168,7 @@ export class Bauwerk {
     const neu = new Map(this.bauNamen);
     for (const id of bau.objektIds) neu.delete(id);
     if (sauber.length > 0 && bau.erstesObjekt !== '') neu.set(bau.erstesObjekt, sauber);
-    return new Bauwerk(this.objekte, this.regelEinstellungen, this.luftbild, neu);
+    return new Bauwerk(this.objekte, this.regelEinstellungen, this.luftbild, neu, this.platzregelEinstellungen);
   }
 
   /** Name des Baus: der Eintrag des ersten Objekts, das einen hat; sonst „Bau N“ mit N = Position in `Bau.alle` (ab 1). */
