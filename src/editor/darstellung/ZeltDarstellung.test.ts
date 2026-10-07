@@ -88,8 +88,12 @@ describe('ZeltDarstellung (Spec E4, D4)', () => {
     const z = zelt('doppelkegler', 0, Vec3.NULL);
     const [dach, waende] = koerper(darstellung.baue(z)) as [THREE.Mesh, THREE.Mesh];
     const spitzen = scheitel(dach).filter((v) => nah(v.y, z.params.firsthoehe));
-    expect(new Set(spitzen.map((v) => v.x.toFixed(6)))).toEqual(new Set([0.775.toFixed(6), (-0.775).toFixed(6)]));
-    expect(Math.max(...scheitel(waende).map((v) => v.y))).toBeCloseTo(z.params.wandhoehe, 4);
+    // Der First liegt auf firsthoehe zwischen den beiden Mittelstangen bei ±0,775.
+    const xs = spitzen.map((v) => v.x);
+    expect(Math.max(...xs)).toBeCloseTo(0.775, 6);
+    expect(Math.min(...xs)).toBeCloseTo(-0.775, 6);
+    // Das Oval hat nur eine niedrige Wand; höher reichen allein die Seitenteile des Vorbaus (|x| = 0,78).
+    expect(Math.max(...scheitel(waende).filter((v) => Math.abs(v.x) > 0.8).map((v) => v.y))).toBeCloseTo(z.params.wandhoehe, 4);
   });
 
   it('sattel: First entlang der Länge auf firsthoehe', () => {
