@@ -4,7 +4,8 @@ import { Zelt } from '../model/Zelt';
 import { ZeltGeometrie } from '../model/ZeltGeometrie';
 import { freierText, liste, type Roh, text, type V3, vektor, zahl } from '../share/lesen';
 import { textWert, zahlText, zahlWert } from './gemeinsam';
-import type { ObjektArt, ObjektJson, PanelAuswahl, PanelEingabe, PanelSpec, PlatzierenPunkt, Werte } from './ObjektArt';
+import { type MaterialBeitrag, seilLaenge } from '../model/MaterialPosten';
+import type { MaterialKontext, ObjektArt, ObjektJson, PanelAuswahl, PanelEingabe, PanelSpec, PlatzierenPunkt, Werte } from './ObjektArt';
 import { findeZeltVorlage, paramsAusZeltVorlage, ZELT_VORLAGEN, ZeltVorlagenWahl } from './zelt/vorlagen';
 
 export interface ZeltJson extends ObjektJson {
@@ -54,12 +55,27 @@ export class ZeltArt implements ObjektArt<Zelt> {
   readonly label = 'Zelt';
   readonly klick = 'wahlweise' as const;
   readonly hatOesen = false;
+  readonly materialGruppe = 'zelt' as const;
   readonly platzieren: PlatzierenPunkt;
 
   constructor(readonly vorlagen: ZeltVorlagenWahl = new ZeltVorlagenWahl()) {
     this.platzieren = {
       modus: 'punkt',
       erzeuge: (id, position) => new Zelt(id, position, paramsAusZeltVorlage(this.vorlagen.aktuell)),
+    };
+  }
+
+  /** Zelt, Haringe und Abspannseile (Spec E5, D1); die Gruppe ist der Vorlagenname, nicht der Name des einzelnen Zelts. */
+  material(o: Zelt, ctx: MaterialKontext): MaterialBeitrag {
+    const { vorlage, name, abspannungen, seillaenge } = o.params;
+    const titel = findeZeltVorlage(vorlage)?.label ?? name;
+    return {
+      gruppe: titel,
+      posten: [
+        { kategorie: 'Zelt', bezeichnung: titel, menge: 1, einheit: 'Stk' },
+        { kategorie: 'Haring', bezeichnung: 'Haring', menge: abspannungen, einheit: 'Stk' },
+        { kategorie: 'Seil', bezeichnung: `Abspannseil ${seilLaenge(seillaenge, ctx.zugabeProEnde)} m`, menge: abspannungen, einheit: 'Stk' },
+      ],
     };
   }
 

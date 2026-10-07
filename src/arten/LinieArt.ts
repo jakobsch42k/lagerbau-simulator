@@ -3,6 +3,7 @@ import type { LagerObjekt } from '../model/LagerObjekt';
 import { type LinienTyp, STANDARD_LINIE } from '../model/params';
 import { freierText, punkte, type Roh, text, type V3, zahl } from '../share/lesen';
 import { textWert, zahlText, zahlWert } from './gemeinsam';
+import type { MaterialBeitrag } from '../model/MaterialPosten';
 import type { Fangpunkt, ObjektArt, ObjektJson, PanelEingabe, PanelSpec, PlatzierenMehrpunkt } from './ObjektArt';
 
 export interface LinieJson extends ObjektJson {
@@ -26,6 +27,7 @@ export class LinieArt implements ObjektArt<Linie> {
   readonly label = 'Linie';
   readonly klick = 'wahlweise' as const;
   readonly hatOesen = false;
+  readonly materialGruppe = 'platz' as const;
   readonly zaehltZumPlatzbedarf = false;
   readonly platzieren: PlatzierenMehrpunkt = {
     modus: 'mehrpunkt',
@@ -33,6 +35,12 @@ export class LinieArt implements ObjektArt<Linie> {
     geschlossen: false,
     erzeuge: (id, linienPunkte) => new Linie(id, linienPunkte, STANDARD_LINIE),
   };
+
+  /** Nur der Zaun zählt, mit seiner Länge auf 0,1 m gerundet (Spec E5, D1); Weg und Grenze liefern keine Posten. */
+  material(l: Linie): MaterialBeitrag {
+    if (l.params.typ !== 'zaun') return { gruppe: 'Zaun', posten: [] };
+    return { gruppe: 'Zaun', posten: [{ kategorie: 'Zaun', bezeichnung: 'Zaun', menge: Math.round(l.laenge() * 10) / 10, einheit: 'm' }] };
+  }
 
   istVon(o: LagerObjekt): o is Linie {
     return o instanceof Linie;

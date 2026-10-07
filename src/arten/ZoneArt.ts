@@ -22,6 +22,7 @@ export class ZoneArt implements ObjektArt<Zone> {
   readonly label = 'Zone';
   readonly klick = 'wahlweise' as const;
   readonly hatOesen = false;
+  readonly materialGruppe = 'platz' as const;
   readonly zaehltZumPlatzbedarf = false;
   readonly platzieren: PlatzierenMehrpunkt = {
     modus: 'mehrpunkt',

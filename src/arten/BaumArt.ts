@@ -19,6 +19,7 @@ export class BaumArt implements ObjektArt<Baum> {
   readonly label = 'Baum';
   readonly klick = 'immer' as const;
   readonly hatOesen = false;
+  readonly materialGruppe = 'bau' as const;
   readonly platzieren: PlatzierenPunkt = {
     modus: 'punkt',
     erzeuge: (id, position) => new Baum(id, position, STANDARD_BAUM),

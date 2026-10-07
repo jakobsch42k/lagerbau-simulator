@@ -3,6 +3,7 @@ import type { PlatzobjektForm } from '../model/params';
 import { Platzobjekt } from '../model/Platzobjekt';
 import { freierText, type Roh, text, type V3, vektor, zahl } from '../share/lesen';
 import { textWert, zahlWert } from './gemeinsam';
+import type { MaterialBeitrag } from '../model/MaterialPosten';
 import type { ObjektArt, ObjektJson, PanelEingabe, PanelSpec, PlatzierenPunkt, Werte } from './ObjektArt';
 import { findeVorlage, paramsAusVorlage, VORLAGEN, VorlagenWahl } from './platz/vorlagen';
 
@@ -31,6 +32,7 @@ export class PlatzobjektArt implements ObjektArt<Platzobjekt> {
   /** Nur in der Auswahl klickbar, damit ein flaches Objekt das Setzen von Bauten darauf nicht blockiert (wie Seil und Plane). */
   readonly klick = 'wahlweise' as const;
   readonly hatOesen = false;
+  readonly materialGruppe = 'platz' as const;
   readonly zaehltZumPlatzbedarf = false;
   readonly platzieren: PlatzierenPunkt;
 
@@ -39,6 +41,12 @@ export class PlatzobjektArt implements ObjektArt<Platzobjekt> {
       modus: 'punkt',
       erzeuge: (id, position) => new Platzobjekt(id, position, paramsAusVorlage(this.vorlagen.aktuell)),
     };
+  }
+
+  /** Ein Stück unter dem Vorlagennamen (Spec E5, D1). */
+  material(o: Platzobjekt): MaterialBeitrag {
+    const titel = findeVorlage(o.params.vorlage)?.label ?? o.params.name;
+    return { gruppe: titel, posten: [{ kategorie: 'Platz', bezeichnung: titel, menge: 1, einheit: 'Stk' }] };
   }
 
   istVon(o: LagerObjekt): o is Platzobjekt {
