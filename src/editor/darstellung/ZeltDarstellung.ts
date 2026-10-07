@@ -4,14 +4,17 @@ import { Zelt } from '../../model/Zelt';
 import { ZeltGeometrie } from '../../model/ZeltGeometrie';
 import { alsTeil, type Darstellung } from './Darstellung';
 import { HARING, ZELT_MARKIERT } from './materialien';
+import { kontrast, ton, TeilBauer } from './teilBauer';
 import { textSprite } from './textSprite';
+import { WAENDE, wandSektor, ZeltZubehoer } from './zeltKoerper';
 
 const HARING_HOEHE = 0.3; // m
 const HARING_RADIUS = 0.03; // m
 const NAME_HOEHE = 0.5; // m, Schrifthöhe des Namens über dem Zelt
 const NAME_ABSTAND = 0.1; // m zwischen Dachspitze und Namen
-const SEIL_FARBE = 0x333333;
-const WAENDE = 3;
+const SEIL_FARBE = 0xf0e6c8; // hell, hebt sich von Dach, Wiese und Haringen ab
+const WAND_TON = 1.15; // Wände etwas heller als das Dach
+const KANTEN_WINKEL = 5; // Grad: ab hier zeichnet die Kantenlinie eine Kante
 
 /** Ein Dreieck aus drei Punkten (lokale Koordinaten, y nach oben). */
 type Dreieck = readonly [THREE.Vector3, THREE.Vector3, THREE.Vector3];
@@ -39,16 +42,18 @@ const wandStueck = (a: Vec3, b: Vec3, hoehe: number): Dreieck[] => [
 export class ZeltDarstellung implements Darstellung<Zelt> {
   baue(o: Zelt): THREE.Group {
     const lokal = new Zelt(o.id, Vec3.NULL, o.params);
-    const material = new THREE.MeshLambertMaterial({ color: o.params.farbe, side: THREE.DoubleSide });
+    const bauer = new TeilBauer(o.id, 'zelt', ZELT_MARKIERT);
     const koerper = new THREE.Group();
     koerper.position.set(o.position.x, 0, o.position.z);
     // Wie Baugruppe.drehung: positiv dreht x nach z, in three.js ist das eine negative Drehung um y.
     koerper.rotation.y = -o.drehungRad;
-    for (const dreiecke of this.teile(lokal)) {
-      const mesh = new THREE.Mesh(geometrie(dreiecke), material);
-      mesh.userData.eigenesMaterial = true;
-      koerper.add(alsTeil(mesh, { objektId: o.id, teilId: o.id, art: 'zelt', klickbar: true, normal: material, markiert: ZELT_MARKIERT }));
-    }
+    const [dach, ...waende] = this.teile(lokal);
+    const wandFarbe = ton(o.params.farbe, WAND_TON);
+    [dach, ...waende].forEach((dreiecke, i) => {
+      const geo = geometrie(dreiecke ?? []);
+      koerper.add(bauer.mesh(geo, i === 0 ? o.params.farbe : wandFarbe, THREE.DoubleSide), this.kanten(geo, o.id, o.params.farbe));
+    });
+    koerper.add(...new ZeltZubehoer(lokal, bauer).alle());
     koerper.add(...this.haringe(lokal));
     const seile = this.seile(lokal);
     if (seile) koerper.add(seile);
@@ -65,13 +70,21 @@ export class ZeltDarstellung implements Darstellung<Zelt> {
     if (aufbau === 'rund') {
       const sektoren: Dreieck[][] = Array.from({ length: WAENDE }, () => []);
       umriss.forEach((a, k) => {
-        const sektor = Math.min(WAENDE - 1, Math.floor(((k + 0.5) / umriss.length) * WAENDE));
+        const sektor = wandSektor(k, umriss.length);
         sektoren[sektor]?.push(...wandStueck(a, naechster(k), wandhoehe));
       });
       return [this.rundesDach(z, umriss), ...sektoren.filter((s, i) => waende[i] && s.length > 0)];
     }
     const wand = umriss.flatMap((a, k) => wandStueck(a, naechster(k), wandhoehe));
     return [aufbau === 'sattel' ? this.satteldach(z, umriss) : this.doppelkegelDach(z, umriss), wand];
+  }
+
+  /** Dunkle Kanten (Rippen, First, Trauf, Wandecken) als Linien, nicht klickbar. */
+  private kanten(geo: THREE.BufferGeometry, id: string, farbe: string): THREE.LineSegments {
+    const material = new THREE.LineBasicMaterial({ color: kontrast(farbe) });
+    const linien = new THREE.LineSegments(new THREE.EdgesGeometry(geo, KANTEN_WINKEL), material);
+    linien.userData.eigenesMaterial = true;
+    return alsTeil(linien, { objektId: id, teilId: id, art: 'zelt', klickbar: false, normal: material, markiert: null });
   }
 
   private rundesDach(z: Zelt, umriss: readonly Vec3[]): Dreieck[] {
@@ -138,6 +151,7 @@ export class ZeltDarstellung implements Darstellung<Zelt> {
     const material = new THREE.LineBasicMaterial({ color: SEIL_FARBE });
     const linien = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(punkte), material);
     linien.userData.eigenesMaterial = true;
+    linien.userData.rolle = 'seil';
     return alsTeil(linien, { objektId: z.id, teilId: z.id, art: 'zelt', klickbar: false, normal: material, markiert: null });
   }
 

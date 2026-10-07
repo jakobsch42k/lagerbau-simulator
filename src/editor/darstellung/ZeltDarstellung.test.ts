@@ -48,7 +48,7 @@ describe('ZeltDarstellung (Spec E4, D4)', () => {
     for (const m of teile(g)) expect([teilDaten(m)?.objektId, teilDaten(m)?.teilId, teilDaten(m)?.art]).toEqual(['z', 'z', 'zelt']);
     let linien = 0;
     g.traverse((k) => {
-      if (k instanceof THREE.LineSegments) linien += k.geometry.getAttribute('position').count / 2;
+      if (k instanceof THREE.LineSegments && k.userData.rolle === 'seil') linien += k.geometry.getAttribute('position').count / 2;
     });
     expect(linien).toBe(12);
   });
