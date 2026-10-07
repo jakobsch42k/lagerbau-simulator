@@ -166,6 +166,7 @@ element<HTMLInputElement>('#inp-luftbild').addEventListener('change', async (e) 
 });
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+  if (!element('#lagerliste').hidden) return; // die Materialliste verdeckt die Szene, Tasten dürfen sie nicht ändern
   const ansichtstaste = e.ctrlKey || e.metaKey || e.altKey ? '' : e.key.toLowerCase();
   if (ansichtstaste === 'p') return schalteAnsicht();
   if (ansichtstaste === 'f') return szene.zeigeAlles(editor.bauwerk);
