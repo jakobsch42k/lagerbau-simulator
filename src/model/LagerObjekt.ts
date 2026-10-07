@@ -26,3 +26,14 @@ export interface LagerObjekt {
   /** Punkte, die der Platzbedarf umfasst: Füße bei Baugruppen und freien Stangen, Ösen bei Planen. */
   platzPunkte(): readonly Vec3[];
 }
+
+/** Fähigkeit „Ecken bearbeiten“ (Spec E3): Zone (geschlossen) und Linie (offen). `mitEcken` prüft neu und wirft einen RangeError. */
+export interface HatEcken extends LagerObjekt {
+  readonly eckenGeschlossen: boolean;
+  ecken(): readonly Vec3[];
+  mitEcken(punkte: readonly Vec3[]): HatEcken;
+}
+
+export function hatEcken(o: LagerObjekt): o is HatEcken {
+  return 'eckenGeschlossen' in o && 'mitEcken' in o;
+}

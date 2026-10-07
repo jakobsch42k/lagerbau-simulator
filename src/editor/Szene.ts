@@ -15,6 +15,9 @@ import { Messanzeige } from './Messanzeige';
 import type { Zeichnung } from './Werkzeuge';
 import type { Messung } from './Messung';
 import { Nordpfeil } from './Nordpfeil';
+import { EckenGriffe } from './darstellung/EckenGriffe';
+import type { EckenAnzeige } from './EditorZustand';
+import type { Pixel } from './eckenTreffer';
 
 const BODEN_EBENE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
@@ -30,6 +33,7 @@ export class Szene {
   private readonly bodenbild = new Bodenbild();
   private readonly nordpfeil: Nordpfeil;
   private readonly raycaster = new THREE.Raycaster();
+  private readonly eckenGriffe: EckenGriffe;
 
   constructor(
     private readonly container: HTMLElement,
@@ -42,6 +46,7 @@ export class Szene {
     this.massstab = new Massstabsleiste(container);
     this.messanzeige = new Messanzeige(container);
     this.nordpfeil = new Nordpfeil(container);
+    this.eckenGriffe = new EckenGriffe(this.szene);
     this.szene.background = new THREE.Color(0xdfe9f3);
     const sonne = new THREE.DirectionalLight(0xffffff, 1.5);
     sonne.position.set(5, 10, 4);
@@ -72,6 +77,18 @@ export class Szene {
     this.bodenbild.zeige(bauwerk.luftbild);
     this.kameras.setzeBodengroesse(this.bodenbild.groesse);
     this.inhalt.zeige(bauwerk, markiert, stangenStart, zeichnung);
+  }
+
+  /** Die Griffe an den Ecken der ausgewählten Zone oder Linie (Spec E3); null blendet sie aus. */
+  zeigeEcken(ecken: EckenAnzeige | null): void {
+    this.eckenGriffe.zeige(ecken);
+  }
+
+  /** Wo ein Bodenpunkt am Bildschirm liegt (Client-Pixel, wie `MouseEvent.clientX/Y`). */
+  zuBildschirm(p: Vec3): Pixel {
+    const rect = this.leinwand.getBoundingClientRect();
+    const ndc = new THREE.Vector3(p.x, p.y, p.z).project(this.kameras.aktiv);
+    return { x: rect.left + ((ndc.x + 1) / 2) * rect.width, y: rect.top + ((1 - ndc.y) / 2) * rect.height };
   }
 
   /** Raster ein- oder ausschalten (Ansichtswahl, nicht im Bauwerk gespeichert). */

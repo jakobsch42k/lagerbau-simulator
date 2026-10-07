@@ -177,6 +177,7 @@ editor.abonniere((z) => {
   z.ausgewaehlt.forEach((id) => markiert.add(id));
   szene.zeige(z.vorschau ?? z.bauwerk, markiert, z.stangenStart, z.zeichnung);
   szene.zeigeMessung(z.messung);
+  szene.zeigeEcken(z.ecken);
   parameter.zeige(z);
   hinweisPanel.zeige(hinweise);
   regelnPanel.zeige(z.bauwerk.regelEinstellungen);

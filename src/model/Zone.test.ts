@@ -66,13 +66,13 @@ describe('Zone', () => {
     expect(d.punkte[1]?.x).toBeCloseTo(-10);
   });
 
-  it('mitParams, mitId, mitPunkten behalten den Rest und prüfen neu', () => {
+  it('mitParams, mitId, mitEcken behalten den Rest und prüfen neu', () => {
     const z = new Zone('z', QUADRAT, PARAMS);
     expect(z.mitParams({ ...PARAMS, name: 'Wiese' }).params.name).toBe('Wiese');
     expect(z.mitId('neu').id).toBe('neu');
     expect(z.mitId('neu').ids()).toEqual(['neu']);
-    expect(z.mitPunkten([p(0, 0), p(2, 0), p(0, 2)]).flaeche()).toBeCloseTo(2);
-    expect(() => z.mitPunkten([p(0, 0), p(2, 0)])).toThrow('Eine Zone braucht mindestens 3 Ecken.');
+    expect(z.mitEcken([p(0, 0), p(2, 0), p(0, 2)]).flaeche()).toBeCloseTo(2);
+    expect(() => z.mitEcken([p(0, 0), p(2, 0)])).toThrow('Eine Zone braucht mindestens 3 Ecken.');
   });
 
   it('platzPunkte sind die Ecken', () => {

@@ -11,6 +11,7 @@ const MAX_NAME_ZEICHEN = 40;
 export class Zone implements LagerObjekt {
   readonly art = 'zone' as const;
   readonly punkte: readonly Vec3[];
+  readonly eckenGeschlossen = true;
 
   constructor(
     readonly id: string,
@@ -38,8 +39,13 @@ export class Zone implements LagerObjekt {
   }
 
   /** Dieselbe Zone mit anderen Ecken; prüft neu (Mindestzahl, Selbstschnitt). Für das Bearbeiten der Ecken. */
-  mitPunkten(punkte: readonly Vec3[]): Zone {
+  mitEcken(punkte: readonly Vec3[]): Zone {
     return new Zone(this.id, punkte, this.params);
+  }
+
+  /** Die Ecken zum Bearbeiten (Griffe). */
+  ecken(): readonly Vec3[] {
+    return this.punkte;
   }
 
   ids(): readonly string[] {

@@ -11,6 +11,7 @@ const MAX_NAME_ZEICHEN = 40;
 export class Linie implements LagerObjekt {
   readonly art = 'linie' as const;
   readonly punkte: readonly Vec3[];
+  readonly eckenGeschlossen = false;
 
   constructor(
     readonly id: string,
@@ -36,8 +37,13 @@ export class Linie implements LagerObjekt {
   }
 
   /** Dieselbe Linie mit anderen Punkten; prüft neu (Mindestzahl). Für das Bearbeiten der Ecken. */
-  mitPunkten(punkte: readonly Vec3[]): Linie {
+  mitEcken(punkte: readonly Vec3[]): Linie {
     return new Linie(this.id, punkte, this.params);
+  }
+
+  /** Die Ecken zum Bearbeiten (Griffe). */
+  ecken(): readonly Vec3[] {
+    return this.punkte;
   }
 
   ids(): readonly string[] {

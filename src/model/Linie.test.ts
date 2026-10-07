@@ -49,12 +49,12 @@ describe('Linie', () => {
     expect(l.gedreht(Math.PI, p(0, 0)).punkte[1]?.x).toBeCloseTo(-3);
   });
 
-  it('mitParams, mitId, mitPunkten, platzPunkte', () => {
+  it('mitParams, mitId, mitEcken, platzPunkte', () => {
     const l = new Linie('l', PUNKTE, PARAMS);
     expect(l.mitParams({ ...PARAMS, typ: 'zaun' }).params.typ).toBe('zaun');
     expect(l.mitId('x').ids()).toEqual(['x']);
-    expect(l.mitPunkten([p(0, 0), p(1, 0)]).laenge()).toBeCloseTo(1);
-    expect(() => l.mitPunkten([p(0, 0)])).toThrow('Eine Linie braucht mindestens 2 Punkte.');
+    expect(l.mitEcken([p(0, 0), p(1, 0)]).laenge()).toBeCloseTo(1);
+    expect(() => l.mitEcken([p(0, 0)])).toThrow('Eine Linie braucht mindestens 2 Punkte.');
     expect(l.platzPunkte()).toHaveLength(3);
   });
 });
