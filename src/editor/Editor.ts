@@ -1,9 +1,9 @@
 import type { ObjektRegister } from '../arten/ObjektRegister';
 import { standardArten } from '../arten/standardArten';
 import type { Bauwerk } from '../model/Bauwerk';
-import { type ArtName, hatEcken, type HatEcken, type LagerObjekt } from '../model/LagerObjekt';
+import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
 import type { Luftbild } from '../model/Luftbild';
-import { massstabAusPunkten } from '../model/Massstab';
+import { setzeDeckkraftAuf, setzeMassstabAuf } from './LuftbildAenderung';
 import { kopiere, mitte } from '../model/Duplikat';
 import { bewege, mitgenommen } from '../model/Mitbewegung';
 import { Vec3 } from '../model/Vec3';
@@ -11,10 +11,10 @@ import { idsImRechteck, type Rechteck } from './Rahmenwahl';
 import type { Messung } from './Messung';
 import { DREH_SCHRITT, DUPLIKAT_VERSATZ } from './konstanten';
 import { SnapService, type Treffer } from './SnapService';
-import type { EckenAnzeige, EditorOptionen, EditorZustand } from './EditorZustand';
+import type { EditorOptionen, EditorZustand } from './EditorZustand';
 import { Tastatur } from './Tastatur';
 import { Verlauf } from './Verlauf';
-import { EckenZiehen, punktAufKante } from './Ecken';
+import { EckenBearbeitung } from './EckenBearbeitung';
 import { type Zug, Ziehvorgang } from './Ziehvorgang';
 import { Zwischenablage } from './Zwischenablage';
 import { type EditorKontext, erzeugeWerkzeug, type KlickOptionen, type Werkzeug, type WerkzeugName } from './Werkzeuge';
@@ -37,8 +37,12 @@ export class Editor implements EditorKontext {
   private meldung: string | null = null;
   private messungWert: Messung | null = null;
   private ziehen: Zug | null = null;
-  /** Der gewählte Griff der Ecken-Bearbeitung (gehört zu genau einem Objekt). */
-  private eckenWahl: { readonly id: string; readonly index: number } | null = null;
+  private readonly eckenBearbeitung = new EckenBearbeitung({
+    bauwerk: () => this.bauwerk, zustand: () => this.zustand(), aendere: (neu) => this.aendere(neu),
+    anzeigeBauwerk: () => this.ziehen?.vorschau ?? this.bauwerk, fuehreAus: (aktion) => this.fuehreAus(aktion),
+    istAuswahlWerkzeug: () => this.werkzeug.name === 'auswahl',
+    beginneZug: (zug) => { this.ziehen = zug; this.meldung = null; this.melde(); },
+  });
   private readonly zwischenablage = new Zwischenablage();
   private readonly tastatur = new Tastatur(this);
   private mausPunkt: Vec3 | null = null;
@@ -74,7 +78,7 @@ export class Editor implements EditorKontext {
   /** Setzt die Auswahl; der gewählte Griff bleibt nur, wenn dasselbe Objekt allein ausgewählt bleibt. */
   private uebernimmAuswahl(ids: ReadonlySet<string>): void {
     this.ausgewaehltIds = ids;
-    if (this.eckenWahl && !(ids.size === 1 && ids.has(this.eckenWahl.id))) this.eckenWahl = null;
+    this.eckenBearbeitung.behalteFuer(ids);
   }
 
   auswahl(): ReadonlySet<string> {
@@ -122,25 +126,11 @@ export class Editor implements EditorKontext {
       stangenStart: this.werkzeug.angefangen,
       zeichnung: this.werkzeug.zeichnung ?? null,
       messung: this.messungWert,
-      ecken: this.eckenAnzeige(ausgewaehlt.size === 1 ? ([...ausgewaehlt][0] ?? null) : null),
+      ecken: this.eckenBearbeitung.anzeige(ausgewaehlt.size === 1 ? ([...ausgewaehlt][0] ?? null) : null),
       meldung: this.meldung,
       kannRueckgaengig: this.verlauf.kannRueckgaengig,
       kannWiederholen: this.verlauf.kannWiederholen,
     };
-  }
-
-  private eckenAnzeige(id: string | null): EckenAnzeige | null {
-    if (id === null || this.werkzeug.name !== 'auswahl') return null;
-    const o = (this.ziehen?.vorschau ?? this.bauwerk).objekt(id);
-    if (!o || !hatEcken(o)) return null;
-    return { punkte: o.ecken(), geschlossen: o.eckenGeschlossen, gewaehlt: this.eckenWahl?.id === id ? this.eckenWahl.index : null };
-  }
-
-  /** Das einzeln ausgewählte Objekt mit Ecken, solange es Griffe zeigt; sonst null. */
-  private eckenObjekt(): HatEcken | null {
-    const id = this.zustand().ecken ? this.zustand().auswahl : null;
-    const o = id === null ? undefined : this.bauwerk.objekt(id);
-    return o && hatEcken(o) ? o : null;
   }
 
   klick(treffer: Treffer, optionen: KlickOptionen = {}): void {
@@ -179,18 +169,12 @@ export class Editor implements EditorKontext {
     });
   }
 
-  /**
-   * Änderung aus dem Parameter-Panel. Die Änderung selbst muss innerhalb der Funktion passieren, damit ein RangeError abgefangen wird.
-   * Gibt false zurück, wenn der Editor die Änderung abgelehnt hat (die Meldung steht dann im Zustand).
-   */
+  /** Änderung aus dem Parameter-Panel (muss innerhalb der Funktion passieren, damit ein RangeError abgefangen wird). false = abgelehnt, Meldung im Zustand. */
   aendereMit(aenderung: (b: Bauwerk) => Bauwerk): boolean {
     return this.fuehreAus(() => this.aendere(aenderung(this.bauwerk)));
   }
 
-  /**
-   * Wendet `fn` auf mehrere Objekte an; das ergibt einen Undo-Schritt (Spec v3, D6). Unbekannte ids zählen nicht,
-   * und ohne Änderung entsteht kein Schritt. Ein RangeError lehnt alles ab; die Meldung steht dann im Zustand.
-   */
+  /** Wendet `fn` auf mehrere Objekte an (ein Undo-Schritt, Spec v3, D6); unbekannte ids zählen nicht, ein RangeError lehnt alles ab. */
   aendereObjekte(ids: readonly string[], fn: (o: LagerObjekt) => LagerObjekt): boolean {
     return this.fuehreAus(() => {
       const neu = [...new Set(ids)].reduce((b, id) => {
@@ -206,27 +190,16 @@ export class Editor implements EditorKontext {
     if (this.aendereMit((b) => b.mitLuftbild(luftbild))) this.waehleWerkzeug('massstab');
   }
 
-  /**
-   * „Übernehmen“ im Panel: Die zwei Klicks des Werkzeugs „Maßstab setzen“ sind `meter` lang (ein Undo-Schritt).
-   * Danach ist wieder die Auswahl aktiv. Bei zu nahen Punkten oder Meter ≤ 0 bleibt alles, wie es war; die Meldung steht im Zustand.
-   */
+  /** „Übernehmen“ im Panel: die zwei Klicks von „Maßstab setzen“ sind `meter` lang (ein Undo-Schritt, danach Auswahl). Sonst bleibt alles, Meldung im Zustand. */
   setzeMassstab(meter: number): boolean {
-    const strecke = this.messungWert;
-    const ok = this.aendereMit((b) => {
-      if (!b.luftbild) throw new RangeError('Kein Luftbild geladen');
-      if (!strecke?.bis) throw new RangeError('Erst zwei Punkte auf dem Bild anklicken');
-      return b.mitLuftbild(b.luftbild.mitMassstab(massstabAusPunkten(strecke.von, strecke.bis, meter, b.luftbild.meterProPixel)));
-    });
+    const ok = this.aendereMit(setzeMassstabAuf(this.messungWert, meter));
     if (ok) this.waehleWerkzeug('auswahl');
     return ok;
   }
 
   /** Deckkraft des Luftbilds, 0 bis 1 (ein Undo-Schritt). */
   setzeDeckkraft(deckkraft: number): boolean {
-    return this.aendereMit((b) => {
-      if (!b.luftbild) throw new RangeError('Kein Luftbild geladen');
-      return b.mitLuftbild(b.luftbild.mitDeckkraft(deckkraft));
-    });
+    return this.aendereMit(setzeDeckkraftAuf(deckkraft));
   }
 
   /** Entfernt das Luftbild (ein Undo-Schritt). Das Werkzeug „Maßstab setzen“ endet damit. */
@@ -244,10 +217,7 @@ export class Editor implements EditorKontext {
     });
   }
 
-  /**
-   * Dreht die Auswahl um den Mittelpunkt ihrer Platzpunkte (bei Objekten ohne Platzpunkte um deren eigenen Drehpunkt),
-   * samt Seilen und Planen (Spec E1, D3). Ein Undo-Schritt.
-   */
+  /** Dreht die Auswahl um den Mittelpunkt ihrer Platzpunkte (sonst um den eigenen Drehpunkt) samt Seilen und Planen (Spec E1, D3). Ein Undo-Schritt. */
   dreheAuswahl(winkel = DREH_SCHRITT): void {
     const ids = [...this.zustand().ausgewaehlt];
     const um = mitte(ids.flatMap((id) => this.bauwerk.objekt(id) ?? []));
@@ -272,44 +242,19 @@ export class Editor implements EditorKontext {
     this.mausPunkt = punkt;
   }
 
-  /**
-   * Maus auf einem Griff gedrückt (Spec E3): wählt den Griff und beginnt ein Ziehen, gerastert auf 0,1 m. Liefert false, wenn die
-   * Auswahl keine Griffe hat oder der Index fehlt. Ohne Bewegung bleibt es beim Wählen (`brichZiehenAb`).
-   */
+  /** Maus auf einem Griff gedrückt (Spec E3): wählt den Griff, beginnt ein Ziehen. Ohne Bewegung bleibt es beim Wählen. */
   beginneEckenZiehen(index: number, _startBoden: Vec3): boolean {
-    const o = this.eckenObjekt();
-    if (!o || index < 0 || index >= o.ecken().length) return false;
-    this.eckenWahl = { id: o.id, index };
-    this.ziehen = EckenZiehen.start(this.bauwerk, o.id, index);
-    this.meldung = null;
-    this.melde();
-    return true;
+    return this.eckenBearbeitung.beginneZiehen(index);
   }
 
   /** Doppelklick auf eine Kante (`kante` = Start-Ecke): setzt dort eine neue Ecke und wählt sie (ein Undo-Schritt). */
   fuegeEckeEin(kante: number, boden: Vec3): boolean {
-    const o = this.eckenObjekt();
-    const ecken = o?.ecken() ?? [];
-    const a = ecken[kante];
-    const b = o?.eckenGeschlossen ? ecken[(kante + 1) % ecken.length] : ecken[kante + 1];
-    if (!o || !a || !b) return false;
-    const punkt = punktAufKante(a, b, boden);
-    return this.fuehreAus(() => {
-      this.aendere(this.bauwerk.ersetze(o.mitEcken([...ecken.slice(0, kante + 1), punkt, ...ecken.slice(kante + 1)])));
-      this.eckenWahl = { id: o.id, index: kante + 1 };
-    });
+    return this.eckenBearbeitung.fuegeEin(kante, boden);
   }
 
-  /** Entf bei gewähltem Griff: entfernt die Ecke (ein Undo-Schritt). Liefert false, wenn kein Griff gewählt ist; sonst ist die Taste behandelt. */
+  /** Entf bei gewähltem Griff: entfernt die Ecke (ein Undo-Schritt). Liefert false, wenn kein Griff gewählt ist. */
   entferneEcke(): boolean {
-    const index = this.zustand().ecken?.gewaehlt ?? null;
-    const o = this.eckenObjekt();
-    if (index === null || !o) return false;
-    this.fuehreAus(() => {
-      this.aendere(this.bauwerk.ersetze(o.mitEcken(o.ecken().filter((_, i) => i !== index))));
-      this.eckenWahl = null;
-    });
-    return true;
+    return this.eckenBearbeitung.entferne();
   }
 
   get zieht(): boolean {
@@ -401,7 +346,7 @@ export class Editor implements EditorKontext {
     const luftbildVorher = this.bauwerk.luftbild;
     this.verlauf = verlauf;
     this.markiertIds = new Set();
-    this.eckenWahl = null;
+    this.eckenBearbeitung.verwirfWahl();
     if (this.werkzeug.name === 'massstab' && this.bauwerk.luftbild !== luftbildVorher) this.waehleWerkzeug('auswahl');
     this.melde();
   }
