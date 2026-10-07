@@ -18,7 +18,7 @@ Auf dem Lagerplatz stehen die Zelte der Gruppen: Jurten (Komplettdach plus 3 Sei
 | 1 | Art | **Eine Art `zelt`** mit Vorlagen: Jurte 5er/6er/8er, Hanger, Doppelkegler, dazu „Eigenes“. Keine Art je Zelttyp |
 | 2 | Jurte | **Komplettdach plus 3 Seitenwände**, jede Wand einzeln an/aus (z. B. offenes Küchenzelt) |
 | 3 | Hanger | Ein Sattler-Zelt. Die Maße sind unbekannt; die Vorlage ist ein **Platzhalter** (Alabama Gr. 3 aus der Recherche) mit einstellbarer Länge. Das Programm gibt ihn nicht als „den Hanger“ aus |
-| 4 | Doppelkegler | Zeltstadt.at Doppelkegelzelt: 5,55 × 4,00 m, Höhe 2,75 m, Seitenhöhe 1,85 m |
+| 4 | Doppelkegler | Zeltstadt.at Doppelkegelzelt: 5,55 × 4,00 m, Höhe 2,75 m, Wand ca. 0,4 m (Skizze; 1,85 m = Stützstangen am Vorbau) |
 | 5 | Startwerte | Die Werte der Recherche, alle `// CHECK MANUALLY: <Quelle>`. **Jede Abmessung ist je Zelt einstellbar** (Spec v3, #7) |
 | 6 | Bestandteile | Drehung, vereinfachter 3D-Körper, **Haringe und Abspannung abgeleitet** (E5 zählt sie), Platzbedarf |
 | 7 | Schreibweise | „Haring“, nie „Hering“ (UI, Code, Meldungen) |
@@ -62,7 +62,7 @@ Eine Liste, an einer Stelle und leicht zu ändern, im Muster von E3 D2. Der Vorl
 | Jurte 6er (`jurte6`) | rund | Ø 6,07, 12 Ecken | 1,65 / 2,62 | 12 × 3,0 m, 2,0 m | Jurtenland Maße; Stromeyer |
 | Jurte 8er (`jurte8`) | rund | Ø 8,05, 16 Ecken | 1,65 / 3,17 | 16 × 3,0 m, 2,0 m | Jurtenland Maße; Zeltstadt 8m |
 | Hanger (`hanger`) | sattel | 6,0 × 4,5 | 1,75 / 2,15 | 8 × 3,0 m, 1,0 m | **Platzhalter** Alabama Gr. 3 (Zeltstadt) |
-| Doppelkegler (`doppelkegler`) | doppelkegel | 5,55 × 4,00 | 1,85 / 2,75 | 20 × 3,0 m, 1,0 m | Zeltstadt, BZW Stückliste |
+| Doppelkegler (`doppelkegler`) | doppelkegel | 5,55 × 4,00 | 0,4 / 2,75 | 20 × 3,0 m, 1,0 m | Zeltstadt, BZW Stückliste |
 | Eigenes (`eigenes`) | sattel | 4,0 × 3,0 | 1,80 / 2,40 | 4 × 3,0 m, 1,0 m | — |
 
 - **Alle Werte `// CHECK MANUALLY: <Quelle>`**, jeder Wert mit seiner eigenen Zeile und Konfidenz aus der Recherche.

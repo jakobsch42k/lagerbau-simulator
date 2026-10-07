@@ -13,7 +13,7 @@ describe('Zelt-Vorlagen (Spec E4, D2)', () => {
       ['jurte6', 'rund', 1.65, 2.62, 12, 3, 2],
       ['jurte8', 'rund', 1.65, 3.17, 16, 3, 2],
       ['hanger', 'sattel', 1.75, 2.15, 8, 3, 1],
-      ['doppelkegler', 'doppelkegel', 1.85, 2.75, 20, 3, 1],
+      ['doppelkegler', 'doppelkegel', 0.4, 2.75, 20, 3, 1],
       ['eigenes', 'sattel', 1.8, 2.4, 4, 3, 1],
     ]);
     expect(ZELT_VORLAGEN.filter((v) => v.aufbau === 'rund').map((v) => [v.durchmesser, v.ecken])).toEqual([
