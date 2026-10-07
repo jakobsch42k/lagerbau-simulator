@@ -1,6 +1,6 @@
 # Lagerbau-Simulator
 
-3D-Planer für Pfadfinder-Lagerbauten (Dreibein, A-Bock, freie Stangen, Abspannungen, Bäume, Planen, Platz-Objekte, Zonen, Wege) mit Faustregel-Hinweisen, Materialliste und Platzbedarf.
+3D-Planer für Pfadfinder-Lagerbauten (Dreibein, A-Bock, freie Stangen, Abspannungen, Bäume, Planen, Platz-Objekte, Zelte, Zonen, Wege) mit Faustregel-Hinweisen, Materialliste und Platzbedarf.
 **Planungshilfe. Ersetzt nicht Sichtprüfung und Probebelastung durch Leiter.**
 
 Online: https://jakobsch42k.github.io/lagerbau-simulator/
@@ -21,6 +21,7 @@ Online: https://jakobsch42k.github.io/lagerbau-simulator/
 - **Deckkraft, Raster, Entfernen:** Der Knopf „Luftbild“ öffnet das Panel mit Deckkraft-Regler, Schalter „Raster zeigen“ (mit Bild zunächst aus) und „Luftbild entfernen“. Alles ist rückgängig zu machen. Oben rechts zeigt der Nordpfeil, wo Norden ist.
 - **Speichern und Teilen:** Das Bild steckt in der gespeicherten **Datei**, nicht im Link (er wäre zu lang). Wer den Link öffnet, sieht den Plan ohne Bild und den Hinweis „Das Luftbild ist nur in der gespeicherten Datei enthalten.“
 - **Lagerplatz auslegen:** „Platz-Objekt setzen“ stellt eine Vorlage (Feuerstelle, Fahnenmast, Latrine/WC, Wasserstelle, Holzlager, Eigenes) mit einem Klick auf den Platz; alle Maße, Name und Farbe sind im Panel einstellbar. „Beschriftung setzen“ legt einen Text auf den Boden (Schalter „Beschriftungen zeigen“ blendet Namen und Texte aus). „Zone zeichnen“ (Fläche, z. B. Küche) und „Linie zeichnen“ (Weg, Zaun, Grenze): Punkte anklicken, Doppelklick oder Enter schließt ab, Esc bricht ab. Die Zone zeigt ihre Fläche, die Linie ihre Länge. Platz-Objekte, Zonen und Linien zählen nicht zum Platzbedarf; Zonen und Linien lassen sich nur mit „Auswählen“ anklicken, sonst kann man auf ihnen bauen.
+- **Zelte setzen:** „Zelt setzen“ stellt ein Zelt (Jurte 5er/6er/8er, Hanger als Platzhalter, Doppelkegler, Eigenes) mit einem Klick auf den Platz. Maße, Drehung, Abspannungen und Haring-Abstand sind im Panel einstellbar, bei der Jurte lässt sich jede der drei Wände ausschalten. Die Haringe zählen zum Platzbedarf und zu „Alles zeigen“. Die Maße der Vorlagen sind Startwerte aus Händlerangaben und noch zu prüfen.
 - **Ecken bearbeiten:** Ist eine Zone oder Linie ausgewählt, zeigt sie gelbe Griffe. Griff ziehen verschiebt die Ecke (Raster 0,1 m), **Doppelklick auf eine Kante** fügt eine Ecke ein, **Entf** bei gewähltem Griff entfernt sie (mindestens 3 Ecken bei der Zone, 2 Punkte bei der Linie; die Zone darf sich nicht selbst schneiden). Jeder Schritt ist rückgängig zu machen.
 
 Am Handy gibt es nur die Ansicht, aber auch dort Plan / 3D und „Alles zeigen“.
@@ -47,3 +48,4 @@ Alle Links und Dateien, die mit Version 1.2 gespeichert wurden (Format-Version g
 Alle Links und Dateien, die mit Version 1.3 gespeichert wurden (Format-Version geändert), öffnet nur die .exe ab 1.3.0; ältere zeigen „Ungültige Bauwerk-Daten”.
 Alle Links und Dateien, die mit Version 1.5 gespeichert wurden (Format-Version 5, Luftbild), öffnet nur die .exe ab 1.5.0; ältere zeigen „Ungültige Bauwerk-Daten“.
 Alle Links und Dateien, die mit Version 1.6 gespeichert wurden (Format-Version 6, Platz-Objekte und Beschriftungen), öffnet nur die .exe ab 1.6.0; ältere zeigen „Ungültige Bauwerk-Daten“.
+Alle Links und Dateien, die mit Version 1.7 gespeichert wurden (Format-Version 7, Zelte), öffnet nur die .exe ab 1.7.0; ältere zeigen „Ungültige Bauwerk-Daten“.
