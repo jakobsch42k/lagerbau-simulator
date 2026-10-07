@@ -1,6 +1,6 @@
-import { VORLAGEN, type VorlagenWahl } from '../arten/platz/vorlagen';
+import type { VorlagenWahl } from '../arten/VorlagenWahl';
 
-/** Das Auswahlfeld zum Werkzeug „Platz-Objekt“: Die gewählte Vorlage bleibt aktiv, bis man eine andere wählt (Spec E3, D2). */
+/** Das Auswahlfeld zu einem Vorlagen-Werkzeug (Platz-Objekt, Zelt): Die gewählte Vorlage bleibt aktiv, bis man eine andere wählt (Spec E3, D2). */
 export class VorlagenAuswahl {
   constructor(
     private readonly select: HTMLSelectElement,
@@ -8,7 +8,7 @@ export class VorlagenAuswahl {
     /** Nach einer Wahl, z. B. um das Werkzeug zu aktivieren. */
     private readonly gewaehlt: () => void,
   ) {
-    for (const v of VORLAGEN) {
+    for (const v of wahl.vorlagen) {
       const option = document.createElement('option');
       option.value = v.schluessel;
       option.textContent = v.label;

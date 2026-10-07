@@ -50,7 +50,7 @@ describe('Zelt-Vorlagen (Spec E4, D2)', () => {
   });
 
   it('findeZeltVorlage kennt die Schlüssel', () => {
-    expect(findeZeltVorlage('hanger')?.label).toBe('Hanger');
+    expect(findeZeltVorlage('hanger')?.label).toBe('Hanger (Platzhalter)');
     expect(findeZeltVorlage('gibtsnicht')).toBeUndefined();
   });
 

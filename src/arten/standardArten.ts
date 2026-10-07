@@ -10,10 +10,11 @@ import { PlatzobjektArt } from './PlatzobjektArt';
 import { SeilArt } from './SeilArt';
 import { StangeArt } from './StangeArt';
 import { ZeltArt } from './ZeltArt';
+import { ZeltVorlagenWahl } from './zelt/vorlagen';
 import { ZoneArt } from './ZoneArt';
 
 /** Alle Arten in der Reihenfolge der Werkzeug-Knöpfe. Eine neue Art braucht hier eine Zeile (Spec v3, D2). */
-export function standardArten(vorlagen: VorlagenWahl = new VorlagenWahl()): ObjektRegister {
+export function standardArten(vorlagen: VorlagenWahl = new VorlagenWahl(), zeltVorlagen: ZeltVorlagenWahl = new ZeltVorlagenWahl()): ObjektRegister {
   return new ObjektRegister([
     new DreibeinArt(),
     new ABockArt(),
@@ -25,6 +26,6 @@ export function standardArten(vorlagen: VorlagenWahl = new VorlagenWahl()): Obje
     new BeschriftungArt(),
     new ZoneArt(),
     new LinieArt(),
-    new ZeltArt(),
+    new ZeltArt(zeltVorlagen),
   ]);
 }

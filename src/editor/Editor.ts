@@ -377,8 +377,8 @@ export class Editor implements EditorKontext {
   private fuehreAus(aktion: () => void): boolean {
     let uebernommen = true;
     try {
+      this.meldung = null; // vor der Aktion, damit sie selbst eine Meldung setzen kann (Zelt gesetzt)
       aktion();
-      this.meldung = null;
     } catch (e) {
       if (!(e instanceof RangeError)) throw e;
       this.meldung = e.message;

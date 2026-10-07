@@ -1,4 +1,5 @@
 import type { ZeltAufbau, ZeltParams } from '../../model/params';
+import { VorlagenWahl } from '../VorlagenWahl';
 
 /**
  * Eine Zelt-Vorlage (Spec E4, D2): Startwerte, die alle Felder vorbelegen; das Zelt lässt sich danach frei einstellen.
@@ -104,7 +105,7 @@ export const ZELT_VORLAGEN: readonly ZeltVorlage[] = [
   },
   {
     schluessel: 'hanger',
-    label: 'Hanger',
+    label: 'Hanger (Platzhalter)',
     name: 'Hanger (Platzhalter)',
     aufbau: 'sattel', // CHECK MANUALLY: PLATZHALTER, Hanger = Sattler-Zelt (Spec E4, Entscheidung 3), Maße unbekannt
     durchmesser: 6.0, // CHECK MANUALLY: gehört nicht zur Form, Startwert Claude = Länge
@@ -151,3 +152,10 @@ export const ZELT_VORLAGEN: readonly ZeltVorlage[] = [
     farbe: '#9a9a9a', // CHECK MANUALLY: Startwert Claude (Spec E4, D2)
   },
 ];
+
+/** Die im Werkzeug „Zelt“ gewählte Vorlage (Mechanismus in `../VorlagenWahl`); Start ist die Jurte 5er. */
+export class ZeltVorlagenWahl extends VorlagenWahl<ZeltVorlage> {
+  constructor() {
+    super(ZELT_VORLAGEN);
+  }
+}
