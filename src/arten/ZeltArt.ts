@@ -30,7 +30,6 @@ export interface ZeltJson extends ObjektJson {
 const GRAD_JE_RAD = 180 / Math.PI;
 const AUFBAU: readonly (readonly [ZeltAufbau, string])[] = [
   ['rund', 'Rund (Jurte)'],
-  ['doppelkegel', 'Doppelkegel'],
   ['sattel', 'Sattel'],
 ];
 const AN_AUS: readonly (readonly [string, string])[] = [
@@ -126,9 +125,16 @@ export class ZeltArt implements ObjektArt<Zelt> {
   panel(o: Zelt): PanelSpec {
     const p = o.params;
     const rund = p.aufbau === 'rund';
+    const fest = p.aufbau === 'doppelkegel'; // feste Bauart: Maße, Form und Leinen sind nicht einstellbar
     const zahl = (schluessel: string, label: string, schritt?: string): PanelEingabe => ({ schluessel, label, faktor: 1, ...(schritt ? { schritt } : {}) });
     const wand = (nr: number): PanelAuswahl => ({ art: 'auswahl', schluessel: `wand${nr + 1}`, label: `Wand ${nr + 1}`, optionen: AN_AUS });
-    const felder: readonly PanelEingabe[] = [
+    const festeFelder: readonly PanelEingabe[] = [
+      { art: 'auswahl', schluessel: 'vorlage', label: 'Vorlage', optionen: ZELT_VORLAGEN.map((v) => [v.schluessel, v.label] as const) },
+      { art: 'text', schluessel: 'name', label: 'Name' },
+      zahl('drehung', 'Drehung (°)', '1'),
+      { art: 'farbe', schluessel: 'farbe', label: 'Farbe' },
+    ];
+    const felder: readonly PanelEingabe[] = fest ? festeFelder : [
       { art: 'auswahl', schluessel: 'vorlage', label: 'Vorlage', optionen: ZELT_VORLAGEN.map((v) => [v.schluessel, v.label] as const) },
       { art: 'text', schluessel: 'name', label: 'Name' },
       { art: 'auswahl', schluessel: 'aufbau', label: 'Form', optionen: AUFBAU },
@@ -174,6 +180,11 @@ export class ZeltArt implements ObjektArt<Zelt> {
       const vorlage = findeZeltVorlage(schluessel);
       if (!vorlage) throw new RangeError('Unbekannte Vorlage');
       return o.mitParams(paramsAusZeltVorlage(vorlage));
+    }
+    if (o.params.aufbau === 'doppelkegel') {
+      const grad = zahlWert(w, 'drehung');
+      const drehung = grad === gradImPanel(o.drehungRad) ? o.drehungRad : grad / GRAD_JE_RAD;
+      return new Zelt(o.id, o.position, { ...o.params, name: textWert(w, 'name'), farbe: textWert(w, 'farbe') }, drehung);
     }
     const params: ZeltParams = {
       vorlage: schluessel,

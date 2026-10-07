@@ -128,7 +128,7 @@ export const ZELT_VORLAGEN: readonly ZeltVorlage[] = [
     ecken: 12, // CHECK MANUALLY: gehört nicht zur Form, Startwert Claude
     laenge: 5.55, // CHECK MANUALLY: Zeltstadt Doppelkegelzelt, 555 cm ohne Vorbau (Vorbaumaß unbekannt, nicht modelliert), Konfidenz mittel
     breite: 4.0, // CHECK MANUALLY: Zeltstadt Doppelkegelzelt, 400 cm, Konfidenz mittel
-    wandhoehe: 1.85, // CHECK MANUALLY: Zeltstadt und BZW, Seitenhöhe 185 cm = Stangenhöhe, Plane unbestätigt, Konfidenz mittel
+    wandhoehe: 0.4, // CHECK MANUALLY: geschätzt aus der BZW-Skizze (senkrechte Wand ca. 30-40 cm, Dach läuft fast bis zum Boden); die 185 cm der Stückliste sind die Stützstangen am Vorbau, nicht die Wand. Messen, Konfidenz niedrig
     firsthoehe: 2.75, // CHECK MANUALLY: Zeltstadt und BZW, 275 cm, Konfidenz mittel
     abspannungen: 20, // CHECK MANUALLY: BZW Stückliste, 20 T-Haringe (30 Bodennägel, Zeltstadt ohne Zahl), Konfidenz niedrig
     seillaenge: 3.0, // CHECK MANUALLY: PLATZHALTER wie bei der Jurte, Zeltstadt nennt keine Länge (Hanf)

@@ -5,6 +5,7 @@ import { ZeltGeometrie } from '../../model/ZeltGeometrie';
 import { alsTeil, type Darstellung } from './Darstellung';
 import { HARING, ZELT_MARKIERT } from './materialien';
 import { kontrast, ton, TeilBauer } from './teilBauer';
+import { DoppelkegelKoerper, type Dreieck } from './doppelkegelKoerper';
 import { textSprite } from './textSprite';
 import { WAENDE, wandSektor, ZeltZubehoer } from './zeltKoerper';
 
@@ -16,8 +17,6 @@ const SEIL_FARBE = 0xf0e6c8; // hell, hebt sich von Dach, Wiese und Haringen ab
 const WAND_TON = 1.15; // Wände etwas heller als das Dach
 const KANTEN_WINKEL = 5; // Grad: ab hier zeichnet die Kantenlinie eine Kante
 
-/** Ein Dreieck aus drei Punkten (lokale Koordinaten, y nach oben). */
-type Dreieck = readonly [THREE.Vector3, THREE.Vector3, THREE.Vector3];
 type Ecken = readonly [THREE.Vector3, THREE.Vector3, THREE.Vector3, THREE.Vector3];
 
 const punkt = (p: Vec3, y: number): THREE.Vector3 => new THREE.Vector3(p.x, y, p.z);
@@ -75,8 +74,12 @@ export class ZeltDarstellung implements Darstellung<Zelt> {
       });
       return [this.rundesDach(z, umriss), ...sektoren.filter((s, i) => waende[i] && s.length > 0)];
     }
+    if (aufbau === 'doppelkegel') {
+      const kegel = new DoppelkegelKoerper(z);
+      return [kegel.dach(), kegel.wand()];
+    }
     const wand = umriss.flatMap((a, k) => wandStueck(a, naechster(k), wandhoehe));
-    return [aufbau === 'sattel' ? this.satteldach(z, umriss) : this.doppelkegelDach(z, umriss), wand];
+    return [this.satteldach(z, umriss), wand];
   }
 
   /** Dunkle Kanten (Rippen, First, Trauf, Wandecken) als Linien, nicht klickbar. */
@@ -110,23 +113,6 @@ export class ZeltDarstellung implements Darstellung<Zelt> {
       [c1, c2, hinten],
       [c3, c0, vorn],
     ];
-  }
-
-  /**
-   * Doppelkegel (BZW-Skizze): Grundriss = Oval aus zwei Halbkreisen (Ø = Breite) mit geradem Mittelstück, die Mittelstangen
-   * stehen bei ±c und tragen den First. Jede Traufecke hängt am nächsten Punkt des Firsts: an den Halbkreisen ist das die
-   * Spitze (Kegel), an den Geraden ein Punkt des Firsts (ebene Dachfläche).
-   */
-  private doppelkegelDach(z: Zelt, umriss: readonly Vec3[]): Dreieck[] {
-    const c = ZeltGeometrie.kegelHalbachse(z);
-    const spitze = (p: Vec3): THREE.Vector3 => new THREE.Vector3(Math.max(-c, Math.min(c, p.x)), z.params.firsthoehe, 0);
-    return umriss.flatMap((a, k) => {
-      const b = umriss[(k + 1) % umriss.length] as Vec3;
-      const [sa, sb] = [spitze(a), spitze(b)];
-      const dreiecke: Dreieck[] = [[punkt(a, z.params.wandhoehe), punkt(b, z.params.wandhoehe), sb]];
-      if (!sa.equals(sb)) dreiecke.push([punkt(a, z.params.wandhoehe), sb, sa]);
-      return dreiecke;
-    });
   }
 
   private haringe(z: Zelt): THREE.Mesh[] {

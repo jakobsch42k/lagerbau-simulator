@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Vec3 } from '../../model/Vec3';
 import type { Zelt } from '../../model/Zelt';
 import { ZeltGeometrie } from '../../model/ZeltGeometrie';
+import { VORBAU_STANGE, vorbauStangenX, vorbauStangenZ } from './doppelkegelKoerper';
 import { kontrast, type TeilBauer } from './teilBauer';
 
 /** Anzahl der Wandsektoren eines runden Zelts (Wand 1 bis 3). */
@@ -76,12 +77,26 @@ export class ZeltZubehoer {
   /** Satteldach: Firstbalken und je eine Stange vor den beiden Giebeln. */
   private stangen(): THREE.Mesh[] {
     const { aufbau, laenge, firsthoehe } = this.z.params;
+    if (aufbau === 'doppelkegel') return this.eingangsStangen();
     if (aufbau !== 'sattel') return [];
     const first = this.bauer.mesh(new THREE.BoxGeometry(laenge, FIRST_HOEHE, FIRST_TIEFE), this.dunkel);
     first.position.set(0, firsthoehe - FIRST_HOEHE / 2, 0);
     const stangen = [1, -1].map((s) => {
       const m = this.bauer.mesh(new THREE.BoxGeometry(STANGE, firsthoehe, STANGE), this.dunkel);
       m.position.set((s * laenge) / 2 + s * GIEBEL_ABSTAND, firsthoehe / 2, 0);
+      return m;
+    });
+    return [first, ...stangen];
+  }
+
+  /** Doppelkegel: Firststange zwischen den Mittelstangen und die beiden Eingangsstangen des Vorbaus. */
+  private eingangsStangen(): THREE.Mesh[] {
+    const c = ZeltGeometrie.kegelHalbachse(this.z);
+    const first = this.bauer.mesh(new THREE.BoxGeometry(2 * c, FIRST_HOEHE, FIRST_TIEFE), this.dunkel);
+    first.position.set(0, this.z.params.firsthoehe - FIRST_HOEHE / 2, 0);
+    const stangen = [1, -1].map((s) => {
+      const m = this.bauer.mesh(new THREE.BoxGeometry(STANGE, VORBAU_STANGE, STANGE), this.dunkel);
+      m.position.set(s * vorbauStangenX(), VORBAU_STANGE / 2, vorbauStangenZ(this.z));
       return m;
     });
     return [first, ...stangen];

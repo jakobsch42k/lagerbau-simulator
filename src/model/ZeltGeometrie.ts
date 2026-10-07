@@ -55,10 +55,10 @@ export class ZeltGeometrie {
     return [new Vec3(l, 0, b), new Vec3(-l, 0, b), new Vec3(-l, 0, -b), new Vec3(l, 0, -b)];
   }
 
-  /** Oval aus zwei Halbkreisen (Radius r, Mittelpunkte bei ±c), `segmente` Seiten je Halbkreis, Start bei (c, r) entlang -x. */
+  /** Oval aus zwei Halbkreisen (Radius r, Mittelpunkte bei ±c), `segmente` Seiten je Halbkreis (beide Endpunkte enthalten, damit die geraden Seiten waagrecht bleiben). */
   private static oval(c: number, r: number, segmente: number): Vec3[] {
     const bogen = (mitte: number, von: number): Vec3[] =>
-      Array.from({ length: segmente }, (_, k) => ZeltGeometrie.versetzt(mitte, ZeltGeometrie.imKreis(r, von + (Math.PI * k) / segmente)));
+      Array.from({ length: segmente + 1 }, (_, k) => ZeltGeometrie.versetzt(mitte, ZeltGeometrie.imKreis(r, von + (Math.PI * k) / segmente)));
     return [...bogen(-c, Math.PI / 2), ...bogen(c, (3 * Math.PI) / 2)];
   }
 
