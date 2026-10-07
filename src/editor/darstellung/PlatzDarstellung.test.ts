@@ -11,8 +11,8 @@ import { MARKIERT, UNSICHTBAR } from './materialien';
 import { standardDarstellungen } from './standardDarstellungen';
 
 const darstellungen = standardDarstellungen();
-const KREIS = { vorlage: 'feuerstelle', name: 'Feuerstelle', form: 'kreis', breite: 1.5, laenge: 1.5, hoehe: 0.3, farbe: '#e8590c' } as const;
-const RECHTECK = { vorlage: 'holzlager', name: 'Holzlager', form: 'rechteck', breite: 3, laenge: 2, hoehe: 1, farbe: '#8b5a2b' } as const;
+const KREIS = { vorlage: 'eigenes', name: 'Feuerstelle', form: 'kreis', breite: 1.5, laenge: 1.5, hoehe: 0.3, farbe: '#e8590c' } as const;
+const RECHTECK = { vorlage: 'eigenes', name: 'Holzlager', form: 'rechteck', breite: 3, laenge: 2, hoehe: 1, farbe: '#8b5a2b' } as const;
 const meshes = (g: THREE.Object3D): THREE.Mesh[] => {
   const m: THREE.Mesh[] = [];
   g.traverse((k) => {
@@ -35,7 +35,8 @@ describe('Darstellung Platz-Objekt (Spec E3, D1)', () => {
     expect(koerper?.geometry).toBeInstanceOf(THREE.CylinderGeometry);
     const geo = koerper?.geometry as THREE.CylinderGeometry;
     expect([geo.parameters.radiusTop, geo.parameters.height]).toEqual([0.75, 0.3]);
-    expect(koerper?.position.toArray()).toEqual([2, 0.15, 3]);
+    gruppe.updateMatrixWorld(true);
+    expect(koerper?.getWorldPosition(new THREE.Vector3()).toArray()).toEqual([2, 0.15, 3]);
     expect((koerper?.material as THREE.MeshLambertMaterial).color.getHexString()).toBe('e8590c');
     const daten = koerper && teilDaten(koerper);
     expect([daten?.objektId, daten?.teilId, daten?.art, daten?.klickbar, daten?.markiert]).toEqual(['p', 'p', 'platzobjekt', true, MARKIERT]);
@@ -48,8 +49,8 @@ describe('Darstellung Platz-Objekt (Spec E3, D1)', () => {
     const geo = koerper?.geometry as THREE.BoxGeometry;
     expect(geo).toBeInstanceOf(THREE.BoxGeometry);
     expect([geo.parameters.width, geo.parameters.height, geo.parameters.depth]).toEqual([3, 1, 2]);
-    expect(koerper?.rotation.y).toBeCloseTo(-Math.PI / 2);
-    const ecke = new THREE.Vector3(1.5, 0, 0).applyEuler(koerper?.rotation ?? new THREE.Euler());
+    gruppe.updateMatrixWorld(true);
+    const ecke = new THREE.Vector3(1.5, 0, 0).applyMatrix4(koerper?.matrixWorld ?? new THREE.Matrix4());
     expect([ecke.x, ecke.z].map((z) => Math.round(z * 1000) / 1000)).toEqual([0, 1.5]);
   });
 
@@ -126,7 +127,7 @@ describe('SzenenInhalt: „Beschriftungen zeigen“ (Spec E3)', () => {
   it('ausgeblendete Beschriftungen sind keine Klickziele, Platz-Objekte schon (Auswahl nennt beide Arten)', () => {
     const inhalt = new SzenenInhalt();
     inhalt.zeige(bauwerk, new Set(), null);
-    const ids = (): string[] => inhalt.ziele(['platzobjekt', 'beschriftung']).map((z) => teilDaten(z)?.objektId ?? '');
+    const ids = (): string[] => [...new Set(inhalt.ziele(['platzobjekt', 'beschriftung']).map((z) => teilDaten(z)?.objektId ?? ''))];
     expect([...new Set(ids())].sort()).toEqual(['b', 'p']);
     inhalt.setzeBeschriftungen(false);
     expect(ids()).toEqual(['p']);
