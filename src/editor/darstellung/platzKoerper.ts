@@ -32,7 +32,7 @@ const feuerstelle: Bau = (p, h, bauer) => {
   const r = p.breite / 2;
   const dick = r * 0.28;
   const innen = r - dick;
-  const n = Math.max(8, Math.round((Math.PI * r) / 0.25));
+  const n = Math.min(64, Math.max(8, Math.round((Math.PI * r) / 0.25)));
   const breiteStein = ((2 * Math.PI * (r - dick / 2)) / n) * 0.85;
   const stein = new THREE.BoxGeometry(dick, h, breiteStein);
   // Mittelradius so, dass auch die Außenecken der Steine im Kreis bleiben.
