@@ -1,4 +1,5 @@
 import type { PlatzobjektForm, PlatzobjektParams } from '../../model/params';
+import { VorlagenWahl as VorlagenWahlBasis } from '../VorlagenWahl';
 
 /** Eine Vorlage für Platz-Objekte: Startwerte, die alle Felder vorbelegen (Spec E3, D2). Das Objekt lässt sich danach frei einstellen. */
 export interface Vorlage {
@@ -41,17 +42,9 @@ export function paramsAusVorlage(v: Vorlage): PlatzobjektParams {
   return { vorlage: v.schluessel, name: v.label, form: v.form, breite: v.breite, laenge: v.laenge, hoehe: v.hoehe, farbe: v.farbe };
 }
 
-/** Die im Werkzeug „Platz-Objekt“ gewählte Vorlage. Sie bleibt aktiv, bis man eine andere wählt (Spec E3, D2). */
-export class VorlagenWahl {
-  private gewaehlt: Vorlage = VORLAGEN[0] as Vorlage;
-
-  get aktuell(): Vorlage {
-    return this.gewaehlt;
-  }
-
-  setze(schluessel: string): void {
-    const v = findeVorlage(schluessel);
-    if (!v) throw new RangeError('Unbekannte Vorlage');
-    this.gewaehlt = v;
+/** Die im Werkzeug „Platz-Objekt“ gewählte Vorlage (Mechanismus in `../VorlagenWahl`); Start ist die Feuerstelle. */
+export class VorlagenWahl extends VorlagenWahlBasis<Vorlage> {
+  constructor() {
+    super(VORLAGEN);
   }
 }

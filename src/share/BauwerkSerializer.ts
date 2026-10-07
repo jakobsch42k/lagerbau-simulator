@@ -12,11 +12,11 @@ import { istEntfernt, type LuftbildEntferntJson, type LuftbildJson, luftbildAusJ
 import { type RegelnJson, regelnAusJson, regelnZuJson } from './RegelnFormat';
 
 /**
- * Datenformat 6 (Spec E3, D3): wie 5 (eine Liste aller Objekte in der Reihenfolge des Bauwerks, dazu optional das Luftbild),
- * die Liste kennt zusätzlich Platz-Objekte und Beschriftungen. Gelesen werden 1–6.
+ * Datenformat 7 (Spec E4, D6): wie 6 plus Zelte in der Liste; v6 = wie 5 (eine Liste aller Objekte in der Reihenfolge des Bauwerks, dazu optional das Luftbild),
+ * die Liste kennt Platz-Objekte und Beschriftungen. Gelesen werden 1–7.
  */
 export interface BauwerkJson {
-  readonly version: 6;
+  readonly version: 7;
   readonly objekte: readonly ObjektJson[];
   /** Nur, wenn eine Regel aus ist oder ein Wert vom Standard abweicht (Spec v3, D8). */
   readonly regeln?: RegelnJson;
@@ -24,8 +24,8 @@ export interface BauwerkJson {
   readonly luftbild?: LuftbildJson | LuftbildEntferntJson;
 }
 
-const ab4 = (version: unknown): boolean => version === 4 || version === 5 || version === 6;
-const ab5 = (version: unknown): boolean => version === 5 || version === 6;
+const ab4 = (version: unknown): boolean => version === 4 || version === 5 || version === 6 || version === 7;
+const ab5 = (version: unknown): boolean => version === 5 || version === 6 || version === 7;
 
 /** Wohin geschrieben wird: Eine Datei enthält das Bild, ein Link nicht (er wäre zu lang). */
 export type Ziel = 'datei' | 'link';
@@ -50,7 +50,7 @@ export class BauwerkSerializer {
     const e = bauwerk.regelEinstellungen;
     const l = bauwerk.luftbild;
     return {
-      version: 6,
+      version: 7,
       objekte,
       ...(e.istStandard ? {} : { regeln: regelnZuJson(e) }),
       ...(l === null ? {} : { luftbild: ziel === 'datei' ? luftbildZuJson(l) : { entfernt: true as const } }),

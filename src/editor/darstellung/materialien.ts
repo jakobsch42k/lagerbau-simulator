@@ -28,3 +28,5 @@ export const ZONE_MARKIERT = new THREE.MeshBasicMaterial({
 });
 // Auswahl einer Grenze: die unsichtbare Klickfläche wird sichtbar.
 export const KLICKBAND_MARKIERT = new THREE.MeshBasicMaterial({ color: 0xd9480f, transparent: true, opacity: 0.45, depthWrite: false, side: THREE.DoubleSide });
+// Auswahl eines Zelts: orange und beidseitig, damit man auch von innen etwas sieht.
+export const ZELT_MARKIERT = new THREE.MeshLambertMaterial({ color: 0xd9480f, side: THREE.DoubleSide });

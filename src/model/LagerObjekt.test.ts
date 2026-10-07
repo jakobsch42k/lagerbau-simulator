@@ -11,6 +11,8 @@ import { Platzobjekt } from './Platzobjekt';
 import { Seil } from './Seil';
 import { Stange } from './Stange';
 import { Vec3 } from './Vec3';
+import { Zelt } from './Zelt';
+import { JURTE6 } from './Zelt.testdaten';
 import { Zone } from './Zone';
 
 const istBei = (p: Vec3 | undefined, x: number, y: number, z: number): void => {
@@ -18,7 +20,7 @@ const istBei = (p: Vec3 | undefined, x: number, y: number, z: number): void => {
 };
 const VIERTEL = Math.PI / 2;
 
-it('erfüllen alle zehn Klassen die gemeinsame Schnittstelle (Spec v3, D1)', () => {
+it('erfüllen alle elf Klassen die gemeinsame Schnittstelle (Spec v3, D1)', () => {
   const alle: readonly LagerObjekt[] = [
     new Dreibein('d', Vec3.NULL, 0, STANDARD_DREIBEIN),
     new ABock('a', Vec3.NULL, 0, STANDARD_ABOCK),
@@ -30,6 +32,7 @@ it('erfüllen alle zehn Klassen die gemeinsame Schnittstelle (Spec v3, D1)', () 
     new Beschriftung('be', Vec3.NULL, STANDARD_BESCHRIFTUNG),
     new Zone('zo', [Vec3.NULL, new Vec3(4, 0, 0), new Vec3(0, 0, 4)], STANDARD_ZONE),
     new Linie('li', [Vec3.NULL, new Vec3(4, 0, 0)], STANDARD_LINIE),
+    new Zelt('ze', Vec3.NULL, JURTE6),
   ];
   expect(alle.map((o) => o.art)).toEqual([...ART_NAMEN]);
 });

@@ -88,3 +88,29 @@ export interface LinienParams {
 /** Startwerte für „Linie zeichnen“: ein Weg, 1 m breit. Keine Regel-Schwellwerte. */
 // CHECK MANUALLY: Breite 1 m laut Spec E3, D1; Name und Farbe Startwert Claude
 export const STANDARD_LINIE: LinienParams = { name: 'Weg', typ: 'weg', breite: 1, farbe: '#a68a64' };
+
+export type ZeltAufbau = 'rund' | 'doppelkegel' | 'sattel';
+
+/** Alle Maße in m; Maße, die zur Form nicht gehören, bleiben gespeichert, damit ein Formwechsel nichts verliert (Spec E4, D1). */
+export interface ZeltParams {
+  /** Schlüssel der Vorlage (src/arten/zelt/vorlagen.ts). */
+  readonly vorlage: string;
+  readonly name: string;
+  readonly aufbau: ZeltAufbau;
+  /** Nur rund: Umkreisdurchmesser (Eck zu Eck). */
+  readonly durchmesser: number;
+  /** Nur rund: Anzahl Ecken, ganze Zahl 6 bis 24. */
+  readonly ecken: number;
+  /** Nur doppelkegel und sattel. */
+  readonly laenge: number;
+  readonly breite: number;
+  readonly wandhoehe: number;
+  readonly firsthoehe: number;
+  /** Nur rund: Wand 1 bis 3 vorhanden. */
+  readonly waende: readonly [boolean, boolean, boolean];
+  /** Anzahl Haringe = Anzahl Abspannseile. */
+  readonly abspannungen: number;
+  readonly seillaenge: number;
+  readonly haringAbstand: number;
+  readonly farbe: string;
+}

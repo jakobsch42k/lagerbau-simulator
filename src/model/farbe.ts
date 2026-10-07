@@ -1,4 +1,4 @@
-const HEX_FARBE = /^#[0-9a-f]{6}$/i;
+export const HEX_FARBE = /^#[0-9a-f]{6}$/i;
 
 /** Wirft den Fehler des Modells, wenn `farbe` kein `#rrggbb` ist (Spec E3, D1). */
 export function pruefeFarbe(farbe: string): void {

@@ -25,6 +25,8 @@ export interface EditorKontext {
   neueId(praefix: string): string;
   /** Zeigt eine Messung an (null löscht sie). Sie gehört nicht ins Bauwerk. */
   setzeMessung(messung: Messung | null): void;
+  /** Zeigt einen Text in der Statuszeile (null löscht ihn). */
+  zeigeMeldung(text: string | null): void;
 }
 
 /** Klick-Zusatz: gedrückte Umschalttaste. */
@@ -107,6 +109,8 @@ export class PlatziereTool implements Werkzeug {
   private fuegeHinzu(k: EditorKontext, objekt: LagerObjekt): void {
     k.aendere(k.bauwerk.mit(objekt));
     k.waehle(objekt.id);
+    const meldung = this.art.meldungNachSetzen?.(objekt);
+    if (meldung) k.zeigeMeldung(meldung);
   }
 }
 

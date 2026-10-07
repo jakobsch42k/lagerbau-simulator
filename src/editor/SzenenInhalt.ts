@@ -142,7 +142,8 @@ export class SzenenInhalt {
     objekt.traverse((k) => {
       if (k instanceof THREE.Mesh || k instanceof THREE.Line) k.geometry.dispose();
       if (k.userData.eigenesMaterial === true && (k instanceof THREE.Mesh || k instanceof THREE.Sprite || k instanceof THREE.Line)) {
-        const material = k.material as THREE.Material & { map?: THREE.Texture | null };
+        // Bei Auswahl trägt das Mesh das geteilte Auswahlmaterial; freizugeben ist das eigene Normalmaterial.
+        const material = (teilDaten(k)?.normal ?? k.material) as THREE.Material & { map?: THREE.Texture | null };
         material.map?.dispose();
         material.dispose();
       }

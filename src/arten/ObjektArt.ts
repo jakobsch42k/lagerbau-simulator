@@ -122,6 +122,8 @@ export interface ObjektArt<T extends LagerObjekt = LagerObjekt> {
   /** Ob die Objekte dieser Art zum Platzbedarf zählen (Spec E3, D3). Fehlt die Angabe: ja. */
   readonly zaehltZumPlatzbedarf?: boolean;
   readonly platzieren: Platzieren;
+  /** Statuszeile nach dem Setzen eines Objekts (Zelt: „Zelt gesetzt: Jurte 6er“); fehlt sie, bleibt die Zeile leer. */
+  meldungNachSetzen?(o: T): string;
   istVon(o: LagerObjekt): o is T;
   zuJson(o: T): ObjektJson;
   /** Wirft einen Error mit dem Feldnamen, wenn `roh` nicht passt. */

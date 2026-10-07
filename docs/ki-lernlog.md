@@ -158,3 +158,16 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Gefunden durch:** Stage-Review von E2.
 **Richtig ist:** Alle Bodenhöhen an einer Stelle (`BODEN_HOEHEN`: Boden −0,05 m, Bild 0,001 m, Raster 0,002 m; Zonen ab E3 bei 0,005 m) und ein Test auf die Reihenfolge; das Bild bekommt zusätzlich `polygonOffset`.
 **Lehre:** Bei übereinanderliegenden flachen Schichten testen, was oben liegt, nicht nur, ob etwas sichtbar geschaltet ist; Höhen zentral festlegen, weil spätere Etappen (Zonen, Planen) dazwischen passen müssen.
+
+### 2026-10-07 — Spec nannte 29 m² für das 12-Eck (E4)
+**Was die KI gemacht hat:** Die E4-Spec schrieb für das 12-Eck Ø 6,07 m „rund 29 m²“ als erwartete Fläche; das war die Händlerangabe, nicht das Ergebnis der Geometrie.
+**Gefunden durch:** Test (Chunk A): Die Shoelace-Fläche ist 27,63 m².
+**Richtig ist:** Die Fläche kommt aus dem Umriss (27,63 m²); Händlerzahlen sind Startwerte, kein Testwert.
+**Lehre:** Erwartungswerte in Specs aus der Formel rechnen, nicht aus Katalogzahlen übernehmen.
+
+### 2026-10-07 — SzenenInhalt.entferne gab das geteilte Auswahlmaterial frei (E4)
+**Was die KI gemacht hat:** Beim Entfernen eines ausgewählten Teils gab `SzenenInhalt.entferne` das gerade aktive (geteilte) Auswahlmaterial frei statt des eigenen Normalmaterials.
+**Gefunden durch:** Review der eigenen Arbeit (Chunk D, beim Einführen geteilter Materialien).
+**Richtig ist:** Frei wird `teilDaten(k).normal`; das Auswahlmaterial gehört der Szene.
+**Lehre:** Wer Materialien teilt, prüft den Besitz beim Freigeben auch im Auswahlzustand und schreibt dafür einen Test.
+
