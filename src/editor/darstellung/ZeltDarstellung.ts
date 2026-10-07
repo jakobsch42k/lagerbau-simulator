@@ -112,23 +112,21 @@ export class ZeltDarstellung implements Darstellung<Zelt> {
     ];
   }
 
-  /** Zwei Spitzen bei ±laenge/4; die Mitten der Längsseiten teilen das Dach. */
+  /**
+   * Doppelkegel (BZW-Skizze): Grundriss = Oval aus zwei Halbkreisen (Ø = Breite) mit geradem Mittelstück, die Mittelstangen
+   * stehen bei ±c und tragen den First. Jede Traufecke hängt am nächsten Punkt des Firsts: an den Halbkreisen ist das die
+   * Spitze (Kegel), an den Geraden ein Punkt des Firsts (ebene Dachfläche).
+   */
   private doppelkegelDach(z: Zelt, umriss: readonly Vec3[]): Dreieck[] {
-    const [c0, c1, c2, c3] = this.ecken(z, umriss);
-    const vorn = new THREE.Vector3(z.params.laenge / 4, z.params.firsthoehe, 0);
-    const hinten = new THREE.Vector3(-z.params.laenge / 4, z.params.firsthoehe, 0);
-    const mitteLinks = new THREE.Vector3(0, z.params.wandhoehe, c0.z);
-    const mitteRechts = new THREE.Vector3(0, z.params.wandhoehe, c2.z);
-    return [
-      [c0, mitteLinks, vorn],
-      [mitteLinks, mitteRechts, vorn],
-      [mitteRechts, c3, vorn],
-      [c3, c0, vorn],
-      [mitteLinks, c1, hinten],
-      [c1, c2, hinten],
-      [c2, mitteRechts, hinten],
-      [mitteRechts, mitteLinks, hinten],
-    ];
+    const c = ZeltGeometrie.kegelHalbachse(z);
+    const spitze = (p: Vec3): THREE.Vector3 => new THREE.Vector3(Math.max(-c, Math.min(c, p.x)), z.params.firsthoehe, 0);
+    return umriss.flatMap((a, k) => {
+      const b = umriss[(k + 1) % umriss.length] as Vec3;
+      const [sa, sb] = [spitze(a), spitze(b)];
+      const dreiecke: Dreieck[] = [[punkt(a, z.params.wandhoehe), punkt(b, z.params.wandhoehe), sb]];
+      if (!sa.equals(sb)) dreiecke.push([punkt(a, z.params.wandhoehe), sb, sa]);
+      return dreiecke;
+    });
   }
 
   private haringe(z: Zelt): THREE.Mesh[] {
@@ -145,8 +143,8 @@ export class ZeltDarstellung implements Darstellung<Zelt> {
     const haringe = ZeltGeometrie.haringe(z);
     if (haringe.length === 0) return null;
     const punkte = haringe.flatMap((h) => {
-      const t = this.traufAnteil(z, h);
-      return [new THREE.Vector3(h.x, HARING_HOEHE, h.z), new THREE.Vector3(h.x * t, z.params.wandhoehe, h.z * t)];
+      const ziel = this.traufPunkt(z, h);
+      return [new THREE.Vector3(h.x, HARING_HOEHE, h.z), new THREE.Vector3(ziel.x, z.params.wandhoehe, ziel.z)];
     });
     const material = new THREE.LineBasicMaterial({ color: SEIL_FARBE });
     const linien = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(punkte), material);
@@ -155,10 +153,19 @@ export class ZeltDarstellung implements Darstellung<Zelt> {
     return alsTeil(linien, { objektId: z.id, teilId: z.id, art: 'zelt', klickbar: false, normal: material, markiert: null });
   }
 
-  /** Anteil des Weges vom Mittelpunkt zum Haring, an dem die Traufe liegt (rund: Radius, sonst Rechteckrand). */
-  private traufAnteil(z: Zelt, h: Vec3): number {
+  /** Punkt der Traufe, den man vom Haring in Richtung Zeltmitte erreicht (rund: Kreis, Doppelkegel: Oval, sonst Rechteckrand). */
+  private traufPunkt(z: Zelt, h: Vec3): { x: number; z: number } {
     const { aufbau, durchmesser, laenge, breite } = z.params;
-    if (aufbau === 'rund') return durchmesser / 2 / Math.hypot(h.x, h.z);
-    return Math.min(laenge / 2 / Math.max(Math.abs(h.x), 1e-9), breite / 2 / Math.max(Math.abs(h.z), 1e-9));
+    if (aufbau === 'doppelkegel') {
+      const c = ZeltGeometrie.kegelHalbachse(z);
+      const qx = Math.max(-c, Math.min(c, h.x));
+      const d = Math.max(Math.hypot(h.x - qx, h.z), 1e-9);
+      return { x: qx + ((h.x - qx) / d) * (breite / 2), z: (h.z / d) * (breite / 2) };
+    }
+    const t =
+      aufbau === 'rund'
+        ? durchmesser / 2 / Math.hypot(h.x, h.z)
+        : Math.min(laenge / 2 / Math.max(Math.abs(h.x), 1e-9), breite / 2 / Math.max(Math.abs(h.z), 1e-9));
+    return { x: h.x * t, z: h.z * t };
   }
 }

@@ -60,10 +60,11 @@ export class ZeltZubehoer {
 
   /** Kleine Kappe auf der Dachspitze, beim Doppelkegel auf beiden Spitzen. */
   private kappen(): THREE.Mesh[] {
-    const { aufbau, laenge, breite, durchmesser, wandhoehe, firsthoehe } = this.z.params;
+    const { aufbau, breite, durchmesser, wandhoehe, firsthoehe } = this.z.params;
     if (aufbau === 'sattel' || firsthoehe <= wandhoehe) return [];
-    const spitzen = aufbau === 'rund' ? [0] : [laenge / 4, -laenge / 4];
-    const lauf = aufbau === 'rund' ? durchmesser / 2 : Math.hypot(laenge / 4, breite / 2);
+    const c = ZeltGeometrie.kegelHalbachse(this.z);
+    const spitzen = aufbau === 'rund' ? [0] : [c, -c];
+    const lauf = aufbau === 'rund' ? durchmesser / 2 : breite / 2;
     const hoehe = Math.max(0.04, (KAPPE_ANTEIL * KAPPE_RADIUS * (firsthoehe - wandhoehe)) / lauf);
     return spitzen.map((x) => {
       const m = this.bauer.mesh(new THREE.ConeGeometry(KAPPE_RADIUS, hoehe, 12), this.dunkel);
