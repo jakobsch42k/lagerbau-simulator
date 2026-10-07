@@ -1,5 +1,6 @@
 import './style.css';
 import { VorlagenWahl } from './arten/platz/vorlagen';
+import { ZeltVorlagenWahl } from './arten/zelt/vorlagen';
 import { standardArten } from './arten/standardArten';
 import { kochstelle } from './beispiele/kochstelle';
 import { Editor, type EditorZustand } from './editor/Editor';
@@ -35,7 +36,8 @@ function element<T extends HTMLElement>(selektor: string): T {
 }
 
 const vorlagenWahl = new VorlagenWahl();
-const arten = standardArten(vorlagenWahl);
+const zeltWahl = new ZeltVorlagenWahl();
+const arten = standardArten(vorlagenWahl, zeltWahl);
 const editor = new Editor(Bauwerk.leer(), { arten });
 const szene = new Szene(element('#ansicht'), arten);
 const modus = new AnsichtsModus(document.body);
@@ -113,6 +115,7 @@ beschriftungenKnopf.addEventListener('click', () => {
   beschriftungenKnopf.setAttribute('aria-pressed', String(szene.beschriftungenSichtbar));
 });
 new VorlagenAuswahl(element('#sel-vorlage'), vorlagenWahl, () => editor.waehleWerkzeug('platzobjekt'));
+new VorlagenAuswahl(element('#sel-zelt'), zeltWahl, () => editor.waehleWerkzeug('zelt'));
 element('#btn-wieder').addEventListener('click', () => editor.wiederholen());
 element('#btn-bearbeiten').addEventListener('click', () => setzeModus(false));
 element('#btn-speichern').addEventListener('click', () => teilen.speichere(editor.bauwerk));
