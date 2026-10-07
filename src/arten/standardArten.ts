@@ -9,6 +9,7 @@ import { VorlagenWahl } from './platz/vorlagen';
 import { PlatzobjektArt } from './PlatzobjektArt';
 import { SeilArt } from './SeilArt';
 import { StangeArt } from './StangeArt';
+import { ZeltArt } from './ZeltArt';
 import { ZoneArt } from './ZoneArt';
 
 /** Alle Arten in der Reihenfolge der Werkzeug-Knöpfe. Eine neue Art braucht hier eine Zeile (Spec v3, D2). */
@@ -24,5 +25,6 @@ export function standardArten(vorlagen: VorlagenWahl = new VorlagenWahl()): Obje
     new BeschriftungArt(),
     new ZoneArt(),
     new LinieArt(),
+    new ZeltArt(),
   ]);
 }

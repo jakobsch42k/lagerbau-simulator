@@ -12,6 +12,8 @@ import { Stange } from '../model/Stange';
 import { Linie } from '../model/Linie';
 import { STANDARD_LINIE, STANDARD_ZONE } from '../model/params';
 import { Vec3 } from '../model/Vec3';
+import { Zelt } from '../model/Zelt';
+import { JURTE6 } from '../model/Zelt.testdaten';
 import { Zone } from '../model/Zone';
 import { ObjektRegister } from './ObjektRegister';
 import { SeilArt } from './SeilArt';
@@ -29,6 +31,7 @@ const beispiele: readonly LagerObjekt[] = [
   new Beschriftung('be', new Vec3(1, 0, 1), STANDARD_BESCHRIFTUNG),
   new Zone('zo', [new Vec3(0, 0, 0), new Vec3(6, 0, 0), new Vec3(6, 0, 4)], STANDARD_ZONE),
   new Linie('li', [new Vec3(0, 0, 0), new Vec3(6, 0, 4)], { ...STANDARD_LINIE, typ: 'zaun' }),
+  new Zelt('ze', new Vec3(3, 0, 3), JURTE6, 0.5),
 ];
 /** Die Felder je Art wie in v3, nur mit `art` vorneweg und bei Gruppen ohne `typ` (Spec v3, D3). */
 const FELDER: Readonly<Record<ArtName, readonly string[]>> = {
@@ -42,6 +45,7 @@ const FELDER: Readonly<Record<ArtName, readonly string[]>> = {
   beschriftung: ['art', 'id', 'position', 'text', 'groesse', 'farbe'],
   zone: ['art', 'id', 'name', 'farbe', 'deckkraft', 'punkte'],
   linie: ['art', 'id', 'name', 'typ', 'breite', 'farbe', 'punkte'],
+  zelt: ['art', 'id', 'vorlage', 'name', 'aufbau', 'position', 'drehungRad', 'durchmesser', 'ecken', 'laenge', 'breite', 'wandhoehe', 'firsthoehe', 'waende', 'abspannungen', 'seillaenge', 'haringAbstand', 'farbe'],
 };
 
 describe('ObjektRegister (Spec v3, D2)', () => {

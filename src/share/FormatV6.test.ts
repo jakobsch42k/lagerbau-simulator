@@ -16,9 +16,9 @@ const schild = new Beschriftung('t', new Vec3(1, 0, 1), { text: 'Küche', groess
 const bauwerk = kochstelle().mit(feuer).mit(schild);
 
 describe('Datenformat v6 (Spec E3, D3)', () => {
-  it('schreibt Version 6 mit den neuen Arten in `objekte`, in der Reihenfolge des Bauwerks', () => {
+  it('schreibt Version 7 mit den neuen Arten in `objekte`, in der Reihenfolge des Bauwerks', () => {
     const json = serializer.zuJson(bauwerk);
-    expect(json.version).toBe(6);
+    expect(json.version).toBe(7);
     expect(json.objekte.slice(-2).map((o) => o.art)).toEqual(['platzobjekt', 'beschriftung']);
   });
 
@@ -52,7 +52,7 @@ describe('Datenformat v6 (Spec E3, D3)', () => {
     const json = serializer.zuJson(Bauwerk.leer().mit(feuer));
     const kaputt = { ...json, objekte: [{ ...json.objekte[0], breite: 0 }] };
     expect(() => serializer.ausJson(kaputt)).toThrow('Ungültige Bauwerk-Daten: Durchmesser muss größer als 0 sein');
-    expect(() => serializer.ausJson({ ...json, version: 7 })).toThrow('unbekannte Version');
+    expect(() => serializer.ausJson({ ...json, version: 8 })).toThrow('unbekannte Version');
   });
 });
 
@@ -65,7 +65,7 @@ describe('Datenformat v6: Zonen und Linien (Spec E3, D1, D3)', () => {
 
   it('schreibt beide Arten in `objekte` und liest sie über JSON-Text zurück, auch im Link', () => {
     const json = serializer.zuJson(mit);
-    expect(json.version).toBe(6);
+    expect(json.version).toBe(7);
     expect(json.objekte.slice(-4).map((o) => o.art)).toEqual(['zone', 'linie', 'linie', 'linie']);
     const zurueck = serializer.ausJson(JSON.parse(JSON.stringify(json)));
     expect(serializer.zuJson(zurueck)).toEqual(json);

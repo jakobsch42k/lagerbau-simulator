@@ -7,6 +7,7 @@ import { PlaneDarstellung } from './PlaneDarstellung';
 import { PlatzobjektDarstellung } from './PlatzobjektDarstellung';
 import { SeilDarstellung } from './SeilDarstellung';
 import { StangeDarstellung } from './StangeDarstellung';
+import { ZeltDarstellung } from './ZeltDarstellung';
 import { ZoneDarstellung } from './ZoneDarstellung';
 
 /** Je Art eine Darstellung (Spec v3, D2). Eine neue Art braucht hier eine Zeile; der Typ meldet sie sonst als fehlend. */
@@ -22,5 +23,6 @@ export function standardDarstellungen(): Darstellungen {
     beschriftung: new BeschriftungDarstellung(),
     zone: new ZoneDarstellung(),
     linie: new LinieDarstellung(),
+    zelt: new ZeltDarstellung(),
   };
 }

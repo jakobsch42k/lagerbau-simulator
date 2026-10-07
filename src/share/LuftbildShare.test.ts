@@ -28,7 +28,7 @@ describe('Datenformat v5 mit Luftbild (Spec E2, D4)', () => {
   it('schreibt Version 5 und das Bild samt Maßstab und Deckkraft in die Datei', () => {
     const l = bild();
     const json = serializer.zuJson(Bauwerk.leer().mitLuftbild(l));
-    expect(json.version).toBe(6);
+    expect(json.version).toBe(7);
     expect(json.luftbild).toEqual({ daten: l.daten, breitePx: 640, hoehePx: 480, meterProPixel: 0.12, deckkraft: 0.6 });
   });
 
@@ -42,7 +42,7 @@ describe('Datenformat v5 mit Luftbild (Spec E2, D4)', () => {
 
   it('übersteht die Rundreise ohne Bild: kein luftbild-Feld, kein Bild danach', () => {
     const json = serializer.zuJson(kochstelle());
-    expect(json.version).toBe(6);
+    expect(json.version).toBe(7);
     expect('luftbild' in json).toBe(false);
     expect(serializer.ausJson(JSON.parse(JSON.stringify(json))).luftbild).toBeNull();
   });
