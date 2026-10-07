@@ -1,6 +1,6 @@
 import type { Materialliste } from '../model/Materialliste';
 
-function zeile(tag: 'th' | 'td', zellen: readonly string[]): HTMLTableRowElement {
+export function zeile(tag: 'th' | 'td', zellen: readonly string[]): HTMLTableRowElement {
   const tr = document.createElement('tr');
   for (const text of zellen) {
     const zelle = document.createElement(tag);
@@ -18,20 +18,34 @@ export class MateriallistePanel {
   ) {}
 
   zeige(liste: Materialliste): void {
-    const { stangen, seile, anzahlHaringe, planen, platzbedarf } = liste;
-    this.tabelle.replaceChildren(
-      zeile('th', ['Länge', 'Ø', 'Anzahl']),
-      ...stangen.zeilen.map((z) => zeile('td', [`${z.laenge.toFixed(1)} m`, `${z.durchmesserCm} cm`, String(z.anzahl)])),
-      zeile('td', ['Bünde', '', String(stangen.anzahlBuende)]),
-      ...(seile.length > 0 ? [zeile('th', ['Seil', '', 'Anzahl']), ...seile.map((s) => zeile('td', [`${s.laenge} m`, '', String(s.anzahl)]))] : []),
-      ...(anzahlHaringe > 0 ? [zeile('td', ['Haringe', '', String(anzahlHaringe)])] : []),
-      ...(planen.length > 0
-        ? [
-            zeile('th', ['Plane', '', 'Anzahl']),
-            ...planen.map((p) => zeile('td', [`${p.breite.toFixed(1)} × ${p.laenge.toFixed(1)} m`, '', String(p.anzahl)])),
-          ]
-        : []),
-    );
-    this.platz.textContent = platzbedarf ? `Platzbedarf: ${platzbedarf.laenge.toFixed(1)} × ${platzbedarf.breite.toFixed(1)} m` : '';
+    this.tabelle.replaceChildren(...stangenZeilen(liste), ...restZeilen(liste));
+    this.platz.textContent = platzText(liste);
   }
+}
+
+/** Kopfzeile, Stangen und Bünde. */
+export function stangenZeilen(liste: Materialliste): HTMLTableRowElement[] {
+  const { stangen } = liste;
+  return [
+    zeile('th', ['Länge', 'Ø', 'Anzahl']),
+    ...stangen.zeilen.map((z) => zeile('td', [`${z.laenge.toFixed(1)} m`, `${z.durchmesserCm} cm`, String(z.anzahl)])),
+    zeile('td', ['Bünde', '', String(stangen.anzahlBuende)]),
+  ];
+}
+
+/** Seile, Haringe und Planen. */
+export function restZeilen(liste: Materialliste): HTMLTableRowElement[] {
+  const { seile, anzahlHaringe, planen } = liste;
+  return [
+    ...(seile.length > 0 ? [zeile('th', ['Seil', '', 'Anzahl']), ...seile.map((s) => zeile('td', [`${s.laenge} m`, '', String(s.anzahl)]))] : []),
+    ...(anzahlHaringe > 0 ? [zeile('td', ['Haringe', '', String(anzahlHaringe)])] : []),
+    ...(planen.length > 0
+      ? [zeile('th', ['Plane', '', 'Anzahl']), ...planen.map((p) => zeile('td', [`${p.breite.toFixed(1)} × ${p.laenge.toFixed(1)} m`, '', String(p.anzahl)]))]
+      : []),
+  ];
+}
+
+export function platzText(liste: Materialliste): string {
+  const { platzbedarf } = liste;
+  return platzbedarf ? `Platzbedarf: ${platzbedarf.laenge.toFixed(1)} × ${platzbedarf.breite.toFixed(1)} m` : '';
 }
