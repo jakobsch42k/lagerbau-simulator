@@ -171,3 +171,33 @@ Wo lag die KI falsch? Ein Eintrag pro Fehler: Physik, Pfadfinder-Fachwissen, Cod
 **Richtig ist:** Frei wird `teilDaten(k).normal`; das Auswahlmaterial gehört der Szene.
 **Lehre:** Wer Materialien teilt, prüft den Besitz beim Freigeben auch im Auswahlzustand und schreibt dafür einen Test.
 
+
+### 2026-10-07 — Doppelkegler aus Maßen geraten statt nach der echten Form gesucht (E4)
+**Was die KI gemacht hat:** Der Doppelkegler wurde aus Länge, Breite und zwei Höhen als Rechteck mit zwei Pyramiden gebaut. Auf drei Rückmeldungen („kein Doppelkegler“) kamen nacheinander ein Kegel-Höhenraster, ein Oval mit falscher Wandhöhe (1,85 m) und erst nach der ausdrücklichen Aufforderung eine Suche nach Referenzbildern.
+**Gefunden durch:** Jakobs Nutzung (dreimal).
+**Richtig ist:** Grundriss = Oval aus zwei Halbkreisen (Ø Breite) mit geradem Mittelstück, Mittelstangen durch einen First verbunden, niedrige Wand (die 185 cm der Stückliste sind die Stützstangen am Vorbau), Ohren an der Traufe, Vorbau an der Längsseite. Die Skizze der Stückliste und das Foto des Händlers zeigten das von Anfang an.
+**Lehre:** Bei einer Form, die nach einem Produkt benannt ist, zuerst Foto und Skizze ansehen (Händlerseite, Stückliste) und die Form daraus ableiten; Maße allein bestimmen sie nicht. Eine Maßangabe nie ungeprüft einer Rolle zuordnen („Seitenhöhe“ ist nicht automatisch die Wandhöhe).
+
+### 2026-10-08 — Wegband war von oben unsichtbar (E3)
+**Was die KI gemacht hat:** `bandGeometrie` baute die Dreiecke des Wegs mit der Vorderseite nach unten. Einseitige Materialien schnitten das Band von oben weg; die Zonen waren doppelseitig und fielen deshalb nie auf. Die E3-Tests prüften Lage, Farbe und Klickbarkeit des Meshes, nie, ob man es sieht.
+**Gefunden durch:** Jakobs Nutzung nach E6.
+**Richtig ist:** Dreiecksrichtung gedreht (Normalen zeigen nach oben); ein Test prüft die Normalen. Ein erster Versuch mit `DoubleSide` am Normalmaterial half nicht, weil das geteilte Auswahlmaterial weiter einseitig war.
+**Lehre:** Bei selbst gebauter Geometrie die Dreiecksrichtung testen und die Ursache in der Geometrie beheben, nicht pro Material. Eine Etappe mit neuer Darstellung braucht einen Screenshot-Check im Browser, nicht nur Unit-Tests.
+
+### 2026-10-08 — Playwright zeigte einen alten Build (Werkzeug)
+**Was die KI gemacht hat:** Beim Prüfen eines Fixes per Screenshot lieferte der wiederverwendete Preview-Server (`reuseExistingServer`) den alten Build aus. Der Fix schien nicht zu wirken.
+**Gefunden durch:** Review der eigenen Arbeit (Gegenprobe mit explizitem `npm run build`).
+**Richtig ist:** Vor jedem Screenshot-Check `npm run build` ausführen.
+**Lehre:** Wenn ein Fix im Browser „nichts bewirkt“, zuerst prüfen, ob der Server den neuen Build ausliefert.
+
+### 2026-10-07 — Subagent-Reports mit falschen Commit-IDs und e2e-Folgefehler (E5/E6)
+**Was die KI gemacht hat:** Ein Implementer-Report nannte die Commit-ID eines fremden Commits (`9db502e` statt `9db5c04`); ein anderer meldete einen roten e2e-Test als „nicht von diesem Chunk“, obwohl er von der vorherigen Änderung am Doppelkegler stammte (das Feld „Haring-Abstand“ gibt es dort nicht mehr).
+**Gefunden durch:** Review der eigenen Arbeit (Report gegen `git log` und `git show --stat` geprüft).
+**Richtig ist:** Commit-IDs und Testzahlen immer aus Git und einem eigenen Lauf übernehmen; ein roter Test nach einer Änderung an einem Fremdbereich gehört zu dieser Änderung.
+**Lehre:** Reports von Subagenten gegen `git log` prüfen und die Suite selbst laufen lassen; eine Änderung, die ein Bedienelement entfernt, braucht eine Suche nach Tests, die es benutzen.
+
+### 2026-10-08 — Gestapelte PR landete nicht in main (Ablauf)
+**Was die KI gemacht hat:** PR #15 (E6) hatte als Basis den E5-Branch. #14 (E5) wurde zuerst nach `main` gemergt, danach #15 in den (nun toten) E5-Branch. E6 war damit nicht in `main`; Pages zeigte weiter 1.8.0.
+**Gefunden durch:** Review der eigenen Arbeit (beim Fix des Wegs aufgefallen: `grep platzregeln src/main.ts` auf `main` leer).
+**Richtig ist:** Zusätzliche PR direkt gegen `main` (#16). Bei gestapelten PRs vor dem Merge der oberen die Basis auf `main` umstellen oder von unten nach oben mit Prüfung der Basis mergen.
+**Lehre:** Nach jedem Merge einer Etappe prüfen, ob die Änderung in `main` angekommen ist (`git merge-base --is-ancestor`), nicht nur, ob die PR „merged“ zeigt.
