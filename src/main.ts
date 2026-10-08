@@ -12,6 +12,7 @@ import type { Luftbild } from './model/Luftbild';
 import { Materialliste } from './model/Materialliste';
 import { Lagerliste } from './model/Lagerliste';
 import { type BauHinweis, BauHinweise } from './rules/BauHinweise';
+import { PlatzRegelEngine } from './rules/platz/PlatzRegelEngine';
 import { RuleEngine } from './rules/RuleEngine';
 import { SEIL_ZUGABE_PRO_ENDE } from './rules/constants';
 import { LinkBasis } from './share/LinkBasis';
@@ -20,6 +21,8 @@ import { BildLader } from './ui/BildLader';
 import { HinweisPanel } from './ui/HinweisPanel';
 import { LuftbildPanel } from './ui/LuftbildPanel';
 import { ParameterPanel } from './ui/ParameterPanel';
+import { AusgeschaltetZeile } from './ui/AusgeschaltetZeile';
+import { PlatzregelnPanel } from './ui/PlatzregelnPanel';
 import { RegelnPanel } from './ui/RegelnPanel';
 import { MateriallistePanel } from './ui/MateriallistePanel';
 import { LagerlistePanel } from './ui/LagerlistePanel';
@@ -44,12 +47,15 @@ const editor = new Editor(Bauwerk.leer(), { arten });
 const szene = new Szene(element('#ansicht'), arten);
 const modus = new AnsichtsModus(document.body);
 const teilen = new Teilen();
-const regelnPanel = new RegelnPanel(element('#btn-regeln'), element('#regeln'), element('#ausgeschaltet'), editor, () => modus.aktiv);
+const ausgeschaltet = new AusgeschaltetZeile(element('#ausgeschaltet'));
+const regelnPanel = new RegelnPanel(element('#btn-regeln'), element('#regeln'), ausgeschaltet, editor, () => modus.aktiv);
+const platzregelnPanel = new PlatzregelnPanel(element('#btn-platzregeln'), element('#platzregeln'), ausgeschaltet, editor, () => modus.aktiv);
 
 /** Wechselt Editor und Ansicht; die Regel-Liste ist in der Ansicht nur lesbar und wird deshalb neu gezeigt. */
 function setzeModus(ansicht: boolean): void {
   modus.setze(ansicht);
   regelnPanel.zeige(editor.bauwerk.regelEinstellungen);
+  platzregelnPanel.zeige(editor.bauwerk.platzregelEinstellungen);
 }
 const parameter = new ParameterPanel(element('#parameter'), editor, arten);
 const luftbildPanel = new LuftbildPanel(element('#luftbild'), element('#btn-luftbild'), editor, szene);
@@ -71,7 +77,11 @@ interface Pruefung {
 let geprueft: Pruefung | null = null;
 function pruefung(bauwerk: Bauwerk): Pruefung {
   if (geprueft?.bauwerk !== bauwerk) {
-    const hinweise = BauHinweise.zuordnen(bauwerk, RuleEngine.fuer(bauwerk.regelEinstellungen).pruefe(bauwerk));
+    // Platzregeln (E6) gehören zu keinem Bau, also ohne Bau-Präfix; der Klick markiert beide betroffeneTeile.
+    const platz: readonly BauHinweis[] = PlatzRegelEngine.fuer(bauwerk.platzregelEinstellungen, arten)
+      .pruefe(bauwerk)
+      .map((h) => ({ ...h, bau: null, bauName: null }));
+    const hinweise = [...BauHinweise.zuordnen(bauwerk, RuleEngine.fuer(bauwerk.regelEinstellungen).pruefe(bauwerk)), ...platz];
     const liste = Materialliste.aus(bauwerk, SEIL_ZUGABE_PRO_ENDE, arten.zaehltZumPlatzbedarf);
     const lager = Lagerliste.aus(bauwerk, arten, SEIL_ZUGABE_PRO_ENDE);
     geprueft = { bauwerk, hinweise, anzahlBaue: lager.baue.filter((z) => z.bau !== null).length, liste, lager };
@@ -198,6 +208,7 @@ editor.abonniere((z) => {
   hinweisPanel.zeige(hinweise, anzahlBaue);
   lagerlistePanel.zeige(lager, z.bauwerk, hinweise);
   regelnPanel.zeige(z.bauwerk.regelEinstellungen);
+  platzregelnPanel.zeige(z.bauwerk.platzregelEinstellungen);
   luftbildPanel.zeige(z);
   materialPanel.zeige(liste);
   for (const knopf of werkzeugKnoepfe) knopf.setAttribute('aria-pressed', String(knopf.dataset.werkzeug === z.werkzeug));

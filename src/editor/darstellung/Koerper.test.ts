@@ -97,7 +97,8 @@ describe('Platz-Körper (Chunk D)', () => {
     for (const v of VORLAGEN) {
       const g = darstellungen.platzobjekt.baue(platzVon(v.schluessel));
       for (const m of meshes(g)) expect([teilDaten(m)?.objektId, teilDaten(m)?.art, teilDaten(m)?.klickbar]).toEqual(['p', 'platzobjekt', true]);
-      expect(meshes(g).length > 1).toBe(v.schluessel !== 'eigenes');
+      // Eigenes und Küche (Höhe 0,1 m, E6) sind einfache Körper
+      expect(meshes(g).length > 1).toBe(v.schluessel !== 'eigenes' && v.schluessel !== 'kueche');
     }
   });
 

@@ -1,11 +1,13 @@
 import type { LagerObjekt } from '../model/LagerObjekt';
 import type { ZeltAufbau, ZeltParams } from '../model/params';
+import { Grundriss } from '../model/Grundriss';
 import { Zelt } from '../model/Zelt';
 import { ZeltGeometrie } from '../model/ZeltGeometrie';
 import { freierText, liste, type Roh, text, type V3, vektor, zahl } from '../share/lesen';
 import { textWert, zahlText, zahlWert } from './gemeinsam';
 import { type MaterialBeitrag, seilLaenge } from '../model/MaterialPosten';
 import type { MaterialKontext, ObjektArt, ObjektJson, PanelAuswahl, PanelEingabe, PanelSpec, PlatzierenPunkt, Werte } from './ObjektArt';
+import type { Rolle } from './platz/rollen';
 import { findeZeltVorlage, paramsAusZeltVorlage, ZELT_VORLAGEN, ZeltVorlagenWahl } from './zelt/vorlagen';
 
 export interface ZeltJson extends ObjektJson {
@@ -82,6 +84,19 @@ export class ZeltArt implements ObjektArt<Zelt> {
   /** Statuszeile nach dem Setzen. */
   meldungNachSetzen(o: Zelt): string {
     return `Zelt gesetzt: ${o.params.name}`;
+  }
+
+  rolle(): Rolle {
+    return 'zelt';
+  }
+
+  /** Der Umriss aus `ZeltGeometrie` (beim Doppelkegler das Oval); Haringe und Abspannseile zählen nicht (Spec E6, Entscheidung 8). */
+  grundriss(o: Zelt): Grundriss {
+    return Grundriss.vieleck(ZeltGeometrie.umriss(o));
+  }
+
+  anzeigeName(o: Zelt): string {
+    return o.params.name;
   }
 
   istVon(o: LagerObjekt): o is Zelt {

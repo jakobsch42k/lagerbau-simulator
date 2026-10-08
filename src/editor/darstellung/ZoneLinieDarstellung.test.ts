@@ -1,3 +1,4 @@
+import { bandGeometrie } from './bodenformen';
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { Bauwerk } from '../../model/Bauwerk';
@@ -89,6 +90,16 @@ describe('Darstellung Linie (Spec E3, D1)', () => {
     expect(((f.material as THREE.MeshBasicMaterial).color).getHexString()).toBe('a68a64');
     const daten = teilDaten(f);
     expect([daten?.objektId, daten?.art, daten?.klickbar, daten?.markiert]).toEqual(['l', 'linie', true, MARKIERT]);
+  });
+
+  it('Weg und Grenze: alle Dreiecke zeigen mit der Vorderseite nach oben (einseitige Materialien bleiben von oben sichtbar)', () => {
+    const knick = [p(0, 0), p(10, 0), p(10, 6)];
+    const geometrien = [bandGeometrie(knick, 2), bandGeometrie([p(0, 0), p(10, 0)], 0.5)];
+    for (const g of geometrien) {
+      const normalen = g.getAttribute('normal');
+      expect(normalen.count).toBeGreaterThan(0);
+      for (let i = 0; i < normalen.count; i++) expect(normalen.getY(i)).toBeGreaterThan(0.99);
+    }
   });
 
   it('Weg mit Knick: die Ecke wird gefüllt (mehr Dreiecke als zwei Rechtecke)', () => {

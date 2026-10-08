@@ -10,7 +10,9 @@ import { MAX_TEILE } from './grenzen';
 import { liste, objekt, type Roh, text } from './lesen';
 import { istEntfernt, type LuftbildEntferntJson, type LuftbildJson, luftbildAusJson, luftbildZuJson } from './LuftbildFormat';
 import { type BauNamenJson, bauNamenAusJson, bauNamenZuJson } from './BauNamenFormat';
+import { type PlatzregelnJson, platzregelnAusJson, platzregelnZuJson } from './PlatzregelnFormat';
 import { type RegelnJson, regelnAusJson, regelnZuJson } from './RegelnFormat';
+import { PlatzregelEinstellungen } from '../rules/platz/PlatzregelEinstellungen';
 
 /**
  * Datenformat 7 (Spec E4, D6): wie 6 plus Zelte in der Liste; v6 = wie 5 (eine Liste aller Objekte in der Reihenfolge des Bauwerks, dazu optional das Luftbild),
@@ -25,6 +27,8 @@ export interface BauwerkJson {
   readonly luftbild?: LuftbildJson | LuftbildEntferntJson;
   /** Namen der Bauten, Objekt-id → Name (Spec E5, D6); fehlt, solange kein Bau einen hat. Die Version bleibt 7: ein optionales Feld wie `regeln`. */
   readonly bauNamen?: BauNamenJson;
+  /** Platzregeln (Spec E6, D4); fehlt, solange alles auf Standard steht. Die Version bleibt 7: ein optionales Feld wie `regeln`; ältere Programme ignorieren es. */
+  readonly platzregeln?: PlatzregelnJson;
 }
 
 const ab4 = (version: unknown): boolean => version === 4 || version === 5 || version === 6 || version === 7;
@@ -59,6 +63,7 @@ export class BauwerkSerializer {
       ...(e.istStandard ? {} : { regeln: regelnZuJson(e) }),
       ...(l === null ? {} : { luftbild: ziel === 'datei' ? luftbildZuJson(l) : { entfernt: true as const } }),
       ...(bauNamen === undefined ? {} : { bauNamen }),
+      ...(bauwerk.platzregelEinstellungen.istStandard ? {} : { platzregeln: platzregelnZuJson(bauwerk.platzregelEinstellungen) }),
     };
   }
 
@@ -87,7 +92,9 @@ export class BauwerkSerializer {
     // Bau-Namen gibt es nur in Version 7; die Ids müssen zu gelesenen Objekten gehören.
     const ids = new Set(objekte.map((x) => x.id));
     const bauNamen = o.version === 7 && o.bauNamen !== undefined ? bauNamenAusJson(o.bauNamen, (id) => ids.has(id)) : undefined;
-    const bauwerk = Bauwerk.von(objekte, regeln, bild.luftbild, bauNamen);
+    // Platzregeln gibt es nur in Version 7 (optionales Feld).
+    const platzregeln = o.version === 7 && o.platzregeln !== undefined ? platzregelnAusJson(o.platzregeln) : PlatzregelEinstellungen.standard();
+    const bauwerk = Bauwerk.von(objekte, regeln, bild.luftbild, bauNamen, platzregeln);
     return { bauwerk, luftbildEntfernt: bild.entfernt };
   }
 

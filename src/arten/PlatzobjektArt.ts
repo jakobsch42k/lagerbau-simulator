@@ -1,3 +1,4 @@
+import { Grundriss } from '../model/Grundriss';
 import type { LagerObjekt } from '../model/LagerObjekt';
 import type { PlatzobjektForm } from '../model/params';
 import { Platzobjekt } from '../model/Platzobjekt';
@@ -5,6 +6,7 @@ import { freierText, type Roh, text, type V3, vektor, zahl } from '../share/lese
 import { textWert, zahlWert } from './gemeinsam';
 import type { MaterialBeitrag } from '../model/MaterialPosten';
 import type { ObjektArt, ObjektJson, PanelEingabe, PanelSpec, PlatzierenPunkt, Werte } from './ObjektArt';
+import { type Rolle, ROLLEN_NAME, rolleAusVorlage } from './platz/rollen';
 import { findeVorlage, paramsAusVorlage, VORLAGEN, VorlagenWahl } from './platz/vorlagen';
 
 export interface PlatzobjektJson extends ObjektJson {
@@ -49,6 +51,21 @@ export class PlatzobjektArt implements ObjektArt<Platzobjekt> {
     return { gruppe: titel, posten: [{ kategorie: 'Platz', bezeichnung: titel, menge: 1, einheit: 'Stk' }] };
   }
 
+  /** Die Rolle folgt nur aus dem Vorlagen-Schlüssel: Maße und Name ändern sie nicht, ein Vorlagenwechsel schon (Spec E6, D2). */
+  rolle(o: Platzobjekt): Rolle | null {
+    return rolleAusVorlage(o.params.vorlage);
+  }
+
+  grundriss(o: Platzobjekt): Grundriss {
+    const { form, breite, laenge } = o.params;
+    const mitte = { x: o.position.x, z: o.position.z };
+    return form === 'kreis' ? Grundriss.kreis(mitte, breite / 2) : Grundriss.rechteck(mitte, breite, laenge, o.drehungRad);
+  }
+
+  anzeigeName(o: Platzobjekt): string {
+    return o.params.name;
+  }
+
   istVon(o: LagerObjekt): o is Platzobjekt {
     return o instanceof Platzobjekt;
   }
@@ -90,10 +107,15 @@ export class PlatzobjektArt implements ObjektArt<Platzobjekt> {
     return {
       felder,
       werte: { vorlage, name, form, breite, laenge, hoehe, farbe },
-      info: 'Steht auf dem Platz, zählt nicht zum Platzbedarf.',
+      info: `Steht auf dem Platz, zählt nicht zum Platzbedarf.${this.rolleInfo(o)}`,
       extras: [],
       mit: (w) => this.mitWerten(o, w),
     };
+  }
+
+  private rolleInfo(o: Platzobjekt): string {
+    const rolle = this.rolle(o);
+    return rolle === null ? '' : ` Zählt als: ${ROLLEN_NAME[rolle]} (Platzregeln).`;
   }
 
   /** Ein Wechsel der Vorlage setzt alle Felder auf deren Werte (ein Schritt); sonst gelten die Werte des Panels. */

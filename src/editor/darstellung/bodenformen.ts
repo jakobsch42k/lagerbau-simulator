@@ -37,7 +37,7 @@ export function bandGeometrie(punkte: readonly Vec3[], breite: number): THREE.Bu
       [b.x + nx, b.z + nz],
       [b.x - nx, b.z - nz],
     ];
-    dreiecke.push(a1, a2, b1, b1, a2, b2);
+    dreiecke.push(a1, b1, a2, b1, b2, a2); // Vorderseite nach oben, sonst schneidet das Culling das Band von oben weg
   }
   for (const p of punkte.slice(1, -1)) dreiecke.push(...scheibe(p, halb));
   return ausDreiecken(dreiecke);
@@ -48,5 +48,5 @@ function scheibe(mitte: Vec3, radius: number): [number, number][] {
     const w = (k * 2 * Math.PI) / KNICK_SEGMENTE;
     return [mitte.x + radius * Math.cos(w), mitte.z + radius * Math.sin(w)];
   };
-  return Array.from({ length: KNICK_SEGMENTE }, (_, k): [number, number][] => [[mitte.x, mitte.z], rand(k), rand(k + 1)]).flat();
+  return Array.from({ length: KNICK_SEGMENTE }, (_, k): [number, number][] => [[mitte.x, mitte.z], rand(k + 1), rand(k)]).flat();
 }

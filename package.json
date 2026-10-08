@@ -1,6 +1,6 @@
 {
   "name": "lagerbau-simulator",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "3D-Planer für Pfadfinder-Lagerbauten mit Faustregel-Hinweisen",
   "scripts": {
     "test": "vitest run --coverage",
