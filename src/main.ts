@@ -10,7 +10,8 @@ import type { WerkzeugName } from './editor/Werkzeuge';
 import { Bauwerk } from './model/Bauwerk';
 import type { Luftbild } from './model/Luftbild';
 import { Materialliste } from './model/Materialliste';
-import type { Hinweis } from './rules/Rule';
+import { Lagerliste } from './model/Lagerliste';
+import { type BauHinweis, BauHinweise } from './rules/BauHinweise';
 import { RuleEngine } from './rules/RuleEngine';
 import { SEIL_ZUGABE_PRO_ENDE } from './rules/constants';
 import { LinkBasis } from './share/LinkBasis';
@@ -21,6 +22,7 @@ import { LuftbildPanel } from './ui/LuftbildPanel';
 import { ParameterPanel } from './ui/ParameterPanel';
 import { RegelnPanel } from './ui/RegelnPanel';
 import { MateriallistePanel } from './ui/MateriallistePanel';
+import { LagerlistePanel } from './ui/LagerlistePanel';
 import { Teilen } from './ui/Teilen';
 import { VorlagenAuswahl } from './ui/VorlagenAuswahl';
 
@@ -54,15 +56,25 @@ const luftbildPanel = new LuftbildPanel(element('#luftbild'), element('#btn-luft
 const bildLader = new BildLader();
 const hinweisPanel = new HinweisPanel(element('#hinweise'), (h) => editor.markiere(h.betroffeneTeile));
 const materialPanel = new MateriallistePanel(element('#stangenliste'), element('#platzbedarf'));
+const lagerlistePanel = new LagerlistePanel(element('#lagerliste'), element('#btn-lagerliste'), editor, (teil) => szene.zeigeAlles(teil), () => modus.aktiv);
 const meldung = element<HTMLParagraphElement>('#meldung');
 const werkzeugKnoepfe = [...document.querySelectorAll<HTMLButtonElement>('[data-werkzeug]')];
 
 // Regeln nur neu prüfen, wenn sich das Bauwerk wirklich geändert hat (nicht bei Auswahl oder Meldung).
-let geprueft: { bauwerk: Bauwerk; hinweise: readonly Hinweis[]; liste: Materialliste } | null = null;
-function pruefung(bauwerk: Bauwerk): { hinweise: readonly Hinweis[]; liste: Materialliste } {
+interface Pruefung {
+  readonly bauwerk: Bauwerk;
+  readonly hinweise: readonly BauHinweis[];
+  readonly anzahlBaue: number;
+  readonly liste: Materialliste;
+  readonly lager: Lagerliste;
+}
+let geprueft: Pruefung | null = null;
+function pruefung(bauwerk: Bauwerk): Pruefung {
   if (geprueft?.bauwerk !== bauwerk) {
-    const hinweise = RuleEngine.fuer(bauwerk.regelEinstellungen).pruefe(bauwerk);
-    geprueft = { bauwerk, hinweise, liste: Materialliste.aus(bauwerk, SEIL_ZUGABE_PRO_ENDE, arten.zaehltZumPlatzbedarf) };
+    const hinweise = BauHinweise.zuordnen(bauwerk, RuleEngine.fuer(bauwerk.regelEinstellungen).pruefe(bauwerk));
+    const liste = Materialliste.aus(bauwerk, SEIL_ZUGABE_PRO_ENDE, arten.zaehltZumPlatzbedarf);
+    const lager = Lagerliste.aus(bauwerk, arten, SEIL_ZUGABE_PRO_ENDE);
+    geprueft = { bauwerk, hinweise, anzahlBaue: lager.baue.filter((z) => z.bau !== null).length, liste, lager };
   }
   return geprueft;
 }
@@ -154,6 +166,7 @@ element<HTMLInputElement>('#inp-luftbild').addEventListener('change', async (e) 
 });
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+  if (!element('#lagerliste').hidden) return; // die Materialliste verdeckt die Szene, Tasten dürfen sie nicht ändern
   const ansichtstaste = e.ctrlKey || e.metaKey || e.altKey ? '' : e.key.toLowerCase();
   if (ansichtstaste === 'p') return schalteAnsicht();
   if (ansichtstaste === 'f') return szene.zeigeAlles(editor.bauwerk);
@@ -175,14 +188,15 @@ function zeichenHinweis(z: EditorZustand): string {
 
 let meldungsTimer: number | undefined;
 editor.abonniere((z) => {
-  const { hinweise, liste } = pruefung(z.bauwerk);
+  const { hinweise, anzahlBaue, liste, lager } = pruefung(z.bauwerk);
   const markiert = new Set(z.markiert);
   z.ausgewaehlt.forEach((id) => markiert.add(id));
   szene.zeige(z.vorschau ?? z.bauwerk, markiert, z.stangenStart, z.zeichnung);
   szene.zeigeMessung(z.messung);
   szene.zeigeEcken(z.ecken);
   parameter.zeige(z);
-  hinweisPanel.zeige(hinweise);
+  hinweisPanel.zeige(hinweise, anzahlBaue);
+  lagerlistePanel.zeige(lager, z.bauwerk, hinweise);
   regelnPanel.zeige(z.bauwerk.regelEinstellungen);
   luftbildPanel.zeige(z);
   materialPanel.zeige(liste);

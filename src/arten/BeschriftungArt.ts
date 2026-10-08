@@ -19,6 +19,7 @@ export class BeschriftungArt implements ObjektArt<Beschriftung> {
   readonly label = 'Beschriftung';
   readonly klick = 'wahlweise' as const;
   readonly hatOesen = false;
+  readonly materialGruppe = 'platz' as const;
   readonly zaehltZumPlatzbedarf = false;
   readonly platzieren: PlatzierenPunkt = {
     modus: 'punkt',

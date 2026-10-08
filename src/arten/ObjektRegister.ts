@@ -33,6 +33,11 @@ export class ObjektRegister {
     return art;
   }
 
+  /** Die Art eines Objekts nach seinem Namen, z. B. für `material`; die Lagerliste fragt nur hier und kennt keine Art einzeln. */
+  fuer(o: LagerObjekt): ObjektArt {
+    return this.art(o.art);
+  }
+
   /** Arten, die Klicks nur in Werkzeugen fangen, die sie nennen (Spec v2b, D2). */
   wahlweise(): readonly ArtName[] {
     return this.alle.filter((a) => a.klick === 'wahlweise').map((a) => a.name);

@@ -69,3 +69,27 @@ body.ansicht .nur-editor, body:not(.ansicht) .nur-ansicht { display: none; }
 #luftbild .feld input[type='range'] { display: inline-block; width: 70%; vertical-align: middle; }
 #luftbild .feld input[type='checkbox'] { display: inline-block; width: auto; }
 .luftbild-strecke { margin-bottom: 6px; }
+
+#lagerliste { position: fixed; inset: 0; z-index: 20; overflow: auto; padding: 16px 24px 48px; background: #fff; }
+#lagerliste[hidden] { display: none; }
+.lager-leiste { display: flex; gap: 8px; justify-content: flex-end; }
+.lager-kopf { font-size: 1.3rem; margin: 8px 0 0; }
+.lager-datum { margin: 0 0 12px; color: #52606d; }
+.lager-block { margin: 0 0 16px; padding: 8px 12px; border: 1px solid var(--rand); border-radius: 4px; break-inside: avoid; }
+.lager-block h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 1rem; }
+.lager-block h4 { margin: 8px 0 2px; font-size: 0.9rem; }
+.lager-block input { font: inherit; min-width: 12rem; }
+.lager-tabelle { border-collapse: collapse; font-size: 0.9rem; min-width: 18rem; }
+.lager-tabelle th, .lager-tabelle td { padding: 2px 10px 2px 4px; text-align: left; border-bottom: 1px solid var(--rand); }
+.lager-tabelle td:last-child { text-align: right; }
+.lager-platz { margin: 6px 0 0; font-size: 0.9rem; }
+.lager-platz:empty { display: none; }
+@media print {
+  body { display: block; height: auto; background: #fff; }
+  body > :not(#lagerliste):not(footer) { display: none !important; }
+  #lagerliste { position: static; padding: 0 0 12px; overflow: visible; }
+  #lagerliste .nicht-drucken { display: none !important; }
+  .lager-block { border-color: #999; }
+  .lager-block input { border: 0; padding: 0; font-weight: bold; }
+  footer { margin-top: 12px; }
+}

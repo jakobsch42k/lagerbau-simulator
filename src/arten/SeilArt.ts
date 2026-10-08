@@ -19,6 +19,7 @@ export class SeilArt implements ObjektArt<Seil> {
   readonly label = 'Seil';
   readonly klick = 'wahlweise' as const;
   readonly hatOesen = false;
+  readonly materialGruppe = 'bau' as const;
   readonly platzieren: PlatzierenLinie = {
     modus: 'linie',
     mindestabstand: MIN_SEILLAENGE,

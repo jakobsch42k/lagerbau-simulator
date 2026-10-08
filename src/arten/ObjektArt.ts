@@ -1,4 +1,5 @@
 import type { ArtName, LagerObjekt } from '../model/LagerObjekt';
+import type { MaterialBeitrag } from '../model/MaterialPosten';
 import type { Vec3 } from '../model/Vec3';
 import type { Roh } from '../share/lesen';
 
@@ -112,6 +113,11 @@ export type Platzieren = PlatzierenPunkt | PlatzierenLinie | PlatzierenMehrpunkt
 /** `immer`: fängt Klicks in jedem Werkzeug; `wahlweise`: nur, wo das Werkzeug die Art als Klickziel nennt (ersetzt `KlickZiel`). */
 export type KlickVerhalten = 'immer' | 'wahlweise';
 
+/** Was `ObjektArt.material` von außen braucht. */
+export interface MaterialKontext {
+  readonly zugabeProEnde: number;
+}
+
 /** Alles Editor-Seitige einer Objektart, ohne three.js (Spec v3, D2). */
 export interface ObjektArt<T extends LagerObjekt = LagerObjekt> {
   readonly name: ArtName;
@@ -121,6 +127,13 @@ export interface ObjektArt<T extends LagerObjekt = LagerObjekt> {
   readonly hatOesen: boolean;
   /** Ob die Objekte dieser Art zum Platzbedarf zählen (Spec E3, D3). Fehlt die Angabe: ja. */
   readonly zaehltZumPlatzbedarf?: boolean;
+  /**
+   * Wohin die Objekte in der Lagerliste gehören (Spec E5, D1): `bau` = Bau-Arten, die `Materialliste` zählt; `zelt` und `platz` liefern
+   * ihren Beitrag über `material`. Arten ohne `material` (Beschriftung, Zone) stehen nicht in der Liste.
+   */
+  readonly materialGruppe: 'bau' | 'zelt' | 'platz';
+  /** Beitrag eines Objekts zur Lagerliste; fehlt bei Arten, die nicht in die Liste kommen. `zugabeProEnde` ist die Seilzugabe je Ende. */
+  material?(o: T, ctx: MaterialKontext): MaterialBeitrag;
   readonly platzieren: Platzieren;
   /** Statuszeile nach dem Setzen eines Objekts (Zelt: „Zelt gesetzt: Jurte 6er“); fehlt sie, bleibt die Zeile leer. */
   meldungNachSetzen?(o: T): string;

@@ -19,6 +19,7 @@ export class ABockArt implements ObjektArt<ABock> {
   readonly label = 'A-Bock';
   readonly klick = 'immer' as const;
   readonly hatOesen = false;
+  readonly materialGruppe = 'bau' as const;
   readonly platzieren: PlatzierenPunkt = {
     modus: 'punkt',
     erzeuge: (id, position) => new ABock(id, position, 0, STANDARD_ABOCK),

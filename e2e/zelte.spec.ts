@@ -58,10 +58,10 @@ test('Jurte 6er: Wand 2 aus, gedreht, Speichern und Laden ergibt dasselbe', asyn
   expect(fehler).toEqual([]);
 });
 
-test('Alles zeigen deckt die Haringe eines Doppelkeglers ab', async ({ page }) => {
+test('Alles zeigen deckt die Haringe eines Zelts ab', async ({ page }) => {
   await page.goto('./?t=zelt-haringe');
   const m = await plan(page);
-  await setzeZelt(page, 'Doppelkegler', m);
+  await setzeZelt(page, 'Jurte 6er', m); // der Doppelkegler ist eine feste Bauart ohne Haring-Abstand
   await page.keyboard.press('f');
   const vorher = await meterProBalken(page);
   // Ein größerer Haring-Abstand rückt die Haringe nach außen, das Zelt bleibt gleich: der Ausschnitt muss wachsen.

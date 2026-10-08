@@ -22,6 +22,7 @@ export class StangeArt implements ObjektArt<Stange> {
   readonly label = 'Stange';
   readonly klick = 'immer' as const;
   readonly hatOesen = false;
+  readonly materialGruppe = 'bau' as const;
   readonly platzieren: PlatzierenLinie = {
     modus: 'linie',
     mindestabstand: MIN_STANGENLAENGE,

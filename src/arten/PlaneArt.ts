@@ -51,6 +51,7 @@ export class PlaneArt implements ObjektArt<Plane> {
   /** Eine große Plane soll das Setzen eines Dreibeins darunter nicht blockieren (Spec v2b, D2). */
   readonly klick = 'wahlweise' as const;
   readonly hatOesen = true;
+  readonly materialGruppe = 'bau' as const;
   readonly platzieren: PlatzierenLinie = {
     modus: 'linie',
     mindestabstand: MIN_SEILLAENGE,

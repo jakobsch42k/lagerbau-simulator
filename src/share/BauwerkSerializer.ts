@@ -9,6 +9,7 @@ import { alteObjekte } from './AltesFormat';
 import { MAX_TEILE } from './grenzen';
 import { liste, objekt, type Roh, text } from './lesen';
 import { istEntfernt, type LuftbildEntferntJson, type LuftbildJson, luftbildAusJson, luftbildZuJson } from './LuftbildFormat';
+import { type BauNamenJson, bauNamenAusJson, bauNamenZuJson } from './BauNamenFormat';
 import { type RegelnJson, regelnAusJson, regelnZuJson } from './RegelnFormat';
 
 /**
@@ -22,6 +23,8 @@ export interface BauwerkJson {
   readonly regeln?: RegelnJson;
   /** In der Datei mit Bild, im Link nur `{ entfernt: true }`; fehlt, wenn es kein Luftbild gibt. */
   readonly luftbild?: LuftbildJson | LuftbildEntferntJson;
+  /** Namen der Bauten, Objekt-id → Name (Spec E5, D6); fehlt, solange kein Bau einen hat. Die Version bleibt 7: ein optionales Feld wie `regeln`. */
+  readonly bauNamen?: BauNamenJson;
 }
 
 const ab4 = (version: unknown): boolean => version === 4 || version === 5 || version === 6 || version === 7;
@@ -49,11 +52,13 @@ export class BauwerkSerializer {
     const objekte = bauwerk.objekte.map((o) => this.arten.artVon(o).zuJson(o));
     const e = bauwerk.regelEinstellungen;
     const l = bauwerk.luftbild;
+    const bauNamen = bauNamenZuJson(bauwerk);
     return {
       version: 7,
       objekte,
       ...(e.istStandard ? {} : { regeln: regelnZuJson(e) }),
       ...(l === null ? {} : { luftbild: ziel === 'datei' ? luftbildZuJson(l) : { entfernt: true as const } }),
+      ...(bauNamen === undefined ? {} : { bauNamen }),
     };
   }
 
@@ -78,11 +83,11 @@ export class BauwerkSerializer {
     const hatRegeln = ab4(o.version);
     const regeln = hatRegeln && o.regeln !== undefined ? regelnAusJson(o.regeln) : RegelEinstellungen.standard();
     const bild = ab5(o.version) && o.luftbild !== undefined ? this.liesLuftbild(o.luftbild) : { luftbild: null, entfernt: false };
-    const bauwerk = Bauwerk.von(
-      roh.map((r) => this.liesObjekt(r)),
-      regeln,
-      bild.luftbild,
-    );
+    const objekte = roh.map((r) => this.liesObjekt(r));
+    // Bau-Namen gibt es nur in Version 7; die Ids müssen zu gelesenen Objekten gehören.
+    const ids = new Set(objekte.map((x) => x.id));
+    const bauNamen = o.version === 7 && o.bauNamen !== undefined ? bauNamenAusJson(o.bauNamen, (id) => ids.has(id)) : undefined;
+    const bauwerk = Bauwerk.von(objekte, regeln, bild.luftbild, bauNamen);
     return { bauwerk, luftbildEntfernt: bild.entfernt };
   }
 
